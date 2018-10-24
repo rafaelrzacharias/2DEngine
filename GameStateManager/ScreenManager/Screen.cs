@@ -155,7 +155,7 @@ namespace GameStateManager
             TransitionState = ScreenState.TransitionOn;
             Font = Resources.GetFont("gameFont");
             Color = Color.White;
-            ControllingPlayer = Input.GetControllingPlayer();
+            ControllingPlayer = Input.ControllingPlayer;
 
             OnHide();
 
@@ -209,7 +209,7 @@ namespace GameStateManager
             // Gradually fade in or out when covered by another screen.
             pauseAlpha = Math.Max(pauseAlpha - 1f / 32, 0);
 
-            ControllingPlayer = Input.GetControllingPlayer();
+            ControllingPlayer = Input.ControllingPlayer;
         }
 
 
