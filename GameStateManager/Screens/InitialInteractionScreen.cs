@@ -29,8 +29,9 @@ namespace GameStateManager
         {
             base.Update(gameTime);
 
-            if (Input.WasAnyButtonPressed())
+            if (Input.WasAnyButtonPressed(out PlayerIndex playerIndex))
             {
+                Input.ControllingPlayer = playerIndex;
                 List<string> screens = new List<string> { "MainMenuScreen" };
                 LoadingScreen.Load(false, screens);
             }
@@ -38,6 +39,6 @@ namespace GameStateManager
 
 
         // Event hander for when a key is pressed.
-        private void 
+         
     }
 }
