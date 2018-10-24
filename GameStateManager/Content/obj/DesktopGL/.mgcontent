@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SourceFileCollection xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Profile>Reach</Profile>
+  <Platform>DesktopGL</Platform>
+  <Config />
+  <SourceFiles>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/Songs/song.ogg</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/battle002.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/battle003.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/battle008.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/battle011.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/battle012.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/cartoon001.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/cartoon002.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/cartoon158.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/cartoon165.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/cartoon181.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/catSound.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SoundEffects/firePlace.wav</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SpriteFonts/debugFont.spritefont</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SpriteFonts/gameFont.spritefont</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/SpriteFonts/menuFont.spritefont</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/Textures/background.png</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/Textures/gameBackground.png</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/Textures/pauseBackground.png</File>
+    <File>C:/Users/rzacharias/Downloads/GameStateManager/GameStateManager/Content/Textures/whiteTexture.png</File>
+  </SourceFiles>
+</SourceFileCollection>

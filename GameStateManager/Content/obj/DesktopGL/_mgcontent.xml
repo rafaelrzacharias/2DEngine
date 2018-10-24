@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SourceFileCollection xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Profile>Reach</Profile>
+  <Platform>DesktopGL</Platform>
+  <Config />
+  <SourceFiles>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/catSound.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/song.ogg</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/firePlace.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/debugFont.spritefont</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/whiteTexture.png</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/menuFont.spritefont</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/background.png</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/battle002.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/battle003.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/battle008.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/battle011.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/battle012.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/cartoon001.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/cartoon002.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/cartoon158.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/cartoon165.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/cartoon181.wav</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/gameFont.spritefont</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/gameBackground.png</File>
+    <File>C:/Users/661066/Documents/Games/Library/GameStateManager/GameStateManager/Content/pauseBackground.png</File>
+  </SourceFiles>
+</SourceFileCollection>
