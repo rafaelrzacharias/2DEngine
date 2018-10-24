@@ -40,6 +40,9 @@ namespace GameStateManager
             {
                 switch (screens[i])
                 {
+                    case "IISMessageBoxScreen":
+                        screensToLoad.Add(new IISMessageBoxScreen());
+                        break;
                     case "GameScreen":
                         screensToLoad.Add(new GameScreen());
                         break;
@@ -96,7 +99,7 @@ namespace GameStateManager
             // Itt doesn't look good if we flash this up for just a fraction of a second, if it's not really needed.
             // This parameter tells us how long the loading will take, so we know whether to bother drawing the message.
             if (isLoadingSlow)
-                ScreenManager.SpriteBatch.DrawString(Font, loadingText, textPosition, Color * TransitionAlpha);
+                SpriteBatch.DrawString(Font, loadingText, textPosition, Color * TransitionAlpha);
 
             base.Draw(gameTime);
         }
