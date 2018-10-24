@@ -106,6 +106,7 @@ namespace GameStateManager
                     IsGamePadConnected[i] = false;
             }
 
+            // Check of any button was pressed in a controller that is not the current controller scheme
             //for (int i = 0; i < MAX_INPUTS; i++)
             //{
             //    if (CurrentGamePadStates[i].IsConnected)
@@ -172,29 +173,38 @@ namespace GameStateManager
 
 
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
-        public static bool WasAnyButtonPressed(out PlayerIndex playerIndex)
+        public static bool WasAnyButtonPressed()
         {
-            playerIndex = PlayerIndex.One;
+            if (WasKeyPressed(Keys.OemTilde, ControllingPlayer, out PlayerIndex playerIndex))
+                return false;
 
             for (int i = 0; i < MAX_INPUTS; i++)
             {
-                if (CurrentGamePadStates[i].IsConnected && CurrentGamePadStates[i].PacketNumber != LastGamePadStates[i].PacketNumber)
+                if (CurrentGamePadStates[i].IsConnected && LastGamePadStates[i].IsConnected &&
+                    CurrentGamePadStates[i] != LastGamePadStates[i])
                 {
                     if (CurrentGamePadStates[i].ThumbSticks.Left.Length() != LastGamePadStates[i].ThumbSticks.Left.Length() ||
                         CurrentGamePadStates[i].ThumbSticks.Right.Length() != LastGamePadStates[i].ThumbSticks.Right.Length())
                         continue;
 
-                    playerIndex = (PlayerIndex)i;
+                    ControllingPlayer = (PlayerIndex)i;
                     return true;
                 }
             }
 
             if (CurrentKeyboardState.GetPressedKeys().Length != 0)
+            {
+                ControllingPlayer = PlayerIndex.One;
                 return true;
+            }
 
-            if (WasMouseClicked(MouseButton.Left, null, out playerIndex) || WasMouseClicked(MouseButton.Middle, null, out playerIndex) ||
+            if (WasMouseClicked(MouseButton.Left, null, out playerIndex) || 
+                WasMouseClicked(MouseButton.Middle, null, out playerIndex) ||
                 WasMouseClicked(MouseButton.Right, null, out playerIndex))
+            {
+                ControllingPlayer = PlayerIndex.One;
                 return true;
+            }
 
             return false;
         }
