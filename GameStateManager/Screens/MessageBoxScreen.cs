@@ -7,8 +7,9 @@ namespace GameStateManager
     // A popup message box screen, used to display confirmation messages.
     public class MessageBoxScreen : Screen
     {
-        private readonly string message;
-        private readonly Texture2D texture;
+        protected readonly string Message;
+        protected readonly Texture2D Texture;
+        protected bool ShouldDarkenBackground;
 
         public delegate void AcceptedEventHandler(PlayerIndex playerIndex);
         public AcceptedEventHandler Accept;
@@ -40,21 +41,21 @@ namespace GameStateManager
         {
             Color = new Color(0, 0, 0, 128);
             Font = Resources.GetFont("menuFont");
-            texture = Resources.GetTexture("whiteTexture");
+            Texture = Resources.GetTexture("whiteTexture");
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
+            ShouldDarkenBackground = true;
 
             if (includeUsageText)
-                this.message = message + "\nA button, Space = Ok\nB button, Esc = Cancel";
+                Message = message + "\nA button, Space = Ok\nB button, Esc = Cancel";
             else
-                this.message = message;
+                Message = message;
         }
 
 
         // Responds to user input, accepting or cancelling the message box.
         public override void HandleInput()
         {
-
             // We pass in our ControllingPlayer, which may be null (to accept input from any player) or a
             // specific index. If null, the InputState helper returns which player provided the input. We pass
             // that through to our Accepted and Cancelled events, so they can tell which player triggered them.
@@ -71,11 +72,12 @@ namespace GameStateManager
             if (IsVisible)
             {
                 // Darken all other screens that were drawn underneath the popup.
-                FadeScreen(TransitionAlpha * 0.66f);
+                if (ShouldDarkenBackground)
+                    FadeScreen(TransitionAlpha * 0.66f);
 
                 // Center the message text in the viewport.
                 Vector2 viewportSize = new Vector2(ScreenManager.Viewport.Width, ScreenManager.Viewport.Height);
-                Vector2 textSize = Font.MeasureString(message);
+                Vector2 textSize = Font.MeasureString(Message);
                 Vector2 textPosition = (viewportSize - textSize) / 2f;
 
                 // The background includes a border larger than the text itself.
@@ -86,8 +88,8 @@ namespace GameStateManager
                     (int)textPosition.X - horizontalPad, (int)textPosition.Y - verticalPad,
                     (int)textSize.X + horizontalPad * 2, (int)textSize.Y + verticalPad * 2);
 
-                ScreenManager.SpriteBatch.Draw(texture, backgroundRectangle, Color * TransitionAlpha);
-                ScreenManager.SpriteBatch.DrawString(Font, message, textPosition, Color.White * TransitionAlpha);
+                SpriteBatch.Draw(Texture, backgroundRectangle, Color * TransitionAlpha);
+                SpriteBatch.DrawString(Font, Message, textPosition, Color.White * TransitionAlpha);
             }
         }
     }
