@@ -4,3 +4,5 @@
 
 /.vs
 /GameStateManager/obj/Release/GameStateManager.csproj.CoreCompileInputs.cache
+/bin
+/obj
