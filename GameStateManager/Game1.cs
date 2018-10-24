@@ -35,7 +35,7 @@ namespace GameStateManager
 
             base.Initialize();
 
-            List<string> screens = new List<string> { "InitialInteractionScreen" };
+            List<string> screens = new List<string> { "BackgroundScreen", "IISMessageBoxScreen" };
             LoadingScreen.Load(false, screens);
         }
 
