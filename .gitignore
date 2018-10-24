@@ -3,6 +3,5 @@
 ################################################################################
 
 /.vs
-/GameStateManager/obj/Release/GameStateManager.csproj.CoreCompileInputs.cache
-/bin
-/obj
+/GameStateManager/obj
+/GameStateManager/bin
