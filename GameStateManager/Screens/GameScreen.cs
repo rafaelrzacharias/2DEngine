@@ -72,7 +72,7 @@ namespace GameStateManager
         public override void Draw(GameTime gameTime)
         {
             if (IsVisible)
-                ScreenManager.SpriteBatch.Draw(texture, ScreenManager.Viewport.Bounds, Color.White);
+                SpriteBatch.Draw(texture, ScreenManager.Viewport.Bounds, Color.White);
 
             base.Draw(gameTime);
         }

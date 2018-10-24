@@ -22,6 +22,9 @@ namespace GameStateManager
     {
         private float pauseAlpha;
 
+        // A spriteBatch that targets the ScreenManager spriteBatch.
+        protected SpriteBatch SpriteBatch;
+
         // Indicates how long the screen takes to transition on when it is activated.
         public TimeSpan TransitionOnTime { get; protected set; }
 
@@ -149,6 +152,7 @@ namespace GameStateManager
         // Constructs a new GameScreen and assign the default values.
         public Screen()
         {
+            SpriteBatch = ScreenManager.SpriteBatch;
             TransitionOnTime = TimeSpan.FromSeconds(0.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);
             TransitionPosition = 1f;

@@ -25,7 +25,7 @@ namespace GameStateManager
         {
             if (IsVisible)
             {
-                ScreenManager.SpriteBatch.Draw(texture, ScreenManager.Viewport.Bounds,
+                SpriteBatch.Draw(texture, ScreenManager.Viewport.Bounds,
                     new Color(TransitionAlpha, TransitionAlpha, TransitionAlpha));
             }
         }

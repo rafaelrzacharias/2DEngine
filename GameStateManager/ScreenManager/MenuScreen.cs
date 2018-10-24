@@ -163,7 +163,7 @@ namespace GameStateManager
                 // Draw the menu title centered on the screen.  
                 Color titleColor = new Color(192, 192, 192) * TransitionAlpha;
 
-                ScreenManager.SpriteBatch.DrawString(Font, MenuTitle, titlePosition, titleColor, 0f,
+                SpriteBatch.DrawString(Font, MenuTitle, titlePosition, titleColor, 0f,
                     titleOrigin, 1.25f, SpriteEffects.None, DrawOrder);
             }
 

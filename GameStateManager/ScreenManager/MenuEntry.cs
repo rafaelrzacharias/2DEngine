@@ -22,6 +22,9 @@ namespace GameStateManager
         // Tracks a fading selection effect on the entry. Entries transition out when deselected.
         private float selectionFade;
 
+        // A spriteBatch that targets the ScreenManager spriteBatch
+        protected SpriteBatch SpriteBatch;
+
         // Gets or sets the text rendered for this entry.
         public string Text { get; set; }
 
@@ -58,6 +61,7 @@ namespace GameStateManager
         // Constructs a new menu entry with the specified text.
         public MenuEntry(string text)
         {
+            SpriteBatch = ScreenManager.SpriteBatch;
             Text = text;
             TextDefaultColor = Color.White;
             TextSelectedColor = Color.Yellow;
@@ -100,9 +104,9 @@ namespace GameStateManager
         public virtual void Draw(MenuScreen screen, GameTime gameTime)
         {
             if (Texture != null)
-                ScreenManager.SpriteBatch.Draw(Texture, Position, TextureColor);
+                SpriteBatch.Draw(Texture, Position, TextureColor);
 
-            ScreenManager.SpriteBatch.DrawString(Font, Text, Position, TextColor, 
+            SpriteBatch.DrawString(Font, Text, Position, TextColor, 
                 Rotation, Origin, Scale, SpriteEffects.None, 0f);
         }
     }
