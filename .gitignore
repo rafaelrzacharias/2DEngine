@@ -5,4 +5,7 @@
 /.vs
 /UpgradeLog2.htm
 /UpgradeLog.htm
-/GameStateManager/obj/Debug
+/GameStateManager/obj
+/GameStateManager/bin
+/GameStateManager/Content/bin
+/GameStateManager/Content/obj
