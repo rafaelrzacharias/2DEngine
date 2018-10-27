@@ -59,10 +59,10 @@ namespace GameStateManager
             // We pass in our ControllingPlayer, which may be null (to accept input from any player) or a
             // specific index. If null, the InputState helper returns which player provided the input. We pass
             // that through to our Accepted and Cancelled events, so they can tell which player triggered them.
-            if (Input.WasMenuSelected(ControllingPlayer, out PlayerIndex playerIndex))
-                OnAccept(playerIndex);
-            else if (Input.WasMenuCancelled(ControllingPlayer, out playerIndex))
-                OnReject(playerIndex);
+            //if (Input.WasMenuSelected(ControllingPlayer, out PlayerIndex playerIndex))
+                //OnAccept(playerIndex);
+            //else if (Input.WasMenuCancelled(ControllingPlayer, out playerIndex))
+                //OnReject(playerIndex);
         }
 
 

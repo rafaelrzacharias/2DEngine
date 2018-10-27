@@ -16,8 +16,9 @@ namespace GameStateManager
         private Color TextureDefaultColor;
         private Color TextureSelectedColor;
         private Color TextureColor;
-        private Vector2 Origin;
+        public Vector2 Origin;
         public bool IsHighlighted;
+        public bool IsSelected;
 
         // Tracks a fading selection effect on the entry. Entries transition out when deselected.
         private float selectionFade;
@@ -28,11 +29,15 @@ namespace GameStateManager
         // Gets or sets the text rendered for this entry.
         public string Text { get; set; }
 
+        // The horizontal or vertical padding (in pixels) to the right or bellow the entry.
+        public const int HorizontalPadding = 64;
+        public const int VerticalPadding = 64;
+
         // Queries how much space this menu entry requires.
-        public int Height { get { return Font.LineSpacing; } }
+        public int Height { get; private set; }
 
         // Queries ho wide this menu entry is. Used for centering on the screen.
-        public int Width { get { return (int)Font.MeasureString(Text).X; } }
+        public int Width { get; private set; }
 
         // The position at which the entry is drawn. This is set by the MenuScreen each frame in Update.
         public Vector2 Position;
@@ -41,7 +46,7 @@ namespace GameStateManager
         public Texture2D Texture { get; private set; }
 
         // The bounds of the menu entry.
-        public Rectangle Bounds { get; protected set; }
+        public Rectangle Bounds;
 
         public float Scale { get; set; }
 
@@ -53,9 +58,44 @@ namespace GameStateManager
 
         public virtual void OnSelected(PlayerIndex playerIndex)
         {
+            //Audio.PlaySound("entrySelected");
+
             if (Selected != null)
                 Selected.Invoke(playerIndex);
         }
+
+        // Event raised when the menu entry is highlighted.
+        public delegate void BeginHighlightedEventHandler();
+        public event BeginHighlightedEventHandler BeginHighlighted;
+
+        public virtual void OnBeginHighlighted()
+        {
+            if (IsHighlighted == false)
+            {
+                IsHighlighted = true;
+                //Audio.PlaySound("entryHighlighted");
+
+                if (BeginHighlighted != null)
+                    BeginHighlighted.Invoke();
+            }
+        }
+
+
+        // Event raised when the menu entry is not highlighted anymore.
+        public delegate void EndHighlightedEventHandler();
+        public event EndHighlightedEventHandler EndHighlighted;
+
+        public virtual void OnEndHighlighted()
+        {
+            if (IsHighlighted)
+            {
+                IsHighlighted = false;
+
+                if (EndHighlighted != null)
+                    EndHighlighted.Invoke();
+            }
+        }
+
 
 
         // Constructs a new menu entry with the specified text.
@@ -70,7 +110,13 @@ namespace GameStateManager
             Scale = 1f;
             Rotation = 0f;
             Font = Resources.GetFont("menuFont");
-            Origin = new Vector2(0f, Font.LineSpacing / 2f);
+
+            Vector2 textSize = Font.MeasureString(Text);
+            Origin = textSize / 2f;
+            Width = (int)textSize.X;
+            Height = (int)textSize.Y;
+
+            Bounds = Rectangle.Empty;
         }
 
 
@@ -92,17 +138,25 @@ namespace GameStateManager
                 selectionFade = Math.Max(selectionFade - fadeSpeed, 0f);
                 TextureColor = TextureDefaultColor * screen.TransitionAlpha;
                 TextColor = TextDefaultColor;
-            }
+            }      
 
             // Pulsate the size of the selected menu entry.
             float pulsate = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 6) + 1;
-            Scale = 1f + pulsate * 0.05f * selectionFade;
+            Scale = 1f + pulsate * 0.5f * selectionFade;
+
+            Bounds.X = (int)(Position.X - Origin.X);
+            Bounds.Y = (int)(Position.Y - Origin.Y);
+            Bounds.Width = Width;
+            Bounds.Height = Height;
         }
 
 
         // Draws the menu entry. This can be overridden to customize the appearance.
         public virtual void Draw(MenuScreen screen, GameTime gameTime)
         {
+            SpriteBatch.Draw(Resources.GetTexture("whiteTexture"), Position, Bounds, 
+                TextureColor, Rotation, Origin, Scale, SpriteEffects.None, 0f);
+
             if (Texture != null)
                 SpriteBatch.Draw(Texture, Position, TextureColor);
 

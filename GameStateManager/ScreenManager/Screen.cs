@@ -106,13 +106,9 @@ namespace GameStateManager
         public virtual void OnShow()
         {
             isTransitioningOn = true;
-            //IsEnabled = true;
-            //IsVisible = true;
 
             if (Show != null)
-            {
                 Show.Invoke();
-            }
         }
 
 
@@ -123,13 +119,9 @@ namespace GameStateManager
         public virtual void OnHide()
         {
             isTransitioningOff = true;
-            //IsEnabled = false;
-            //IsVisible = false;
 
             if (Hide != null)
-            {
                 Hide.Invoke();
-            }
         }
 
 
@@ -143,9 +135,7 @@ namespace GameStateManager
                 OnHide();
 
             if (Dismiss != null)
-            {
                 Dismiss.Invoke();
-            }
         }
 
 
@@ -159,7 +149,7 @@ namespace GameStateManager
             TransitionState = ScreenState.TransitionOn;
             Font = Resources.GetFont("gameFont");
             Color = Color.White;
-            ControllingPlayer = Input.ControllingPlayer;
+            ControllingPlayer = Input.GetPrimaryUser().Index;
 
             OnHide();
 
@@ -213,7 +203,7 @@ namespace GameStateManager
             // Gradually fade in or out when covered by another screen.
             pauseAlpha = Math.Max(pauseAlpha - 1f / 32, 0);
 
-            ControllingPlayer = Input.ControllingPlayer;
+            ControllingPlayer = Input.GetPrimaryUser().Index;
         }
 
 

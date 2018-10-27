@@ -36,7 +36,7 @@ namespace GameStateManager
             SpriteBatch.DrawString(Font, "Mouse state: ", TextPosition, Color.Yellow);
             TextPosition.Y += Font.LineSpacing;
 
-            PlayerIndex controllingPlayer = Input.ControllingPlayer;
+            PlayerIndex controllingPlayer = Input.GetPrimaryUser().Index;
 
             string mouseLeft = Input.IsMouseDown(MouseButton.Left, controllingPlayer, out PlayerIndex playerIndex) ? "Pressed" : "Released";
             string mouseMiddle = Input.IsMouseDown(MouseButton.Middle, controllingPlayer, out playerIndex) ? "Pressed" : "Released";

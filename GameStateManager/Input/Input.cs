@@ -1,11 +1,27 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
-using System;
 using System.Collections.Generic;
 
 namespace GameStateManager
 {
+    public class User
+    {
+        public PlayerIndex Index;
+        public bool IsPrimaryUser;
+        public InputType InputType;
+    }
+
+
+    public enum InputType
+    {
+        NONE,
+        KEYBOARD,
+        GAMEPAD,
+        TOUCH
+    }
+
+
     public enum MouseButton
     {
         Left,
@@ -19,6 +35,7 @@ namespace GameStateManager
     // such as "move up through the menu" or "pause the game".
     public static class Input
     {
+        private static User[] Users;
         private static MouseState LastMouseState;
         private static KeyboardState LastKeyboardState;
         private static bool isLeftMouseDown = false;
@@ -39,9 +56,6 @@ namespace GameStateManager
         // Key repeat duration in seconds after the first key press.
         private static float keyRepeatDuration = 0.05f;
 
-        // The controlling player (primary user)
-        public static PlayerIndex ControllingPlayer;
-
         public static MouseState CurrentMouseState { get; private set; }
         public static KeyboardState CurrentKeyboardState { get; private set; }
         public static bool isDragging = false;
@@ -52,6 +66,8 @@ namespace GameStateManager
 
         private static Vector2 prevMousePosition = Vector2.Zero;
         public static Vector2 PrevMousePosition { get { return prevMousePosition; } }
+
+        public static bool HasMouseMoved { get { return currentMousePosition != prevMousePosition; } }
 
         private static Vector2 dragMouseStart = Vector2.Zero;
         public static Vector2 MouseDragStartPosition { get { return dragMouseStart; } }
@@ -71,6 +87,16 @@ namespace GameStateManager
         {
             if (isInitialized == false)
             {
+                Users = new User[MAX_INPUTS];
+
+                for (int i = 0; i < Users.Length; i++)
+                {
+                    Users[i] = new User();
+                    Users[i].Index = (PlayerIndex)i;
+                }
+
+                Users[0].IsPrimaryUser = true;
+
                 CurrentMouseState = new MouseState();
                 LastMouseState = new MouseState();
                 CurrentKeyboardState = new KeyboardState();
@@ -85,6 +111,34 @@ namespace GameStateManager
         }
 
 
+        // Gets the primary user.
+        public static User GetPrimaryUser()
+        {
+            for (int i = 0; i < Users.Length; i++)
+            {
+                if (Users[i].IsPrimaryUser)
+                    return Users[i];
+            }
+
+            return null;
+        }
+
+
+        // Sets the primary user.
+        public static void SetPrimaryUser(PlayerIndex playerIndex)
+        {
+            int index = (int)playerIndex;
+
+            if (index >= 0 && index < Users.Length)
+            {
+                for (int i = 0; i < Users.Length; i++)
+                    Users[i].IsPrimaryUser = false;
+
+                Users[index].IsPrimaryUser = true;
+            }
+        }
+
+
         // Reads the latest state of the keyboard and gamepad.
         public static void Update()
         {
@@ -95,10 +149,10 @@ namespace GameStateManager
 
             UpdateMouseStates();
 
-            for (int i = 0; i < MAX_INPUTS; i++)
+            for (int i = 0; i < Users.Length; i++)
             {
                 LastGamePadStates[i] = CurrentGamePadStates[i];
-                CurrentGamePadStates[i] = GamePad.GetState((PlayerIndex)i);
+                CurrentGamePadStates[i] = GamePad.GetState(Users[i].Index);
 
                 if (CurrentGamePadStates[i].IsConnected)
                     IsGamePadConnected[i] = true;
@@ -172,10 +226,18 @@ namespace GameStateManager
         }
 
 
+        // Checks if the mouse is currently hovering an interactible area.
+        public static bool IsMouseOver(Rectangle area)
+        {
+            return (currentMousePosition.X > area.X && currentMousePosition.X < area.X + area.Width &&
+                currentMousePosition.Y > area.Y && currentMousePosition.Y < area.Y + area.Height);
+        }
+
+
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
         public static bool WasAnyButtonPressed()
         {
-            if (WasKeyPressed(Keys.OemTilde, ControllingPlayer, out PlayerIndex playerIndex))
+            if (WasKeyPressed(Keys.OemTilde, GetPrimaryUser().Index, out PlayerIndex playerIndex))
                 return false;
 
             for (int i = 0; i < MAX_INPUTS; i++)
@@ -187,22 +249,32 @@ namespace GameStateManager
                         CurrentGamePadStates[i].ThumbSticks.Right.Length() != LastGamePadStates[i].ThumbSticks.Right.Length())
                         continue;
 
-                    ControllingPlayer = (PlayerIndex)i;
+                    SetPrimaryUser((PlayerIndex)i);
+                    GetPrimaryUser().InputType = InputType.GAMEPAD;
                     return true;
                 }
             }
 
             if (CurrentKeyboardState.GetPressedKeys().Length != 0)
             {
-                ControllingPlayer = PlayerIndex.One;
+                SetPrimaryUser(PlayerIndex.One);
+                GetPrimaryUser().InputType = InputType.KEYBOARD;
                 return true;
             }
 
-            if (WasMouseClicked(MouseButton.Left, null, out playerIndex) || 
-                WasMouseClicked(MouseButton.Middle, null, out playerIndex) ||
-                WasMouseClicked(MouseButton.Right, null, out playerIndex))
+            if (WasMouseClicked(MouseButton.Left, GetPrimaryUser().Index, out playerIndex) || 
+                WasMouseClicked(MouseButton.Middle, GetPrimaryUser().Index, out playerIndex) ||
+                WasMouseClicked(MouseButton.Right, GetPrimaryUser().Index, out playerIndex))
             {
-                ControllingPlayer = PlayerIndex.One;
+                SetPrimaryUser(playerIndex);
+                GetPrimaryUser().InputType = InputType.KEYBOARD;
+                return true;
+            }
+
+            if (Gestures.Count != 0)
+            {
+                SetPrimaryUser(PlayerIndex.One);
+                GetPrimaryUser().InputType = InputType.TOUCH;
                 return true;
             }
 
@@ -362,48 +434,6 @@ namespace GameStateManager
                         WasButtonPressed(button, PlayerIndex.Three, out playerIndex) ||
                         WasButtonPressed(button, PlayerIndex.Four, out playerIndex));
             }
-        }
-
-
-        // Checks for a "menu select" input action. The controllingPlayer parameter specifies which player
-        // to read input for. If this is null, it will accept input from any player. When the action
-        // is detected, the output playerIndex reports which player pressed it.
-        public static bool WasMenuSelected(PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
-        {
-            return WasMouseClicked(MouseButton.Left, controllingPlayer, out playerIndex) ||
-                   WasKeyPressed(Keys.Space, controllingPlayer, out playerIndex) ||
-                   WasButtonPressed(Buttons.A, controllingPlayer, out playerIndex);
-        }
-
-
-        // Checks for a "menu cancel" input action. The controllingPlayer parameter specifies which player
-        // to read input for. If this is null, it will accept input from any player. When the action
-        // is detected, the output playerIndex reports which player pressed it.
-        public static bool WasMenuCancelled(PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
-        {
-            return WasMouseClicked(MouseButton.Right, controllingPlayer, out playerIndex) ||
-                   WasKeyPressed(Keys.Escape, controllingPlayer, out playerIndex) ||
-                   WasButtonPressed(Buttons.B, controllingPlayer, out playerIndex);
-        }
-
-
-        // Checks for a "menu up" input action. The controllingPlayer parameter specifies which player
-        // to read input for. If this is null, it will accept input from any player.
-        public static bool WasMenuUp(PlayerIndex? controllingPlayer)
-        {
-            return WasKeyPressed(Keys.Up, controllingPlayer, out PlayerIndex playerIndex) ||
-                   WasButtonPressed(Buttons.DPadUp, controllingPlayer, out playerIndex) ||
-                   WasButtonPressed(Buttons.LeftThumbstickUp, controllingPlayer, out playerIndex);
-        }
-
-
-        // Checks for a "menu down" input action. The controllingPlayer parameter specifies which player
-        // to read input for. If this is null, it will accept input from any player.
-        public static bool WasMenuDown(PlayerIndex? controllingPlayer)
-        {
-            return WasKeyPressed(Keys.Down, controllingPlayer, out PlayerIndex playerIndex) ||
-                   WasButtonPressed(Buttons.DPadDown, controllingPlayer, out playerIndex) ||
-                   WasButtonPressed(Buttons.LeftThumbstickDown, controllingPlayer, out playerIndex);
         }
 
 
