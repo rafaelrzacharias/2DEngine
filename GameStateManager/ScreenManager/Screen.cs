@@ -46,7 +46,7 @@ namespace GameStateManager
         public SpriteFont Font { get; protected set; }
 
         // Get the current screen color for drawing.
-        public Color Color { get; protected set; }
+        public Color BackgroundColor { get; protected set; }
 
         // There are two reasons why a screen might be transitioning off. It could be temporarily
         // going away to make room for another screen that is on top of it, or it could be going
@@ -148,7 +148,7 @@ namespace GameStateManager
             TransitionPosition = 1f;
             TransitionState = ScreenState.TransitionOn;
             Font = Resources.GetFont("gameFont");
-            Color = Color.White;
+            BackgroundColor = Color.White;
             ControllingPlayer = Input.GetPrimaryUser().Index;
 
             OnHide();
