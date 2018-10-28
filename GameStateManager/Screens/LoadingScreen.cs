@@ -53,7 +53,7 @@ namespace GameStateManager
                         screensToLoad.Add(new MainMenuScreen("Main Menu"));
                         break;
                     case "MessageBoxScreen":
-                        screensToLoad.Add(new MessageBoxScreen());
+                        screensToLoad.Add(new MessageBoxScreen(""));
                         break;
                     case "OptionsMenuScreen":
                         screensToLoad.Add(new OptionsMenuScreen("Options"));
@@ -99,7 +99,7 @@ namespace GameStateManager
             // Itt doesn't look good if we flash this up for just a fraction of a second, if it's not really needed.
             // This parameter tells us how long the loading will take, so we know whether to bother drawing the message.
             if (isLoadingSlow)
-                SpriteBatch.DrawString(Font, loadingText, textPosition, Color * TransitionAlpha);
+                SpriteBatch.DrawString(Font, loadingText, textPosition, BackgroundColor * TransitionAlpha);
 
             base.Draw(gameTime);
         }
