@@ -115,8 +115,15 @@ namespace GameStateManager
             Origin = textSize / 2f;
             Width = (int)textSize.X;
             Height = (int)textSize.Y;
+            Bounds = new Rectangle(0, 0, Width, Height);
+        }
 
-            Bounds = Rectangle.Empty;
+
+        // Sets up the interactable area for mouse hover and click.
+        public void UpdateBounds()
+        {
+            Bounds.X = (int)(Position.X - Origin.X);
+            Bounds.Y = (int)(Position.Y - Origin.Y);
         }
 
 
@@ -132,6 +139,7 @@ namespace GameStateManager
                 selectionFade = Math.Min(selectionFade + fadeSpeed, 1f);
                 TextureColor = TextureSelectedColor * screen.TransitionAlpha;
                 TextColor = TextSelectedColor;
+                Utils.PulseColor(ref TextColor);
             }
             else
             {
@@ -139,28 +147,16 @@ namespace GameStateManager
                 TextureColor = TextureDefaultColor * screen.TransitionAlpha;
                 TextColor = TextDefaultColor;
             }      
-
-            // Pulsate the size of the selected menu entry.
-            float pulsate = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 6) + 1;
-            Scale = 1f + pulsate * 0.5f * selectionFade;
-
-            Bounds.X = (int)(Position.X - Origin.X);
-            Bounds.Y = (int)(Position.Y - Origin.Y);
-            Bounds.Width = Width;
-            Bounds.Height = Height;
         }
 
 
         // Draws the menu entry. This can be overridden to customize the appearance.
         public virtual void Draw(MenuScreen screen, GameTime gameTime)
         {
-            SpriteBatch.Draw(Resources.GetTexture("whiteTexture"), Position, Bounds, 
-                TextureColor, Rotation, Origin, Scale, SpriteEffects.None, 0f);
-
             if (Texture != null)
                 SpriteBatch.Draw(Texture, Position, TextureColor);
 
-            SpriteBatch.DrawString(Font, Text, Position, TextColor, 
+            SpriteBatch.DrawString(Font, Text, Position, TextColor,
                 Rotation, Origin, Scale, SpriteEffects.None, 0f);
         }
     }
