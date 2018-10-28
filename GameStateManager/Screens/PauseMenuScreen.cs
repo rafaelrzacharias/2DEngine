@@ -23,17 +23,22 @@ namespace GameStateManager
             resumeGameEntry.Selected += ResumeGameEntry_OnSelected;
             quitGameEntry.Selected += QuitGameEntry_OnSelected;
 
-            MenuEntries.Add(resumeGameEntry);
-            MenuEntries.Add(quitGameEntry);
+            Entries.Add(resumeGameEntry);
+            Entries.Add(quitGameEntry);
 
             messageBox = new MessageBoxScreen("Are you sure you want to quit?");
-            messageBox.Accept += MessageBox_OnAccept;
-            messageBox.Dismiss += MessageBox_OnDismiss;
+            messageBox.Entries.Add(new MenuEntry("Yes"));
+            messageBox.Entries.Add(new MenuEntry("No"));
+            messageBox.Entries[0].Selected += MessageBox_Yes;
+            messageBox.Entries[1].Selected += MessageBox_No;
         }
 
-        private void MessageBox_OnDismiss()
+
+        // Event handler for when the "No" entry is selected on the Message Box.
+        private void MessageBox_No(PlayerIndex playerindex)
         {
             IsEnabled = true;
+            messageBox.OnHide();
         }
 
 
@@ -45,9 +50,9 @@ namespace GameStateManager
         }
 
 
-        // Event handler for when the quit popup is displayed. This uses the loading
-        // screen to transition from the game back to the main menu screen.
-        private void MessageBox_OnAccept(PlayerIndex playerIndex)
+        // Event handler for when the "Yes" entry is selected on the Message Box.
+        // It uses the loading screen to transition from the game back to the main menu.
+        private void MessageBox_Yes(PlayerIndex playerIndex)
         {
             messageBox.OnHide();
             OnHide();

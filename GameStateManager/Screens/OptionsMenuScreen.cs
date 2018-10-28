@@ -48,11 +48,11 @@ namespace GameStateManager
             backEntry.Selected += BackEntry_OnSelected;
 
             // Add entries to the menu.
-            MenuEntries.Add(ungulateEntry);
-            MenuEntries.Add(languageEntry);
-            MenuEntries.Add(frobnicateEntry);
-            MenuEntries.Add(elfEntry);
-            MenuEntries.Add(backEntry);
+            Entries.Add(ungulateEntry);
+            Entries.Add(languageEntry);
+            Entries.Add(frobnicateEntry);
+            Entries.Add(elfEntry);
+            Entries.Add(backEntry);
         }
 
 
