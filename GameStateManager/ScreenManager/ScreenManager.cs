@@ -19,7 +19,7 @@ namespace GameStateManager
         public static Viewport Viewport { get; private set; }
         public static Rectangle TitleSafeArea { get; private set; }
         public static Game Game { get; private set; }
-
+        public static GameTime GameTime { get; private set; }
 
         // Initializes the screen manager component.
         public static void Initialize(Game game)
@@ -50,6 +50,8 @@ namespace GameStateManager
         // Allows each screen to run logic.
         public static void Update(GameTime gameTime)
         {
+            GameTime = gameTime;
+
             // Make a copy of the master screen list, to avoid confusion if
             // the process of updating one screen adds or removes others.
             screensToUpdate.Clear();
@@ -99,7 +101,8 @@ namespace GameStateManager
         {
             Game.GraphicsDevice.Clear(Color.Black);
 
-            SpriteBatch.Begin();
+            SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp,
+                DepthStencilState.DepthRead, RasterizerState.CullCounterClockwise);
 
             for (int i = 0; i < Screens.Count; i++)
             {

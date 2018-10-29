@@ -46,7 +46,7 @@ namespace GameStateManager
         public SpriteFont Font { get; protected set; }
 
         // Get the current screen color for drawing.
-        public Color Color { get; protected set; }
+        public Color BackgroundColor { get; protected set; }
 
         // There are two reasons why a screen might be transitioning off. It could be temporarily
         // going away to make room for another screen that is on top of it, or it could be going
@@ -106,13 +106,9 @@ namespace GameStateManager
         public virtual void OnShow()
         {
             isTransitioningOn = true;
-            //IsEnabled = true;
-            //IsVisible = true;
 
             if (Show != null)
-            {
                 Show.Invoke();
-            }
         }
 
 
@@ -123,13 +119,9 @@ namespace GameStateManager
         public virtual void OnHide()
         {
             isTransitioningOff = true;
-            //IsEnabled = false;
-            //IsVisible = false;
 
             if (Hide != null)
-            {
                 Hide.Invoke();
-            }
         }
 
 
@@ -143,9 +135,7 @@ namespace GameStateManager
                 OnHide();
 
             if (Dismiss != null)
-            {
                 Dismiss.Invoke();
-            }
         }
 
 
@@ -158,8 +148,8 @@ namespace GameStateManager
             TransitionPosition = 1f;
             TransitionState = ScreenState.TransitionOn;
             Font = Resources.GetFont("gameFont");
-            Color = Color.White;
-            ControllingPlayer = Input.ControllingPlayer;
+            BackgroundColor = Color.White;
+            ControllingPlayer = Input.GetPrimaryUser().Index;
 
             OnHide();
 
@@ -213,7 +203,7 @@ namespace GameStateManager
             // Gradually fade in or out when covered by another screen.
             pauseAlpha = Math.Max(pauseAlpha - 1f / 32, 0);
 
-            ControllingPlayer = Input.ControllingPlayer;
+            ControllingPlayer = Input.GetPrimaryUser().Index;
         }
 
 

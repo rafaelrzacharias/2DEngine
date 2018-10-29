@@ -5,64 +5,60 @@ using Microsoft.Xna.Framework.Input.Touch;
 namespace GameStateManager
 {
     // A popup message box screen, used to display confirmation messages.
-    public class MessageBoxScreen : Screen
+    public class MessageBoxScreen : MenuScreen
     {
-        protected readonly string Message;
-        protected readonly Texture2D Texture;
+        private string Text;
+        protected Color TextColor;
+        private Vector2 TextPosition;
+        private Texture2D Texture;
+        private Rectangle BackgroundArea;
         protected bool ShouldDarkenBackground;
-
-        public delegate void AcceptedEventHandler(PlayerIndex playerIndex);
-        public AcceptedEventHandler Accept;
-
-        public virtual void OnAccept(PlayerIndex playerIndex)
-        {
-            OnHide();
-
-            if (Accept != null)
-                Accept.Invoke(playerIndex);
-        }
-
-
-        public delegate void RejectedEventHandler(PlayerIndex playerIndex);
-        public RejectedEventHandler Reject;
-
-        public virtual void OnReject(PlayerIndex playerIndex)
-        {
-            OnDismiss();
-
-            if (Reject != null)
-                Reject.Invoke(playerIndex);
-        }
-
+        private Vector2 Padding;
+        private Vector2 TextSize;
+        private Vector2 Origin;
 
         // Constructs a message box in which the caller specifies the prompt.
-        public MessageBoxScreen(string message = "", bool includeUsageText = true)
-            : base()
+        public MessageBoxScreen(string message, string menuTitle = "")
+            : base(menuTitle)
         {
-            Color = new Color(0, 0, 0, 128);
+            BackgroundColor = new Color(0, 0, 0, 128);
             Font = Resources.GetFont("menuFont");
             Texture = Resources.GetTexture("whiteTexture");
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
             ShouldDarkenBackground = true;
-
-            if (includeUsageText)
-                Message = message + "\nA button, Space = Ok\nB button, Esc = Cancel";
-            else
-                Message = message;
+            Text = message;
+            TextColor = Color.Yellow;
+            MenuTitle = menuTitle;
+            TextPosition = new Vector2(ScreenManager.Viewport.Width, ScreenManager.Viewport.Height) * 0.5f;
+            TextSize = Font.MeasureString(Text);
+            Origin = TextSize * 0.5f;
+            Padding = new Vector2(32, 32);
+            BackgroundArea = Rectangle.Empty;
         }
 
 
-        // Responds to user input, accepting or cancelling the message box.
-        public override void HandleInput()
+        // Override for the menu entries, so that they will not slide in/out of the screen.
+        protected override void UpdateMenuEntryLocations()
         {
-            // We pass in our ControllingPlayer, which may be null (to accept input from any player) or a
-            // specific index. If null, the InputState helper returns which player provided the input. We pass
-            // that through to our Accepted and Cancelled events, so they can tell which player triggered them.
-            if (Input.WasMenuSelected(ControllingPlayer, out PlayerIndex playerIndex))
-                OnAccept(playerIndex);
-            else if (Input.WasMenuCancelled(ControllingPlayer, out playerIndex))
-                OnReject(playerIndex);
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                Entries[i].Position.X = TextPosition.X - Origin.X + 
+                    (i + 1) * TextSize.X / Entries.Count - TextSize.X / (Entries.Count + 1);
+                Entries[i].Position.Y = TextPosition.Y - Origin.Y + 2 * Font.LineSpacing;
+
+                Entries[i].UpdateBounds();
+            }
+
+            BackgroundArea.Width = (int)TextSize.X + (int)Padding.X;
+
+            if (Entries.Count > 0)
+            {
+                BackgroundArea.Height = (int)Entries[Entries.Count - 1].Position.Y - (int)TextPosition.Y +
+                    + (int)TextSize.Y + (int)Padding.Y;
+            }
+            else
+                BackgroundArea.Height = (int)TextSize.Y + (int)Padding.Y;
         }
 
 
@@ -75,22 +71,13 @@ namespace GameStateManager
                 if (ShouldDarkenBackground)
                     FadeScreen(TransitionAlpha * 0.66f);
 
-                // Center the message text in the viewport.
-                Vector2 viewportSize = new Vector2(ScreenManager.Viewport.Width, ScreenManager.Viewport.Height);
-                Vector2 textSize = Font.MeasureString(Message);
-                Vector2 textPosition = (viewportSize - textSize) / 2f;
-
-                // The background includes a border larger than the text itself.
-                const int horizontalPad = 32;
-                const int verticalPad = 16;
-
-                Rectangle backgroundRectangle = new Rectangle(
-                    (int)textPosition.X - horizontalPad, (int)textPosition.Y - verticalPad,
-                    (int)textSize.X + horizontalPad * 2, (int)textSize.Y + verticalPad * 2);
-
-                SpriteBatch.Draw(Texture, backgroundRectangle, Color * TransitionAlpha);
-                SpriteBatch.DrawString(Font, Message, textPosition, Color.White * TransitionAlpha);
+                SpriteBatch.Draw(Texture, TextPosition, BackgroundArea, BackgroundColor * TransitionAlpha,
+                    0f, Origin + Padding * 0.5f, 1f, SpriteEffects.None, 0f);
+                SpriteBatch.DrawString(Font, Text, TextPosition, TextColor * TransitionAlpha,
+                    0f, Origin, 1f, SpriteEffects.None, 0f);
             }
+
+            base.Draw(gameTime);
         }
     }
 }

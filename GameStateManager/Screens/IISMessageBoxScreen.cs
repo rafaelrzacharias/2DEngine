@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 
 namespace GameStateManager
 {
@@ -6,7 +7,7 @@ namespace GameStateManager
     {
         // Constructs an initialInteraction screen.
         public IISMessageBoxScreen() :
-            base("Press any key to start", false)
+            base("Press any key to start")
         {
             ShouldDarkenBackground = false;
             OnShow();
@@ -15,11 +16,19 @@ namespace GameStateManager
 
         public override void HandleInput()
         {
+            base.HandleInput();
+
             if (Input.WasAnyButtonPressed())
             {
                 List<string> screens = new List<string> { "MainMenuScreen" };
                 LoadingScreen.Load(false, screens);
             }
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            Utils.PulseColor(ref TextColor);
+            base.Draw(gameTime);
         }
     }
 }

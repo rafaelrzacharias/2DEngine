@@ -27,9 +27,9 @@ namespace GameStateManager
             exitEntry.Selected += ExitEntry_OnSelected;
 
             // Add the entries to the menu.
-            MenuEntries.Add(playGameEntry);
-            MenuEntries.Add(optionsEntry);
-            MenuEntries.Add(exitEntry);
+            Entries.Add(playGameEntry);
+            Entries.Add(optionsEntry);
+            Entries.Add(exitEntry);
 
             backgroundScreen = new BackgroundScreen();
 
@@ -37,10 +37,27 @@ namespace GameStateManager
             optionsMenu.Hide += OptionsMenu_OnHide;
 
             messageBox = new MessageBoxScreen("Are you sure you want to exit?");
-            messageBox.Accept += MessageBox_OnAccept;
-            messageBox.Reject += MessageBox_OnReject;
+            messageBox.Entries.Add(new MenuEntry("Yes"));
+            messageBox.Entries.Add(new MenuEntry("No"));
+            messageBox.Entries[0].Selected += MessageBoxScreen_Yes;
+            messageBox.Entries[1].Selected += MessageBoxScreen_No;
 
             OnShow();
+        }
+
+
+        // Event handler for when the "Yes" entry is selected on the Message Box.
+        private void MessageBoxScreen_Yes(PlayerIndex playerIndex)
+        {
+            ScreenManager.Game.Exit();
+        }
+
+
+        // Event handler for when the "No" entry is selected on the Message Box.
+        private void MessageBoxScreen_No(PlayerIndex playerIndex)
+        {
+            IsEnabled = true;
+            messageBox.OnHide();
         }
 
 
@@ -73,20 +90,6 @@ namespace GameStateManager
 
             IsEnabled = false;
             messageBox.OnShow();
-        }
-
-
-        // Event handler for when the message box is accepted.
-        private void MessageBox_OnAccept(PlayerIndex playerIndex)
-        {
-            ScreenManager.Game.Exit();
-        }
-
-
-        // Event handler for when the message box gets dismissed.
-        private void MessageBox_OnReject(PlayerIndex playerIndex)
-        {
-            IsEnabled = true;
         }
 
 
