@@ -157,7 +157,12 @@ namespace GameStateManager
                 if (CurrentGamePadStates[i].IsConnected)
                     IsGamePadConnected[i] = true;
                 else
+                {
                     IsGamePadConnected[i] = false;
+
+                    if (LastGamePadStates[i].IsConnected)
+                        OnControllerDisconnected((PlayerIndex)i);
+                }
             }
 
             // Check of any button was pressed in a controller that is not the current controller scheme
@@ -170,11 +175,28 @@ namespace GameStateManager
             //    }
             //}
 
+
+
             TouchState = TouchPanel.GetState();
             Gestures.Clear();
 
             while (TouchPanel.IsGestureAvailable)
                 Gestures.Add(TouchPanel.ReadGesture());
+        }
+
+        // Event raised when a controller is disconnected.
+        private delegate void ControllerDisconnectedEventHandler(PlayerIndex playerIndex);
+        private static event ControllerDisconnectedEventHandler ControllerDisconnected;
+
+        private static void OnControllerDisconnected(PlayerIndex playerIndex)
+        {
+            IISMessageBoxScreen messageBox = new IISMessageBoxScreen(
+                "Reconnect controller " + playerIndex.ToString() + " and press any key to continue.");
+
+            messageBox.OnShow();
+
+            if (ControllerDisconnected != null)
+                ControllerDisconnected.Invoke(playerIndex);
         }
 
 
@@ -235,9 +257,9 @@ namespace GameStateManager
 
 
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
-        public static bool WasAnyButtonPressed()
+        public static bool WasAnyButtonPressed(out PlayerIndex playerIndex)
         {
-            if (WasKeyPressed(Keys.OemTilde, GetPrimaryUser().Index, out PlayerIndex playerIndex))
+            if (WasKeyPressed(Keys.OemTilde, GetPrimaryUser().Index, out playerIndex))
                 return false;
 
             for (int i = 0; i < MAX_INPUTS; i++)
