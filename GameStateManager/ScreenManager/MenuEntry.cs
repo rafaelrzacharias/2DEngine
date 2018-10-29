@@ -29,10 +29,10 @@ namespace GameStateManager
         public string Text { get; set; }
 
         // Queries how much space this menu entry requires.
-        public int Height { get; private set; }
+        public int Height { get { return Font.LineSpacing; } }
 
         // Queries ho wide this menu entry is. Used for centering on the screen.
-        public int Width { get; private set; }
+        public int Width { get { return (int)Font.MeasureString(Text).X; } }
 
         // The position at which the entry is drawn. This is set by the MenuScreen each frame in Update.
         public Vector2 Position;
@@ -41,7 +41,7 @@ namespace GameStateManager
         public Texture2D Texture { get; private set; }
 
         // The bounds of the menu entry.
-        public Rectangle Bounds;
+        public Rectangle Bounds { get; protected set; }
 
         public float Scale { get; set; }
 
@@ -70,12 +70,7 @@ namespace GameStateManager
             Scale = 1f;
             Rotation = 0f;
             Font = Resources.GetFont("menuFont");
-
-            Vector2 textSize = Font.MeasureString(Text);
-            Origin = textSize / 2f;
-            Width = (int)textSize.X;
-            Height = (int)textSize.Y;
-            Bounds = new Rectangle((int)Position.X, (int)Position.Y, Width, Height);
+            Origin = new Vector2(0f, Font.LineSpacing / 2f);
         }
 
 
@@ -102,18 +97,6 @@ namespace GameStateManager
             // Pulsate the size of the selected menu entry.
             float pulsate = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 6) + 1;
             Scale = 1f + pulsate * 0.05f * selectionFade;
-
-            UpdateBounds();
-        }
-
-
-        // Updates the Bounds of the entry.
-        private void UpdateBounds()
-        {
-            Bounds.X = (int)(Position.X * Scale);
-            Bounds.Y = (int)(Position.Y * Scale);
-            Bounds.Width = (int)(Position.X + Bounds.Width * Scale);
-            Bounds.Height = (int)(Position.Y + Bounds.Height * Scale);
         }
 
 
@@ -122,8 +105,6 @@ namespace GameStateManager
         {
             if (Texture != null)
                 SpriteBatch.Draw(Texture, Position, TextureColor);
-
-            SpriteBatch.Draw(Resources.GetTexture("whiteTexture"), Bounds, new Color(255, 0, 0, 50));
 
             SpriteBatch.DrawString(Font, Text, Position, TextColor, 
                 Rotation, Origin, Scale, SpriteEffects.None, 0f);
