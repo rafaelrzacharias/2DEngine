@@ -27,7 +27,12 @@ namespace GameStateManager
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
             ShouldDarkenBackground = true;
-            Text = message;
+
+            if (string.IsNullOrEmpty(message))
+                Text = "Press any key to start";
+            else
+                Text = message;
+
             TextColor = Color.Yellow;
             MenuTitle = menuTitle;
             TextPosition = new Vector2(ScreenManager.Viewport.Width, ScreenManager.Viewport.Height) * 0.5f;

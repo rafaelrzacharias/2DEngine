@@ -41,7 +41,7 @@ namespace GameStateManager
                 switch (screens[i])
                 {
                     case "IISMessageBoxScreen":
-                        screensToLoad.Add(new IISMessageBoxScreen());
+                        screensToLoad.Add(new IISMessageBoxScreen(""));
                         break;
                     case "GameScreen":
                         screensToLoad.Add(new GameScreen());

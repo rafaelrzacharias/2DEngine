@@ -6,8 +6,8 @@ namespace GameStateManager
     public class IISMessageBoxScreen : MessageBoxScreen
     {
         // Constructs an initialInteraction screen.
-        public IISMessageBoxScreen() :
-            base("Press any key to start")
+        public IISMessageBoxScreen(string message) :
+            base(message)
         {
             ShouldDarkenBackground = false;
             OnShow();
@@ -18,7 +18,7 @@ namespace GameStateManager
         {
             base.HandleInput();
 
-            if (Input.WasAnyButtonPressed())
+            if (Input.WasAnyButtonPressed(out PlayerIndex playerIndex))
             {
                 List<string> screens = new List<string> { "MainMenuScreen" };
                 LoadingScreen.Load(false, screens);
