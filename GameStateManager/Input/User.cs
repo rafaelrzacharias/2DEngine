@@ -21,8 +21,8 @@ namespace GameStateManager
 
         private bool isLeftMouseDown;
         private const int dragThreshold = 3;
-        private bool isDragging;
-        private static bool isDragComplete;
+        public bool isDragging;
+        public bool isDragComplete;
 
         private Vector2 dragMouseStart;
         public Vector2 MouseDragStartPosition { get { return dragMouseStart; } }

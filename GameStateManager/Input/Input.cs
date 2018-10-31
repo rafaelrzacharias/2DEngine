@@ -25,7 +25,9 @@ namespace GameStateManager
     // and previous state of the input devices, and implements query methods for high level input actions.
     public static class Input
     {
-        private static List<User> Users;
+        // Number of users that the Input system with keep track off.
+        private const int MAX_USERS = 4;
+        public static List<User> Users;
 
         // Key that pressed last frame.
         private static Keys pressedKey;
@@ -42,7 +44,12 @@ namespace GameStateManager
 
         public static void Initialize()
         {
+            Users = new List<User>(MAX_USERS);
 
+            for (int i = 0; i < MAX_USERS; i++)
+                Users.Add(new User());
+
+            Users[0].IsPrimaryUser = true;
         }
 
 
@@ -112,7 +119,7 @@ namespace GameStateManager
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
         public static bool WasAnyButtonPressed(out PlayerIndex playerIndex)
         {
-            if (WasKeyPressed(Keys.OemTilde, GetPrimaryUser().Index, out playerIndex))
+            if (WasKeyPressed(Keys.OemTilde, out playerIndex))
                 return false;
 
             for (int i = 0; i < Users.Count; i++)
@@ -128,9 +135,9 @@ namespace GameStateManager
                                 return true;
                             }
 
-                            if (WasMouseClicked(MouseButton.Left, GetPrimaryUser().Index, out playerIndex) ||
-                                WasMouseClicked(MouseButton.Middle, GetPrimaryUser().Index, out playerIndex) ||
-                                WasMouseClicked(MouseButton.Right, GetPrimaryUser().Index, out playerIndex))
+                            if (WasMouseClicked(MouseButton.Left, out playerIndex) ||
+                                WasMouseClicked(MouseButton.Middle, out playerIndex) ||
+                                WasMouseClicked(MouseButton.Right, out playerIndex))
                             //if (Users[i].CurrentMouseState != Users[i].LastMouseState)
                             {
                                 SetPrimaryUser(Users[i].Index);
@@ -171,24 +178,51 @@ namespace GameStateManager
         }
 
 
+        public static Keys[] GetPressedKeys()
+        {
+            for (int i = 0; i < Users.Count; i++)
+            {
+                if (Users[i].InputType == InputType.KEYBOARD)
+                    return Users[i].CurrentKeyboardState.GetPressedKeys();
+            }
+
+            return null;
+        }
+
+
         // Checks if a key was pressed during this update. The controllingPlayer parameter specifies
         // which player to read input for. If this is null, it will accept input from any player.
         // When a keypress is detected, the output playerIndex reports which player pressed it.
-        public static bool WasKeyPressed(Keys key, PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
+        public static bool WasKeyPressed(Keys key, out PlayerIndex playerIndex, User user = null)
         {
-            if (controllingPlayer.HasValue)
+            // Read keyboard input from the specified player, if he is a keyboard user.
+            if (user != null)
             {
-                // Read keyboard input from the specified player.
-                playerIndex = controllingPlayer.Value;
-                return CurrentKeyboardState.IsKeyDown(key) && LastKeyboardState.IsKeyUp(key);
+                playerIndex = user.Index;
+
+                if (user.InputType == InputType.KEYBOARD)
+                    return user.CurrentKeyboardState.IsKeyDown(key) && user.LastKeyboardState.IsKeyUp(key);
+
+                return false;
             }
             else
             {
+                bool result = false;
+                playerIndex = PlayerIndex.One;
+
                 // Accept input from any player.
-                return (WasKeyPressed(key, PlayerIndex.One, out playerIndex) ||
-                        WasKeyPressed(key, PlayerIndex.Two, out playerIndex) ||
-                        WasKeyPressed(key, PlayerIndex.Three, out playerIndex) ||
-                        WasKeyPressed(key, PlayerIndex.Four, out playerIndex));
+                for (int i = 0; i < Users.Count; i++)
+                {
+                    result = WasKeyPressed(key, out playerIndex, Users[i]);
+
+                    if (result)
+                    {
+                        playerIndex = Users[i].Index;
+                        return result;
+                    }
+                }
+
+                return result;
             }
         }
 
@@ -196,12 +230,18 @@ namespace GameStateManager
         // Checks if a key was pressed and allow repeating the key press after some time.
         public static bool IsKeyPressed(Keys key, float dt)
         {
-            // Treat it as pressed if the given key wasn't pressed in previous frame.
-            if (LastKeyboardState.IsKeyUp(key))
+            for (int i = 0; i < Users.Count; i++)
             {
-                keyRepeatTimer = keyRepeatStartDuration;
-                pressedKey = key;
-                return true;
+                if (Users[i].InputType == InputType.KEYBOARD)
+                {
+                    // Treat it as pressed if the given key wasn't pressed in previous frame.
+                    if (Users[i].LastKeyboardState.IsKeyUp(key))
+                    {
+                        keyRepeatTimer = keyRepeatStartDuration;
+                        pressedKey = key;
+                        return true;
+                    }
+                }
             }
 
             // Handling key repeating if given key has pressed in previous frame.
@@ -261,35 +301,51 @@ namespace GameStateManager
         // Helper for checking if a mouse button was newly pressed during this update. The controllingPlayer
         // parameter specifies which player to read input for. If this is null, it will accept input from any
         // player. When a mouse click is detected, the output playerIndex reports which player performed the click.
-        public static bool WasMouseClicked(MouseButton mouseButton, PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
+        public static bool WasMouseClicked(MouseButton mouseButton, out PlayerIndex playerIndex, User user = null)
         {
-            if (controllingPlayer.HasValue)
+            if (user != null)
             {
                 // Read mouse input from the specified player.
-                playerIndex = controllingPlayer.Value;
+                playerIndex = user.Index;
 
-                switch (mouseButton)
+                if (user.InputType == InputType.KEYBOARD)
                 {
-                    case MouseButton.Left:
-                        return CurrentMouseState.LeftButton == ButtonState.Pressed &&
-                            LastMouseState.LeftButton == ButtonState.Released;
-                    case MouseButton.Middle:
-                        return CurrentMouseState.MiddleButton == ButtonState.Pressed &&
-                            LastMouseState.MiddleButton == ButtonState.Released;
-                    case MouseButton.Right:
-                        return CurrentMouseState.RightButton == ButtonState.Pressed &&
-                            LastMouseState.RightButton == ButtonState.Released;
-                    default:
-                        return false;
+                    switch (mouseButton)
+                    {
+                        case MouseButton.Left:
+                            return user.CurrentMouseState.LeftButton == ButtonState.Pressed &&
+                                user.LastMouseState.LeftButton == ButtonState.Released;
+                        case MouseButton.Middle:
+                            return user.CurrentMouseState.MiddleButton == ButtonState.Pressed &&
+                                user.LastMouseState.MiddleButton == ButtonState.Released;
+                        case MouseButton.Right:
+                            return user.CurrentMouseState.RightButton == ButtonState.Pressed &&
+                                user.LastMouseState.RightButton == ButtonState.Released;
+                    }
+
+                    return false;
                 }
+
+                return false;
             }
             else
             {
+                bool result = false;
+                playerIndex = PlayerIndex.One;
+
                 // Accept input from any player.
-                return (WasMouseClicked(mouseButton, PlayerIndex.One, out playerIndex) ||
-                        WasMouseClicked(mouseButton, PlayerIndex.Two, out playerIndex) ||
-                        WasMouseClicked(mouseButton, PlayerIndex.Three, out playerIndex) ||
-                        WasMouseClicked(mouseButton, PlayerIndex.Four, out playerIndex));
+                for (int i = 0; i < Users.Count; i++)
+                {
+                    result = WasMouseClicked(mouseButton, out playerIndex, Users[i]);
+
+                    if (result)
+                    {
+                        playerIndex = Users[i].Index;
+                        return result;
+                    }
+                }
+
+                return result;
             }
         }
 
@@ -297,32 +353,48 @@ namespace GameStateManager
         // Helper for checking if a mouse button is currently being pressed on this update. The controllingPlayer
         // parameter specifies which player to read input for. If this is null, it will accept input from any
         // player. When a mouse click is detected, the output playerIndex reports which player performed the click.
-        public static bool IsMouseDown(MouseButton mouseButton, PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
+        public static bool IsMouseDown(MouseButton mouseButton, out PlayerIndex playerIndex, User user = null)
         {
-            if (controllingPlayer.HasValue)
+            if (user != null)
             {
                 // Read mouse input from the specified player.
-                playerIndex = controllingPlayer.Value;
+                playerIndex = user.Index;
 
-                switch (mouseButton)
+                if (user.InputType == InputType.KEYBOARD)
                 {
-                    case MouseButton.Left:
-                        return CurrentMouseState.LeftButton == ButtonState.Pressed;
-                    case MouseButton.Middle:
-                        return CurrentMouseState.MiddleButton == ButtonState.Pressed;
-                    case MouseButton.Right:
-                        return CurrentMouseState.RightButton == ButtonState.Pressed;
-                    default:
-                        return false;
+                    switch (mouseButton)
+                    {
+                        case MouseButton.Left:
+                            return user.CurrentMouseState.LeftButton == ButtonState.Pressed;
+                        case MouseButton.Middle:
+                            return user.CurrentMouseState.MiddleButton == ButtonState.Pressed;
+                        case MouseButton.Right:
+                            return user.CurrentMouseState.RightButton == ButtonState.Pressed;
+                    }
+
+                    return false;
                 }
+
+                return false;
             }
             else
             {
+                bool result = false;
+                playerIndex = PlayerIndex.One;
+
                 // Accept input from any player.
-                return (IsMouseDown(mouseButton, PlayerIndex.One, out playerIndex) ||
-                        IsMouseDown(mouseButton, PlayerIndex.Two, out playerIndex) ||
-                        IsMouseDown(mouseButton, PlayerIndex.Three, out playerIndex) ||
-                        IsMouseDown(mouseButton, PlayerIndex.Four, out playerIndex));
+                for (int i = 0; i < Users.Count; i++)
+                {
+                    result = IsMouseDown(mouseButton, out playerIndex, Users[i]);
+
+                    if (result)
+                    {
+                        playerIndex = Users[i].Index;
+                        return result;
+                    }
+                }
+
+                return result;
             }
         }
 
@@ -330,33 +402,79 @@ namespace GameStateManager
         // Helper for checking if a button was newly pressed during this update. The controllingPlayer
         // parameter specifies which player to read input for. If this is null, it will accept input from any
         // player. When a button press is detected, the output playerIndex reports which player pressed it.
-        public static bool WasButtonPressed(Buttons button, PlayerIndex? controllingPlayer, out PlayerIndex playerIndex)
+        public static bool WasButtonPressed(Buttons button, out PlayerIndex playerIndex, User user = null)
         {
-            if (controllingPlayer.HasValue)
+            if (user != null)
             {
                 // Read gamepad input from the specified player.
-                playerIndex = controllingPlayer.Value;
+                playerIndex = user.Index;
 
-                return CurrentGamePadStates[(int)playerIndex].IsButtonDown(button) &&
-                    LastGamePadStates[(int)playerIndex].IsButtonUp(button);
+                if (user.InputType == InputType.GAMEPAD)
+                    return user.CurrentGamePadState.IsButtonDown(button) && user.LastGamePadState.IsButtonUp(button);
+
+                return false;
             }
             else
             {
+                bool result = false;
+                playerIndex = PlayerIndex.One;
+
                 // Accept input from any player.
-                return (WasButtonPressed(button, PlayerIndex.One, out playerIndex) ||
-                        WasButtonPressed(button, PlayerIndex.Two, out playerIndex) ||
-                        WasButtonPressed(button, PlayerIndex.Three, out playerIndex) ||
-                        WasButtonPressed(button, PlayerIndex.Four, out playerIndex));
+                for (int i = 0; i < Users.Count; i++)
+                {
+                    result = WasButtonPressed(button, out playerIndex, Users[i]);
+
+                    if (result)
+                    {
+                        playerIndex = Users[i].Index;
+                        return result;
+                    }
+                }
+
+                return result;
             }
         }
 
 
         // Checks for a "pause the game" input action. The controllingPlayer parameter specifies which player
         // to read input for. If this is null, it will accept input from any player.
-        public static bool WasGamePaused(PlayerIndex? controllingPlayer)
+        public static bool WasGamePaused(out PlayerIndex playerIndex, User user = null)
         {
-            return WasKeyPressed(Keys.Escape, controllingPlayer, out PlayerIndex playerIndex) ||
-                   WasButtonPressed(Buttons.Start, controllingPlayer, out playerIndex);
+            // Read gamepad input from the specified player.
+            if (user != null)
+            {
+                playerIndex = user.Index;
+
+                switch (user.InputType)
+                {
+                    case InputType.KEYBOARD:
+                        return WasKeyPressed(Keys.Escape, out playerIndex, user);
+                    case InputType.GAMEPAD:
+                        return WasButtonPressed(Buttons.Start, out playerIndex, user);
+                    //case InputType.TOUCH:
+                }
+
+                return false;
+            }
+            else
+            {
+                bool result = false;
+                playerIndex = PlayerIndex.One;
+
+                // Accept input from any player.
+                for (int i = 0; i < Users.Count; i++)
+                {
+                    result = WasGamePaused(out playerIndex, Users[i]);
+
+                    if (result)
+                    {
+                        playerIndex = Users[i].Index;
+                        return result;
+                    }
+                }
+
+                return result;
+            }
         }
     }
 }
