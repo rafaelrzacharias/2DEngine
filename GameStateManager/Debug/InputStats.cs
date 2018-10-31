@@ -38,41 +38,83 @@ namespace GameStateManager
 
             PlayerIndex controllingPlayer = Input.GetPrimaryUser().Index;
 
-            string mouseLeft = Input.IsMouseDown(MouseButton.Left, controllingPlayer, out PlayerIndex playerIndex) ? "Pressed" : "Released";
-            string mouseMiddle = Input.IsMouseDown(MouseButton.Middle, controllingPlayer, out playerIndex) ? "Pressed" : "Released";
-            string mouseRight = Input.IsMouseDown(MouseButton.Right, controllingPlayer, out playerIndex) ? "Pressed" : "Released";
-            string wheelValue = Input.CurrentMouseState.ScrollWheelValue.ToString();
+            string mouseLeft = Input.IsMouseDown(MouseButton.Left, out PlayerIndex playerIndex) ? "Pressed" : "Released";
+            string mouseMiddle = Input.IsMouseDown(MouseButton.Middle, out playerIndex) ? "Pressed" : "Released";
+            string mouseRight = Input.IsMouseDown(MouseButton.Right, out playerIndex) ? "Pressed" : "Released";
+
+            string wheelValue = "0";
+            string isDragging = "false";
+            string isDragComplete = "false";
+            string currentMousePosition = "";
+            string mouseDragStart = "";
+            string mouseDragEnd = "";
+            string mouseDragDelta = "";
+            string mouseDragDistance = "";
+
+            List<GamePadState> gamePads = new List<GamePadState>();
+            Microsoft.Xna.Framework.Input.Touch.TouchCollection touchState = new Microsoft.Xna.Framework.Input.Touch.TouchCollection();
+
+            for (int i = 0; i < Input.Users.Count; i++)
+            {
+                User user = Input.Users[i];
+
+                switch (user.InputType)
+                {
+                    case InputType.KEYBOARD:
+                        {
+                            wheelValue = user.CurrentMouseState.ScrollWheelValue.ToString();
+                            isDragging = user.isDragging.ToString();
+                            isDragComplete = user.isDragComplete.ToString();
+                            currentMousePosition = user.CurrentMouseState.Position.ToString();
+                            mouseDragStart = user.MouseDragStartPosition.ToString();
+                            mouseDragEnd = user.MouseDragEndPosition.ToString();
+                            mouseDragDelta = user.MouseDragDelta.ToString();
+                            mouseDragDistance = user.MouseDragDistance.ToString();
+                        }
+                        break;
+                    case InputType.GAMEPAD:
+                        {
+                            gamePads.Add(user.CurrentGamePadState);
+                            break;
+                        }
+                    case InputType.TOUCH:
+                        {
+                            touchState = user.TouchState;
+                            break;
+                        }
+                }
+            }
 
             SpriteBatch.DrawString(Font, "Left button: " + mouseLeft + ", Middle button: " + mouseMiddle + ", Right Button: " + mouseRight +
                 ", ScrollWheelValue: " + wheelValue, TextPosition, Color.White);
             TextPosition.Y += Font.LineSpacing;
 
-            SpriteBatch.DrawString(Font, "Is dragging: " + Input.isDragging.ToString() + ", Is drag complete: " + 
-                Input.isDragComplete.ToString(), TextPosition, Color.White);
+            SpriteBatch.DrawString(Font, "Is dragging: " + isDragging + ", Is drag complete: " +
+                isDragComplete, TextPosition, Color.White);
             TextPosition.Y += Font.LineSpacing;
 
-            SpriteBatch.DrawString(Font, "Current position: " + Input.CurrentMousePosition.ToString() + ", Drag start position: " +
-                Input.MouseDragStartPosition.ToString() + ", Drag end position: " + Input.MouseDragEndPosition.ToString() , TextPosition, Color.White);
+            SpriteBatch.DrawString(Font, "Current position: " + currentMousePosition + ", Drag start position: " +
+                mouseDragStart + ", Drag end position: " + mouseDragEnd, TextPosition, Color.White);
             TextPosition.Y += Font.LineSpacing;
 
-            SpriteBatch.DrawString(Font, "Drag delta: " + Input.MouseDragDelta.ToString() +
-                ", Drag Distance: " + Input.MouseDragDistance.ToString(), TextPosition, Color.White);
+            SpriteBatch.DrawString(Font, "Drag delta: " + mouseDragDelta +
+                ", Drag Distance: " + mouseDragDistance, TextPosition, Color.White);
             TextPosition.Y += 2 * Font.LineSpacing;
 
             SpriteBatch.DrawString(Font, "Gamepad states:", TextPosition, Color.Yellow);
             TextPosition.Y += Font.LineSpacing;
-            
-            for (int i = 0; i < Input.CurrentGamePadStates.Length; i++)
+
+            for (int i = 0; i < gamePads.Count; i++)
             {
                 TextPosition.X = 0f;
-                SpriteBatch.DrawString(Font, "No." + (i + 1).ToString() + ", Is connected: " + 
-                    Input.IsGamePadConnected[i].ToString(), TextPosition, Color.White);
+                SpriteBatch.DrawString(Font, "No." + (i + 1).ToString() + ", Is connected: " +
+                    gamePads[i].IsConnected.ToString(), TextPosition, Color.White);
                 TextPosition.Y += Font.LineSpacing;
 
                 SpriteBatch.DrawString(Font, "Buttons: ", TextPosition, Color.White);
                 Color buttonColor;
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.A))
+                if (gamePads[i].IsButtonDown(Buttons.A))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -80,7 +122,7 @@ namespace GameStateManager
                 TextPosition.X = Font.MeasureString("Buttons: ").X;
                 SpriteBatch.DrawString(Font, "A, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.B))
+                if (gamePads[i].IsButtonDown(Buttons.B))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -88,7 +130,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("A, ").X;
                 SpriteBatch.DrawString(Font, "B, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.X))
+                if (gamePads[i].IsButtonDown(Buttons.X))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -96,15 +138,15 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("B, ").X;
                 SpriteBatch.DrawString(Font, "X, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.Y))
+                if (gamePads[i].IsButtonDown(Buttons.Y))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString("X, ").X;
                 SpriteBatch.DrawString(Font, "Y, ", TextPosition, buttonColor);
-                
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.Back))
+
+                if (gamePads[i].IsButtonDown(Buttons.Back))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -112,7 +154,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("Y, ").X;
                 SpriteBatch.DrawString(Font, "Back, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.Start))
+                if (gamePads[i].IsButtonDown(Buttons.Start))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -120,7 +162,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("Back, ").X;
                 SpriteBatch.DrawString(Font, "Start, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftShoulder))
+                if (gamePads[i].IsButtonDown(Buttons.LeftShoulder))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -128,7 +170,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("Start, ").X;
                 SpriteBatch.DrawString(Font, "LeftShoulder, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightShoulder))
+                if (gamePads[i].IsButtonDown(Buttons.RightShoulder))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -136,25 +178,25 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("LeftShoulder, ").X;
                 SpriteBatch.DrawString(Font, "RightShoulder, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftTrigger))
+                if (gamePads[i].IsButtonDown(Buttons.LeftTrigger))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString("RightShoulder, ").X;
-                string leftTrigger = "LeftTrigger (" + Input.CurrentGamePadStates[i].Triggers.Left.ToString() + "), ";
+                string leftTrigger = "LeftTrigger (" + gamePads[i].Triggers.Left.ToString() + "), ";
                 SpriteBatch.DrawString(Font, leftTrigger, TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightTrigger))
+                if (gamePads[i].IsButtonDown(Buttons.RightTrigger))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString(leftTrigger).X;
-                string rightTrigger = "RightTrigger (" + Input.CurrentGamePadStates[i].Triggers.Right.ToString() + "), ";
+                string rightTrigger = "RightTrigger (" + gamePads[i].Triggers.Right.ToString() + "), ";
                 SpriteBatch.DrawString(Font, rightTrigger, TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftStick))
+                if (gamePads[i].IsButtonDown(Buttons.LeftStick))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -163,7 +205,7 @@ namespace GameStateManager
                 TextPosition.Y += Font.LineSpacing;
                 SpriteBatch.DrawString(Font, "LeftStick, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightStick))
+                if (gamePads[i].IsButtonDown(Buttons.RightStick))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -171,7 +213,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("LeftStick, ").X;
                 SpriteBatch.DrawString(Font, "RightStick, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.DPadDown))
+                if (gamePads[i].IsButtonDown(Buttons.DPadDown))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -179,7 +221,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("RightStick, ").X;
                 SpriteBatch.DrawString(Font, "DPadDown, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.DPadUp))
+                if (gamePads[i].IsButtonDown(Buttons.DPadUp))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -187,7 +229,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("DPadDown, ").X;
                 SpriteBatch.DrawString(Font, "DPadUp, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.DPadLeft))
+                if (gamePads[i].IsButtonDown(Buttons.DPadLeft))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -195,7 +237,7 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("DPadUp, ").X;
                 SpriteBatch.DrawString(Font, "DPadLeft, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.DPadRight))
+                if (gamePads[i].IsButtonDown(Buttons.DPadRight))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -203,8 +245,8 @@ namespace GameStateManager
                 TextPosition.X += Font.MeasureString("DPadLeft, ").X;
                 SpriteBatch.DrawString(Font, "DPadRight, ", TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftThumbstickLeft) ||
-                    Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftThumbstickRight))
+                if (gamePads[i].IsButtonDown(Buttons.LeftThumbstickLeft) ||
+                    gamePads[i].IsButtonDown(Buttons.LeftThumbstickRight))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
@@ -212,37 +254,37 @@ namespace GameStateManager
                 TextPosition.X = Font.MeasureString("Buttons: ").X;
                 TextPosition.Y += Font.LineSpacing;
 
-                string leftThumbstickX = "LeftStickX (" + Input.CurrentGamePadStates[i].ThumbSticks.Left.X.ToString() + "), ";
+                string leftThumbstickX = "LeftStickX (" + gamePads[i].ThumbSticks.Left.X.ToString() + "), ";
                 SpriteBatch.DrawString(Font, leftThumbstickX, TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftThumbstickDown) ||
-                    Input.CurrentGamePadStates[i].IsButtonDown(Buttons.LeftThumbstickUp))
+                if (gamePads[i].IsButtonDown(Buttons.LeftThumbstickDown) ||
+                    gamePads[i].IsButtonDown(Buttons.LeftThumbstickUp))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString(leftThumbstickX).X;
-                string leftThumbstickY = "LeftStickY (" + Input.CurrentGamePadStates[i].ThumbSticks.Left.Y.ToString() + "), ";
+                string leftThumbstickY = "LeftStickY (" + gamePads[i].ThumbSticks.Left.Y.ToString() + "), ";
                 SpriteBatch.DrawString(Font, leftThumbstickY, TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightThumbstickLeft) ||
-                    Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightThumbstickRight))
+                if (gamePads[i].IsButtonDown(Buttons.RightThumbstickLeft) ||
+                    gamePads[i].IsButtonDown(Buttons.RightThumbstickRight))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString(leftThumbstickY).X;
-                string rightThumbstickX = "RightStickX (" + Input.CurrentGamePadStates[i].ThumbSticks.Right.X.ToString() + "), ";
+                string rightThumbstickX = "RightStickX (" + gamePads[i].ThumbSticks.Right.X.ToString() + "), ";
                 SpriteBatch.DrawString(Font, rightThumbstickX, TextPosition, buttonColor);
 
-                if (Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightThumbstickDown) ||
-                    Input.CurrentGamePadStates[i].IsButtonDown(Buttons.RightThumbstickUp))
+                if (gamePads[i].IsButtonDown(Buttons.RightThumbstickDown) ||
+                    gamePads[i].IsButtonDown(Buttons.RightThumbstickUp))
                     buttonColor = Color.Yellow;
                 else
                     buttonColor = Color.White;
 
                 TextPosition.X += Font.MeasureString(rightThumbstickX).X;
-                string rightThumbstickY = "RightStickY (" + Input.CurrentGamePadStates[i].ThumbSticks.Right.Y.ToString() + ")";
+                string rightThumbstickY = "RightStickY (" + gamePads[i].ThumbSticks.Right.Y.ToString() + ")";
                 SpriteBatch.DrawString(Font, rightThumbstickY, TextPosition, buttonColor);
 
                 TextPosition.Y += Font.LineSpacing;
@@ -254,15 +296,8 @@ namespace GameStateManager
             SpriteBatch.DrawString(Font, "Touch state: ", TextPosition, Color.Yellow);
             TextPosition.Y += Font.LineSpacing;
 
-            for (int i = 0; i < Input.TouchState.Count; i++)
-            {
-                SpriteBatch.DrawString(Font, "No." + (i + 1).ToString() + ", Is connected: " + 
-                    Input.TouchState.IsConnected.ToString(), TextPosition, Color.White);
-                TextPosition.Y += Font.LineSpacing;
-
-                SpriteBatch.DrawString(Font, Input.TouchState[i].ToString(), TextPosition, Color.White);
-                TextPosition.Y += Font.LineSpacing;
-            }
+            SpriteBatch.DrawString(Font, touchState.ToString(), TextPosition, Color.White);
+            TextPosition.Y += Font.LineSpacing;
 
             SpriteBatch.End();
         }

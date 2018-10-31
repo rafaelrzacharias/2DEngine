@@ -283,7 +283,7 @@ namespace GameStateManager
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.WasKeyPressed(Keys.OemTilde, PlayerIndex.One, out playerIndex))
+                    if (Input.WasKeyPressed(Keys.OemTilde, out playerIndex))
                         Show();
                     break;
                 case State.OPENING:
@@ -295,7 +295,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.WasKeyPressed(Keys.OemTilde, PlayerIndex.One, out playerIndex))
+                    if (Input.WasKeyPressed(Keys.OemTilde, out playerIndex))
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);
@@ -315,7 +315,11 @@ namespace GameStateManager
         // Handle keyboard input.
         public void ProcessKeyInputs(float dt)
         {
-            Keys[] keys = Input.CurrentKeyboardState.GetPressedKeys();
+
+            Keys[] keys = Input.GetPressedKeys();
+
+            if (keys == null || keys.Length == 0)
+                return;
 
             bool shift = Input.IsKeyPressed(Keys.LeftShift) || Input.IsKeyPressed(Keys.RightShift);
 

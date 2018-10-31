@@ -39,28 +39,25 @@ namespace GameStateManager
         // this will only be called when the gameplay screen is sactive.
         public override void HandleInput()
         {
-            // Look up inputs for the active player profile.
-            PlayerIndex playerIndex = ControllingPlayer.Value;
-
             // The game pauses either if the user presses the pause button, or if they unplug the active gamepad.
             // This requires us to keep track of whether a gamepad was ever plugged in, because we don't want
             // to pause on PC if they are playing with a keyboard and have no gamepad at all!
             // Specify further, how controller disconnection should display message and how pausing the game is handled!!!
-            if (Input.WasGamePaused(ControllingPlayer) /*|| Input.IsGamePadConnected[(int)ControllingPlayer.Value] == false*/)
+            if (Input.WasGamePaused(out PlayerIndex playerIndex, PrimaryUser) /*|| Input.IsGamePadConnected[(int)ControllingPlayer.Value] == false*/)
             {
                 OnDismiss();
             }
 
-            if (Input.WasKeyPressed(Keys.S, ControllingPlayer, out playerIndex))
+            if (Input.WasKeyPressed(Keys.S, out playerIndex, PrimaryUser))
                 Audio.PlaySong("song", true, 0.1f);
 
-            if (Input.WasKeyPressed(Keys.D, ControllingPlayer, out playerIndex))
+            if (Input.WasKeyPressed(Keys.D, out playerIndex, PrimaryUser))
                 Audio.PauseOrResumeSong();
 
-            if (Input.WasKeyPressed(Keys.F, ControllingPlayer, out playerIndex))
+            if (Input.WasKeyPressed(Keys.F, out playerIndex, PrimaryUser))
                 Audio.StopSong();
 
-            if (Input.WasKeyPressed(Keys.Q, ControllingPlayer, out playerIndex))
+            if (Input.WasKeyPressed(Keys.Q, out playerIndex, PrimaryUser))
             {
                 foreach (KeyValuePair<string, SoundEffect> pair in Resources.SoundEffects)
                     Audio.PlaySound(pair.Key, new AudioEmitter(), false);
