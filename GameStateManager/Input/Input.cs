@@ -1,18 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Input.Touch;
 using System.Collections.Generic;
 
 namespace GameStateManager
 {
-    public class User
-    {
-        public PlayerIndex Index;
-        public bool IsPrimaryUser;
-        public InputType InputType;
-    }
-
-
     public enum InputType
     {
         NONE,
@@ -31,18 +22,10 @@ namespace GameStateManager
 
 
     // Helper for reading input from keyboard, gamepad, and touch input. This class tracks both the current
-    // and previous state of the input devices, and implements query methods for high level input actions
-    // such as "move up through the menu" or "pause the game".
+    // and previous state of the input devices, and implements query methods for high level input actions.
     public static class Input
     {
-        private static User[] Users;
-        private static MouseState LastMouseState;
-        private static KeyboardState LastKeyboardState;
-        private static bool isLeftMouseDown = false;
-        private static int dragThreshold = 3;
-        private const int MAX_INPUTS = 4;
-        private static GamePadState[] LastGamePadStates;
-        private static bool isInitialized;
+        private static List<User> Users;
 
         // Key that pressed last frame.
         private static Keys pressedKey;
@@ -56,65 +39,17 @@ namespace GameStateManager
         // Key repeat duration in seconds after the first key press.
         private static float keyRepeatDuration = 0.05f;
 
-        public static MouseState CurrentMouseState { get; private set; }
-        public static KeyboardState CurrentKeyboardState { get; private set; }
-        public static bool isDragging = false;
-        public static bool isDragComplete = false;
-
-        private static Vector2 currentMousePosition = Vector2.Zero;
-        public static Vector2 CurrentMousePosition { get { return currentMousePosition; } }
-
-        private static Vector2 prevMousePosition = Vector2.Zero;
-        public static Vector2 PrevMousePosition { get { return prevMousePosition; } }
-
-        public static bool HasMouseMoved { get { return currentMousePosition != prevMousePosition; } }
-
-        private static Vector2 dragMouseStart = Vector2.Zero;
-        public static Vector2 MouseDragStartPosition { get { return dragMouseStart; } }
-
-        private static Vector2 dragMouseEnd = Vector2.Zero;
-        public static Vector2 MouseDragEndPosition { get { return dragMouseEnd; } }
-
-        public static Vector2 MouseDragDelta { get; private set; }
-        public static float MouseDragDistance { get; private set; }
-        public static GamePadState[] CurrentGamePadStates { get; private set; }
-        public static bool[] IsGamePadConnected { get; private set; }
-        public static TouchCollection TouchState { get; private set; }
-        public static List<GestureSample> Gestures { get; private set; }
-
 
         public static void Initialize()
         {
-            if (isInitialized == false)
-            {
-                Users = new User[MAX_INPUTS];
 
-                for (int i = 0; i < Users.Length; i++)
-                {
-                    Users[i] = new User();
-                    Users[i].Index = (PlayerIndex)i;
-                }
-
-                Users[0].IsPrimaryUser = true;
-
-                CurrentMouseState = new MouseState();
-                LastMouseState = new MouseState();
-                CurrentKeyboardState = new KeyboardState();
-                LastKeyboardState = new KeyboardState();
-                CurrentGamePadStates = new GamePadState[MAX_INPUTS];
-                LastGamePadStates = new GamePadState[MAX_INPUTS];
-                IsGamePadConnected = new bool[MAX_INPUTS];
-                Gestures = new List<GestureSample>();
-
-                isInitialized = true;
-            }
         }
 
 
         // Gets the primary user.
         public static User GetPrimaryUser()
         {
-            for (int i = 0; i < Users.Length; i++)
+            for (int i = 0; i < Users.Count; i++)
             {
                 if (Users[i].IsPrimaryUser)
                     return Users[i];
@@ -127,68 +62,25 @@ namespace GameStateManager
         // Sets the primary user.
         public static void SetPrimaryUser(PlayerIndex playerIndex)
         {
-            int index = (int)playerIndex;
+            for (int i = 0; i < Users.Count; i++)
+                Users[i].IsPrimaryUser = false;
 
-            if (index >= 0 && index < Users.Length)
-            {
-                for (int i = 0; i < Users.Length; i++)
-                    Users[i].IsPrimaryUser = false;
-
-                Users[index].IsPrimaryUser = true;
-            }
+            Users[(int)playerIndex].IsPrimaryUser = true;
         }
 
 
         // Reads the latest state of the keyboard and gamepad.
         public static void Update()
         {
-            LastMouseState = CurrentMouseState;
-            CurrentMouseState = Mouse.GetState();
-            LastKeyboardState = CurrentKeyboardState;
-            CurrentKeyboardState = Keyboard.GetState();
-
-            UpdateMouseStates();
-
-            for (int i = 0; i < Users.Length; i++)
-            {
-                LastGamePadStates[i] = CurrentGamePadStates[i];
-                CurrentGamePadStates[i] = GamePad.GetState(Users[i].Index);
-
-                if (CurrentGamePadStates[i].IsConnected)
-                    IsGamePadConnected[i] = true;
-                else
-                {
-                    IsGamePadConnected[i] = false;
-
-                    if (LastGamePadStates[i].IsConnected)
-                        OnControllerDisconnected((PlayerIndex)i);
-                }
-            }
-
-            // Check of any button was pressed in a controller that is not the current controller scheme
-            //for (int i = 0; i < MAX_INPUTS; i++)
-            //{
-            //    if (CurrentGamePadStates[i].IsConnected)
-            //    {
-            //        ControllingPlayer = (PlayerIndex)i;
-            //        break;
-            //    }
-            //}
-
-
-
-            TouchState = TouchPanel.GetState();
-            Gestures.Clear();
-
-            while (TouchPanel.IsGestureAvailable)
-                Gestures.Add(TouchPanel.ReadGesture());
+            for (int i = 0; i < Users.Count; i++)
+                Users[i].UpdateInput();
         }
 
         // Event raised when a controller is disconnected.
-        private delegate void ControllerDisconnectedEventHandler(PlayerIndex playerIndex);
-        private static event ControllerDisconnectedEventHandler ControllerDisconnected;
+        public delegate void ControllerDisconnectedEventHandler(PlayerIndex playerIndex);
+        public static event ControllerDisconnectedEventHandler ControllerDisconnected;
 
-        private static void OnControllerDisconnected(PlayerIndex playerIndex)
+        public static void OnControllerDisconnected(PlayerIndex playerIndex)
         {
             IISMessageBoxScreen messageBox = new IISMessageBoxScreen(
                 "Reconnect controller " + playerIndex.ToString() + " and press any key to continue.");
@@ -200,59 +92,20 @@ namespace GameStateManager
         }
 
 
-        // I NEED TO MAKE THIS METHOD USE THE PLAYERINDEX JUST LIKE ALL OTHER METHODS.
-        private static void UpdateMouseStates()
-        {
-            currentMousePosition.X = CurrentMouseState.X;
-            currentMousePosition.Y = CurrentMouseState.Y;
-            prevMousePosition.X = LastMouseState.X;
-            prevMousePosition.Y = LastMouseState.Y;
-
-            // If we were dragging and the left mouse button was released
-            if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
-            {
-                isLeftMouseDown = false;
-                isDragging = false;
-                isDragComplete = true;
-                dragMouseEnd = currentMousePosition;
-
-                MouseDragDistance = Vector2.Distance(dragMouseStart, dragMouseEnd);
-                MouseDragDelta = dragMouseEnd - dragMouseStart;
-            }
-
-            // Let's set the left mouse down and the mouse origin
-            if (isLeftMouseDown == false && CurrentMouseState.LeftButton == ButtonState.Pressed &&
-                    CurrentMouseState.Equals(LastMouseState) == false)
-            {
-                isLeftMouseDown = true;
-                isDragComplete = false;
-                dragMouseStart = currentMousePosition;
-            }
-
-            if (isLeftMouseDown && CurrentMouseState.LeftButton == ButtonState.Released &&
-                    CurrentMouseState.Equals(LastMouseState) == false)
-                isLeftMouseDown = false;
-
-            // If dragging distance was over the current threshold (5 pixels),
-            // set the dragging to true.
-            if (isLeftMouseDown && isDragging == false)
-            {
-                Vector2 delta = dragMouseStart - currentMousePosition;
-
-                if (delta.Length() > dragThreshold)
-                {
-                    isDragging = true;
-                    dragMouseStart = currentMousePosition;
-                }
-            }
-        }
-
-
         // Checks if the mouse is currently hovering an interactible area.
         public static bool IsMouseOver(Rectangle area)
         {
-            return (currentMousePosition.X > area.X && currentMousePosition.X < area.X + area.Width &&
-                currentMousePosition.Y > area.Y && currentMousePosition.Y < area.Y + area.Height);
+            for (int i = 0; i < Users.Count; i++)
+            {
+                if (Users[i].InputType == InputType.KEYBOARD)
+                {
+                    Point mousePosition = Users[i].CurrentMouseState.Position;
+                    return (mousePosition.X > area.X && mousePosition.X < area.X + area.Width &&
+                        mousePosition.Y > area.Y && mousePosition.Y < area.Y + area.Height);
+                }
+            }
+
+            return false;
         }
 
 
@@ -262,42 +115,56 @@ namespace GameStateManager
             if (WasKeyPressed(Keys.OemTilde, GetPrimaryUser().Index, out playerIndex))
                 return false;
 
-            for (int i = 0; i < MAX_INPUTS; i++)
+            for (int i = 0; i < Users.Count; i++)
             {
-                if (CurrentGamePadStates[i].IsConnected && LastGamePadStates[i].IsConnected &&
-                    CurrentGamePadStates[i] != LastGamePadStates[i])
+                switch (Users[i].InputType)
                 {
-                    if (CurrentGamePadStates[i].ThumbSticks.Left.Length() != LastGamePadStates[i].ThumbSticks.Left.Length() ||
-                        CurrentGamePadStates[i].ThumbSticks.Right.Length() != LastGamePadStates[i].ThumbSticks.Right.Length())
-                        continue;
+                    case InputType.KEYBOARD:
+                        {
+                            if (Users[i].CurrentKeyboardState != Users[i].LastKeyboardState)
+                            {
+                                SetPrimaryUser(Users[i].Index);
+                                GetPrimaryUser().InputType = InputType.KEYBOARD; // WFT???
+                                return true;
+                            }
 
-                    SetPrimaryUser((PlayerIndex)i);
-                    GetPrimaryUser().InputType = InputType.GAMEPAD;
-                    return true;
+                            if (WasMouseClicked(MouseButton.Left, GetPrimaryUser().Index, out playerIndex) ||
+                                WasMouseClicked(MouseButton.Middle, GetPrimaryUser().Index, out playerIndex) ||
+                                WasMouseClicked(MouseButton.Right, GetPrimaryUser().Index, out playerIndex))
+                            //if (Users[i].CurrentMouseState != Users[i].LastMouseState)
+                            {
+                                SetPrimaryUser(Users[i].Index);
+                                GetPrimaryUser().InputType = InputType.KEYBOARD; // WTF???
+                                return true;
+                            }
+                        }
+                        break;
+                    case InputType.GAMEPAD:
+                        {
+                            if (Users[i].CurrentGamePadState.IsConnected && Users[i].LastGamePadState.IsConnected && // I might not need to check for IsConnected...
+                                Users[i].CurrentGamePadState != Users[i].LastGamePadState)
+                            {
+                                if (Users[i].CurrentGamePadState.ThumbSticks.Left.Length() != Users[i].LastGamePadState.ThumbSticks.Left.Length() ||
+                                    Users[i].CurrentGamePadState.ThumbSticks.Right.Length() != Users[i].LastGamePadState.ThumbSticks.Right.Length())
+                                    continue;
+
+                                SetPrimaryUser(Users[i].Index);
+                                GetPrimaryUser().InputType = InputType.GAMEPAD; // WFT???
+                                return true;
+                            }
+                        }
+                        break;
+                    case InputType.TOUCH:
+                        {
+                            if (Users[i].Gestures.Count != 0)
+                            {
+                                SetPrimaryUser(Users[i].Index);
+                                GetPrimaryUser().InputType = InputType.TOUCH; // WFT???
+                                return true;
+                            }
+                        }
+                        break;
                 }
-            }
-
-            if (CurrentKeyboardState.GetPressedKeys().Length != 0)
-            {
-                SetPrimaryUser(PlayerIndex.One);
-                GetPrimaryUser().InputType = InputType.KEYBOARD;
-                return true;
-            }
-
-            if (WasMouseClicked(MouseButton.Left, GetPrimaryUser().Index, out playerIndex) || 
-                WasMouseClicked(MouseButton.Middle, GetPrimaryUser().Index, out playerIndex) ||
-                WasMouseClicked(MouseButton.Right, GetPrimaryUser().Index, out playerIndex))
-            {
-                SetPrimaryUser(playerIndex);
-                GetPrimaryUser().InputType = InputType.KEYBOARD;
-                return true;
-            }
-
-            if (Gestures.Count != 0)
-            {
-                SetPrimaryUser(PlayerIndex.One);
-                GetPrimaryUser().InputType = InputType.TOUCH;
-                return true;
             }
 
             return false;
@@ -355,14 +222,39 @@ namespace GameStateManager
         // Checks if a keyboard key is currently being pressed.
         public static bool IsKeyPressed(Keys key)
         {
-            return CurrentKeyboardState.IsKeyDown(key);
+            for (int i = 0; i < Users.Count; i++)
+            {
+                if (Users[i].InputType == InputType.KEYBOARD)
+                    return Users[i].CurrentKeyboardState.IsKeyDown(key);
+            }
+
+            return false;
+        }
+
+
+        // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
+        public static bool HasMouseMoved()
+        { 
+            for (int i = 0; i < Users.Count; i++)
+            {
+                if (Users[i].InputType == InputType.KEYBOARD)
+                    return Users[i].CurrentMouseState.Position != Users[i].LastMouseState.Position;
+            }
+
+            return false;
         }
 
 
         // Checks whether or not the scroll wheel changed.
         public static bool HasScrollWheelChanged()
         {
-            return CurrentMouseState.ScrollWheelValue != LastMouseState.ScrollWheelValue;
+            for (int i = 0; i < Users.Count; i++)
+            {
+                if (Users[i].InputType == InputType.KEYBOARD)
+                    return Users[i].CurrentMouseState.ScrollWheelValue != Users[i].LastMouseState.ScrollWheelValue;
+            }
+
+            return false;
         }
 
 
