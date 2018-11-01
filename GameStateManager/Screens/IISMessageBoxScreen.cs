@@ -18,7 +18,7 @@ namespace GameStateManager
         {
             base.HandleInput();
 
-            if (Input.WasAnyButtonPressed(out PlayerIndex playerIndex))
+            if (Input.WasAnyButtonPressed())
             {
                 List<string> screens = new List<string> { "MainMenuScreen" };
                 LoadingScreen.Load(false, screens);

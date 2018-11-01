@@ -57,7 +57,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Ungulate" entry is selected.
-        void UngulateEntry_OnSelected(PlayerIndex playerIndex)
+        void UngulateEntry_OnSelected(User user)
         {
             currentUngulate++;
 
@@ -69,7 +69,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Language" entry is selected.
-        private void LanguageEntry_OnSelected(PlayerIndex playerIndex)
+        private void LanguageEntry_OnSelected(User user)
         {
             currentLanguage++;
 
@@ -81,7 +81,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Frobnicate" entry is selected.
-        private void FrobnicateEntry_OnSelected(PlayerIndex playerIndex)
+        private void FrobnicateEntry_OnSelected(User user)
         {
             frobnicate = !frobnicate;
             frobnicateEntry.Text = "Frobnicate: " + frobnicate.ToString();
@@ -89,7 +89,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Elf" entry is selected.
-        private void ElfEntry_OnSelected(PlayerIndex playerIndex)
+        private void ElfEntry_OnSelected(User user)
         {
             elf++;
             elfEntry.Text = "Elf: " + elf.ToString();
@@ -97,7 +97,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Back" entry is selected or the Options Menu is dismissed.
-        private void BackEntry_OnSelected(PlayerIndex playerIndex)
+        private void BackEntry_OnSelected(User user)
         {
             OnHide();
         }

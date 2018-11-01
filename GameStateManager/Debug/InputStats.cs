@@ -38,9 +38,9 @@ namespace GameStateManager
 
             PlayerIndex controllingPlayer = Input.GetPrimaryUser().Index;
 
-            string mouseLeft = Input.IsMouseDown(MouseButton.Left, out PlayerIndex playerIndex) ? "Pressed" : "Released";
-            string mouseMiddle = Input.IsMouseDown(MouseButton.Middle, out playerIndex) ? "Pressed" : "Released";
-            string mouseRight = Input.IsMouseDown(MouseButton.Right, out playerIndex) ? "Pressed" : "Released";
+            string mouseLeft = Input.IsMouseDown(MouseButton.LEFT, out PlayerIndex playerIndex) ? "Pressed" : "Released";
+            string mouseMiddle = Input.IsMouseDown(MouseButton.MIDDLE, out playerIndex) ? "Pressed" : "Released";
+            string mouseRight = Input.IsMouseDown(MouseButton.RIGHT, out playerIndex) ? "Pressed" : "Released";
 
             string wheelValue = "0";
             string isDragging = "false";

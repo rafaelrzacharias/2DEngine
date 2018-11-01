@@ -47,14 +47,14 @@ namespace GameStateManager
 
 
         // Event handler for when the "Yes" entry is selected on the Message Box.
-        private void MessageBoxScreen_Yes(PlayerIndex playerIndex)
+        private void MessageBoxScreen_Yes(User user)
         {
             ScreenManager.Game.Exit();
         }
 
 
         // Event handler for when the "No" entry is selected on the Message Box.
-        private void MessageBoxScreen_No(PlayerIndex playerIndex)
+        private void MessageBoxScreen_No(User user)
         {
             IsEnabled = true;
             messageBox.OnHide();
@@ -62,7 +62,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Play Game" entry is selected.
-        private void PlayGameEntry_OnSelected(PlayerIndex playerIndex)
+        private void PlayGameEntry_OnSelected(User user)
         {
             List<string> screens = new List<string> { "GameScreen", "PauseScreen", "MessageScreen" };
             LoadingScreen.Load(true, screens);
@@ -70,7 +70,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Options" entry is selected.
-        private void OptionsEntry_OnSelected(PlayerIndex playerIndex)
+        private void OptionsEntry_OnSelected(User user)
         {
             OnHide();
             optionsMenu.OnShow();
@@ -78,7 +78,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Exit" entry is selected. A popup message is displayed.
-        private void ExitEntry_OnSelected(PlayerIndex playerIndex)
+        private void ExitEntry_OnSelected(User user)
         {
             OnDismiss();
         }

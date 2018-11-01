@@ -53,15 +53,15 @@ namespace GameStateManager
         public float Rotation { get; protected set; }
 
         // Event raised when the menu entry is selected.
-        public delegate void SelectedEventHandler(PlayerIndex playerIndex);
+        public delegate void SelectedEventHandler(User user);
         public event SelectedEventHandler Selected;
 
-        public virtual void OnSelected(PlayerIndex playerIndex)
+        public virtual void OnSelected(User user)
         {
             //Audio.PlaySound("entrySelected");
 
             if (Selected != null)
-                Selected.Invoke(playerIndex);
+                Selected.Invoke(user);
         }
 
         // Event raised when the menu entry is highlighted.

@@ -42,48 +42,24 @@ namespace GameStateManager
 
         private void UpdateEntriesHighlight()
         {
-            User primaryUser = Input.GetPrimaryUser();
-            PlayerIndex playerIndex;
+            isMenuUp = Input.WasButtonPressed(Action.UI_UP, out User user);
+            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN, out user);
 
-            switch (primaryUser.InputType)
+            if (Input.HasMouseMoved())
             {
-                case InputType.KEYBOARD:
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    isMouseOver = Input.IsMouseOver(Entries[i].Bounds);
+
+                    if (isMouseOver)
                     {
-                        isMenuUp = Input.WasKeyPressed(Keys.Up, out playerIndex, primaryUser) ||
-                            Input.WasKeyPressed(Keys.Left, out playerIndex, primaryUser);
-                        isMenuDown = Input.WasKeyPressed(Keys.Down, out playerIndex, primaryUser) ||
-                            Input.WasKeyPressed(Keys.Right, out playerIndex, primaryUser);
-
-                        if (Input.HasMouseMoved() == false)
-                            break;
-
-                        for (int i = 0; i < Entries.Count; i++)
-                        {
-                            isMouseOver = Input.IsMouseOver(Entries[i].Bounds);
-
-                            if (isMouseOver)
-                            {
-                                previousHighlightedEntry = i;
-                                highlightedEntry = i;
-                                break;
-                            }
-
-                            highlightedEntry = -1;
-                        }
+                        previousHighlightedEntry = i;
+                        highlightedEntry = i;
+                        break;
                     }
-                    break;
-                case InputType.GAMEPAD:
-                    {
-                        isMenuUp = Input.WasButtonPressed(Buttons.DPadUp, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.DPadLeft, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.LeftThumbstickUp, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.LeftThumbstickLeft, out playerIndex, primaryUser);
-                        isMenuDown = Input.WasButtonPressed(Buttons.DPadDown, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.DPadRight, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.LeftThumbstickDown, out playerIndex, primaryUser) ||
-                            Input.WasButtonPressed(Buttons.LeftThumbstickRight, out playerIndex, primaryUser);
-                    }
-                    break;
+
+                    highlightedEntry = -1;
+                }
             }
 
             if (isMenuUp)
@@ -120,72 +96,39 @@ namespace GameStateManager
 
         private void UpdateEntriesSelected()
         {
-            User primaryUser = Input.GetPrimaryUser();
-            PlayerIndex playerIndex;
+            User user;
 
-            switch (primaryUser.InputType)
+            for (int i = 0; i < Entries.Count; i++)
             {
-                case InputType.KEYBOARD:
-                    {
-                        for (int i = 0; i < Entries.Count; i++)
-                        {
-                            if (Entries[i].IsHighlighted &&
-                                (Input.WasMouseClicked(MouseButton.Left, out playerIndex, primaryUser) ||
-                                Input.WasKeyPressed(Keys.Space, out playerIndex, primaryUser)))
-                            {
-                                Entries[i].OnSelected(playerIndex);
-                                break;
-                            }
-                        }
+                if (Entries[i].IsHighlighted && Input.WasButtonPressed(Action.UI_CONFIRM, out user))
+                {
+                    Entries[i].OnSelected(user);
+                    //Audio.PlaySound("entrySelected");
+                    break;
+                }
+            }
 
-                        if (Input.WasMouseClicked(MouseButton.Right, out playerIndex, primaryUser) ||
-                            Input.WasKeyPressed(Keys.Escape, out playerIndex, primaryUser))
-                        {
-                            OnDismiss();
-                            //Audio.PlaySound("menuDismissed");
-                        }
-                    }
-                    break;
-                case InputType.GAMEPAD:
-                    {
-                        for (int i = 0; i < Entries.Count; i++)
-                        {
-                            if (Entries[i].IsHighlighted &&
-                                (Input.WasButtonPressed(Buttons.A, out playerIndex, primaryUser)))
-                            {
-                                Entries[i].OnSelected(playerIndex);
-                                //Audio.PlaySound("entrySelected");
-                                break;
-                            }
-                        }
+            if (Input.WasButtonPressed(Action.UI_BACK, out user))
+            {
+                OnDismiss();
+                //Audio.PlaySound("menuDismissed");
+            }
 
-                        if (Input.WasButtonPressed(Buttons.B, out playerIndex, primaryUser))
-                        {
-                            OnDismiss();
-                            //Audio.PlaySound("menuDismissed");
-                        }
-                    }
-                    break;
-                case InputType.TOUCH:
+            for (int i = 0; i < Input.Users.Count; i++)
+            {
+                if (Input.Users[i].InputType == InputType.TOUCH && Input.Users[i].Gestures[i].GestureType == GestureType.Tap)
+                {
+                    for (int j = 0; j < Entries.Count; j++)
                     {
-                        for (int i = 0; i < Input.Users.Count; i++)
+                        // Since gestures are only available on Mobile, we can safely pass PlayerIndex.One
+                        // to all entries since there will be only one player on Mobile.
+                        if (Entries[j].Bounds.Contains(Input.Users[i].Gestures[i].Position))
                         {
-                            if (Input.Users[i].InputType == InputType.TOUCH && Input.Users[i].Gestures[i].GestureType == GestureType.Tap)
-                            {
-                                for (int j = 0; j < Entries.Count; j++)
-                                {
-                                    // Since gestures are only available on Mobile, we can safely pass PlayerIndex.One
-                                    // to all entries since there will be only one player on Mobile.
-                                    if (Entries[j].Bounds.Contains(Input.Users[i].Gestures[i].Position))
-                                    {
-                                        Entries[j].OnSelected(PlayerIndex.One);
-                                        //Audio.PlaySound("menuSelect");
-                                    }
-                                }
-                            }
+                            Entries[j].OnSelected(PrimaryUser);
+                            //Audio.PlaySound("menuSelect");
                         }
                     }
-                    break;
+                }
             }
         }
 

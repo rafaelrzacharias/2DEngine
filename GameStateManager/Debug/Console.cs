@@ -278,12 +278,11 @@ namespace GameStateManager
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             const float OPEN_SPEED = 8.0f;
             const float CLOSE_SPEED = 8.0f;
-            PlayerIndex playerIndex;
 
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.WasKeyPressed(Keys.OemTilde, out playerIndex))
+                    if (Input.WasButtonPressed(Action.DEBUG, out User user))
                         Show();
                     break;
                 case State.OPENING:
@@ -295,7 +294,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.WasKeyPressed(Keys.OemTilde, out playerIndex))
+                    if (Input.WasButtonPressed(Action.DEBUG, out user))
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);
@@ -315,7 +314,6 @@ namespace GameStateManager
         // Handle keyboard input.
         public void ProcessKeyInputs(float dt)
         {
-
             Keys[] keys = Input.GetPressedKeys();
 
             if (keys == null || keys.Length == 0)

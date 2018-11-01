@@ -33,6 +33,7 @@ namespace GameStateManager
         public Vector2 MouseDragDelta { get; private set; }
         public float MouseDragDistance { get; private set; }
 
+
         public User()
         {
             LastMouseState = new MouseState();
@@ -100,7 +101,7 @@ namespace GameStateManager
                         CurrentGamePadState = GamePad.GetState(Index);
 
                         if (CurrentGamePadState.IsConnected == false && LastGamePadState.IsConnected)
-                            Input.OnControllerDisconnected(Index);
+                            Input.OnControllerDisconnected(this);
                     }
                     break;
                 case InputType.TOUCH:
