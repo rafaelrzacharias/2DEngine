@@ -282,7 +282,7 @@ namespace GameStateManager
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.WasButtonPressed(Action.DEBUG, out User user))
+                    if (Input.WasButtonPressed(Action.DEBUG).Count > 0)
                         Show();
                     break;
                 case State.OPENING:
@@ -294,7 +294,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.WasButtonPressed(Action.DEBUG, out user))
+                    if (Input.WasButtonPressed(Action.DEBUG).Count > 0)
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);

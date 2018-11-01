@@ -4,16 +4,6 @@ using System.Collections.Generic;
 
 namespace GameStateManager
 {
-    public struct InputState
-    {
-        public bool One;
-        public bool Two;
-        public bool Three;
-        public bool Four;
-        public bool Any;
-    }
-
-
     public enum InputType
     {
         NONE,
@@ -22,14 +12,14 @@ namespace GameStateManager
         TOUCH
     }
 
-
+#if DESKTOP
     public enum MouseButton
     {
         LEFT,
         MIDDLE,
         RIGHT
     }
-
+#endif
 
     public enum Action
     {
@@ -54,6 +44,7 @@ namespace GameStateManager
         private const int MAX_USERS = 4;
         public static List<User> Users;
 
+#if DESKTOP
         // Key that pressed last frame.
         private static Keys pressedKey;
 
@@ -65,11 +56,11 @@ namespace GameStateManager
 
         // Key repeat duration in seconds after the first key press.
         private static float keyRepeatDuration = 0.05f;
-
-        // List of all possible in-game actions mapped to their corresponding buttons.s
-        private static Dictionary<Action, Keys> keys;
-        private static Dictionary<Action, Buttons> buttons;
+        
+        private static Dictionary<Action, List<Keys>> keys;
         private static Dictionary<Action, MouseButton> mouseButtons;
+#endif
+        private static Dictionary<Action, List<Buttons>> buttons;
 
 
         public static void Initialize()
@@ -80,19 +71,19 @@ namespace GameStateManager
                 Users.Add(new User());
 
             Users[0].IsPrimaryUser = true;
-
-            keys = new Dictionary<Action, Keys>
+#if DESKTOP
+            keys = new Dictionary<Action, List<Keys>>
             {
-                { Action.UI_UP, Keys.Up | Keys.W },
-                { Action.UI_DOWN, Keys.Down | Keys.S },
-                { Action.UI_LEFT, Keys.Left | Keys.A },
-                { Action.UI_RIGHT, Keys.Right | Keys.D },
-                { Action.UI_CONFIRM, Keys.Space },
-                { Action.UI_BACK, Keys.Escape | Keys.Back },
-                { Action.UI_PAGE_LEFT, Keys.Q | Keys.PageUp },
-                { Action.UI_PAGE_RIGHT, Keys.E | Keys.PageDown },
-                { Action.DEBUG, Keys.OemTilde },
-                { Action.PAUSE, Keys.Enter }
+                { Action.UI_UP, new List<Keys> { Keys.Up, Keys.W } },
+                { Action.UI_DOWN, new List<Keys> { Keys.Down, Keys.S } },
+                { Action.UI_LEFT, new List<Keys> { Keys.Left, Keys.A } },
+                { Action.UI_RIGHT, new List<Keys> { Keys.Right, Keys.D } },
+                { Action.UI_CONFIRM, new List<Keys> { Keys.Space } },
+                { Action.UI_BACK, new List<Keys> { Keys.Escape, Keys.Back } },
+                { Action.UI_PAGE_LEFT, new List<Keys> { Keys.Q, Keys.PageUp } },
+                { Action.UI_PAGE_RIGHT, new List<Keys> { Keys.E, Keys.PageDown } },
+                { Action.DEBUG, new List<Keys> { Keys.OemTilde } },
+                { Action.PAUSE, new List<Keys> { Keys.Enter } }
             };
 
             mouseButtons = new Dictionary<Action, MouseButton>
@@ -100,19 +91,19 @@ namespace GameStateManager
                 { Action.UI_CONFIRM, MouseButton.LEFT },
                 { Action.UI_BACK, MouseButton.RIGHT }
             };
-
-            buttons = new Dictionary<Action, Buttons>
+#endif
+            buttons = new Dictionary<Action, List<Buttons>>
             {
-                { Action.UI_UP, Buttons.DPadUp | Buttons.LeftThumbstickUp },
-                { Action.UI_DOWN, Buttons.DPadDown | Buttons.LeftThumbstickDown },
-                { Action.UI_LEFT, Buttons.DPadLeft | Buttons.LeftThumbstickLeft },
-                { Action.UI_RIGHT, Buttons.DPadRight | Buttons.LeftThumbstickRight },
-                { Action.UI_CONFIRM, Buttons.A },
-                { Action.UI_BACK, Buttons.B },
-                { Action.UI_PAGE_LEFT, Buttons.LeftShoulder },
-                { Action.UI_PAGE_RIGHT, Buttons.RightShoulder },
-                { Action.DEBUG, Buttons.Back },
-                { Action.PAUSE, Buttons.Start }
+                { Action.UI_UP, new List<Buttons> { Buttons.DPadUp, Buttons.LeftThumbstickUp } },
+                { Action.UI_DOWN, new List<Buttons> { Buttons.DPadDown, Buttons.LeftThumbstickDown } },
+                { Action.UI_LEFT, new List<Buttons> { Buttons.DPadLeft, Buttons.LeftThumbstickLeft } },
+                { Action.UI_RIGHT, new List<Buttons> { Buttons.DPadRight, Buttons.LeftThumbstickRight } },
+                { Action.UI_CONFIRM, new List<Buttons> { Buttons.A } },
+                { Action.UI_BACK, new List<Buttons> { Buttons.B } },
+                { Action.UI_PAGE_LEFT, new List<Buttons> { Buttons.LeftShoulder } },
+                { Action.UI_PAGE_RIGHT, new List<Buttons> { Buttons.RightShoulder } },
+                { Action.DEBUG, new List<Buttons> { Buttons.Back } },
+                { Action.PAUSE, new List<Buttons> { Buttons.Start } }
             };
         }
 
@@ -163,6 +154,7 @@ namespace GameStateManager
         }
 
 
+#if DESKTOP
         // Checks if the mouse is currently hovering an interactible area.
         public static bool IsMouseOver(Rectangle area)
         {
@@ -178,16 +170,17 @@ namespace GameStateManager
 
             return false;
         }
-
+#endif
 
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
         public static bool WasAnyButtonPressed()
         {
-            if (WasButtonPressed(Action.DEBUG, out User user))
+            if (WasButtonPressed(Action.DEBUG).Count > 0)
                 return false;
 
             for (int i = 0; i < MAX_USERS; i++)
             {
+#if DESKTOP
                 if (Users[i].CurrentKeyboardState != Users[i].LastKeyboardState)
                 {
                     Users[i].InputType = InputType.KEYBOARD;
@@ -204,7 +197,7 @@ namespace GameStateManager
                     SetPrimaryUser(Users[i]);
                     return true;
                 }
-
+#endif
                 if (Users[i].CurrentGamePadState.IsConnected && Users[i].LastGamePadState.IsConnected && // I might not need to check for IsConnected...
                     Users[i].CurrentGamePadState != Users[i].LastGamePadState)
                 {
@@ -216,13 +209,14 @@ namespace GameStateManager
                     SetPrimaryUser(Users[i]);
                     return true;
                 }
-
+#if MOBILE
                 if (Users[i].Gestures.Count != 0)
                 {
                     Users[i].InputType = InputType.TOUCH;
                     SetPrimaryUser(Users[i]);
                     return true;
                 }
+#endif
             }
 
             return false;
@@ -244,9 +238,9 @@ namespace GameStateManager
         // Checks if a key was pressed during this update. The controllingPlayer parameter specifies
         // which player to read input for. If this is null, it will accept input from any player.
         // When a keypress is detected, the output playerIndex reports which player pressed it.
-        public static bool WasButtonPressed(Action action, out User user)
+        public static List<User> WasButtonPressed(Action action)
         {
-            user = null;
+            List<User> users = new List<User>();
 
             for (int i = 0; i < MAX_USERS; i++)
             {
@@ -254,62 +248,74 @@ namespace GameStateManager
                 {
                     case InputType.KEYBOARD:
                         {
-                            if (Users[i].LastKeyboardState.IsKeyUp(keys[action]) &&
-                                Users[i].CurrentKeyboardState.IsKeyDown(keys[action]))
+                            if (keys.ContainsKey(action))
                             {
-                                user = Users[i];
-                                return true;
+                                for (int j = 0; j < keys[action].Count; j++)
+                                {
+                                    if (Users[i].LastKeyboardState.IsKeyUp(keys[action][j]) &&
+                                        Users[i].CurrentKeyboardState.IsKeyDown(keys[action][j]))
+                                    {
+                                        users.Add(Users[i]);
+                                        break;
+                                    }
+                                }
                             }
-
-                            switch (mouseButtons[action])
+                            
+                            if (mouseButtons.ContainsKey(action))
                             {
-                                case MouseButton.LEFT:
-                                    {
-                                        if (Users[i].LastMouseState.LeftButton == ButtonState.Released &&
-                                            Users[i].CurrentMouseState.LeftButton == ButtonState.Pressed)
+                                switch (mouseButtons[action])
+                                {
+                                    case MouseButton.LEFT:
                                         {
-                                            user = Users[i];
-                                            return true;
+                                            if (Users[i].LastMouseState.LeftButton == ButtonState.Released &&
+                                                Users[i].CurrentMouseState.LeftButton == ButtonState.Pressed)
+                                            {
+                                                users.Add(Users[i]);
+                                            }
                                         }
-                                    }
-                                    break;
-                                case MouseButton.RIGHT:
-                                    {
-                                        if (Users[i].LastMouseState.RightButton == ButtonState.Released &&
-                                            Users[i].CurrentMouseState.RightButton == ButtonState.Pressed)
+                                        break;
+                                    case MouseButton.RIGHT:
                                         {
-                                            user = Users[i];
-                                            return true;
+                                            if (Users[i].LastMouseState.RightButton == ButtonState.Released &&
+                                                Users[i].CurrentMouseState.RightButton == ButtonState.Pressed)
+                                            {
+                                                users.Add(Users[i]);
+                                            }
                                         }
-                                    }
-                                    break;
-                                case MouseButton.MIDDLE:
-                                    {
-                                        if (Users[i].LastMouseState.MiddleButton == ButtonState.Released &&
-                                            Users[i].CurrentMouseState.MiddleButton == ButtonState.Pressed)
+                                        break;
+                                    case MouseButton.MIDDLE:
                                         {
-                                            user = Users[i];
-                                            return true;
+                                            if (Users[i].LastMouseState.MiddleButton == ButtonState.Released &&
+                                                Users[i].CurrentMouseState.MiddleButton == ButtonState.Pressed)
+                                            {
+                                                users.Add(Users[i]);
+                                            }
                                         }
-                                    }
-                                    break;
+                                        break;
+                                }
                             }
                         }
                         break;
                     case InputType.GAMEPAD:
                         {
-                            if (Users[i].LastGamePadState.IsButtonUp(buttons[action]) &&
-                                Users[i].CurrentGamePadState.IsButtonDown(buttons[action]))
+                            if (buttons.ContainsKey(action))
                             {
-                                user = Users[i];
-                                return true;
+                                for (int j = 0; j < buttons[action].Count; j++)
+                                {
+                                    if (Users[i].LastGamePadState.IsButtonUp(buttons[action][j]) &&
+                                        Users[i].CurrentGamePadState.IsButtonDown(buttons[action][j]))
+                                    {
+                                        users.Add(Users[i]);
+                                        break;
+                                    }
+                                }
                             }
                         }
                         break;
                 }
             }
 
-            return false;
+            return users;
         }
 
 

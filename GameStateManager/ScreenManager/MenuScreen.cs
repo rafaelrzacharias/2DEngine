@@ -42,8 +42,8 @@ namespace GameStateManager
 
         private void UpdateEntriesHighlight()
         {
-            isMenuUp = Input.WasButtonPressed(Action.UI_UP, out User user);
-            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN, out user);
+            isMenuUp = Input.WasButtonPressed(Action.UI_UP).Count > 0 || Input.WasButtonPressed(Action.UI_LEFT).Count > 0;
+            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN).Count > 0 || Input.WasButtonPressed(Action.UI_RIGHT).Count > 0;
 
             if (Input.HasMouseMoved())
             {
@@ -96,33 +96,35 @@ namespace GameStateManager
 
         private void UpdateEntriesSelected()
         {
-            User user;
+            List<User> users = Input.WasButtonPressed(Action.UI_CONFIRM);
 
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Entries[i].IsHighlighted && Input.WasButtonPressed(Action.UI_CONFIRM, out user))
+                if (Entries[i].IsHighlighted && users.Count > 0)
                 {
-                    Entries[i].OnSelected(user);
+                    for (int u = 0; u < users.Count; u++)
+                        Entries[i].OnSelected(users[u]);
+
                     //Audio.PlaySound("entrySelected");
                     break;
                 }
             }
 
-            if (Input.WasButtonPressed(Action.UI_BACK, out user))
+            if (Input.WasButtonPressed(Action.UI_BACK).Count > 0)
             {
                 OnDismiss();
                 //Audio.PlaySound("menuDismissed");
             }
-
-            for (int i = 0; i < Input.Users.Count; i++)
+#if MOBILE
+            for (int i = 0; i < Input.Users[0].Gestures.Count; i++)
             {
-                if (Input.Users[i].InputType == InputType.TOUCH && Input.Users[i].Gestures[i].GestureType == GestureType.Tap)
+                if (Input.Users[0].Gestures[i].GestureType == GestureType.Tap)
                 {
                     for (int j = 0; j < Entries.Count; j++)
                     {
                         // Since gestures are only available on Mobile, we can safely pass PlayerIndex.One
                         // to all entries since there will be only one player on Mobile.
-                        if (Entries[j].Bounds.Contains(Input.Users[i].Gestures[i].Position))
+                        if (Entries[j].Bounds.Contains(Input.Users[0].Gestures[i].Position))
                         {
                             Entries[j].OnSelected(PrimaryUser);
                             //Audio.PlaySound("menuSelect");
@@ -130,6 +132,7 @@ namespace GameStateManager
                     }
                 }
             }
+#endif
         }
 
         // Responds to user input, changing the selected entry and accepting or cancelling the menu.

@@ -60,6 +60,7 @@ namespace GameStateManager
 
                 switch (user.InputType)
                 {
+#if DESKTOP
                     case InputType.KEYBOARD:
                         {
                             wheelValue = user.CurrentMouseState.ScrollWheelValue.ToString();
@@ -72,16 +73,19 @@ namespace GameStateManager
                             mouseDragDistance = user.MouseDragDistance.ToString();
                         }
                         break;
+#endif
                     case InputType.GAMEPAD:
                         {
                             gamePads.Add(user.CurrentGamePadState);
                             break;
                         }
+#if MOBILE
                     case InputType.TOUCH:
                         {
                             touchState = user.TouchState;
                             break;
                         }
+#endif
                 }
             }
 
