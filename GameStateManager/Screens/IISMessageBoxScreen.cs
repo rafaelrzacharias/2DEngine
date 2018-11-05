@@ -20,8 +20,17 @@ namespace GameStateManager
 
             if (Input.WasAnyButtonPressed())
             {
-                List<string> screens = new List<string> { "MainMenuScreen" };
-                LoadingScreen.Load(false, screens);
+                OnHide();
+                MainMenuScreen mainMenu = new MainMenuScreen("Main Menu");
+                mainMenu.Name = nameof(mainMenu);
+                OptionsMenuScreen optionsMenu = new OptionsMenuScreen("Options Menu");
+                optionsMenu.Name = nameof(optionsMenu);
+                MessageBoxScreen confirmQuit = new MessageBoxScreen("Are you sure you want to quit?");
+                confirmQuit.Name = nameof(confirmQuit);
+
+                Screen[] screens = new Screen[] { mainMenu, optionsMenu, confirmQuit };
+                LoadingScreen.Load(screens);
+                mainMenu.Setup();
             }
         }
 

@@ -6,9 +6,8 @@ namespace GameStateManager
     // The main menu screen is the first thing displayed when the game starts up.
     public class MainMenuScreen : MenuScreen
     {
-        private readonly BackgroundScreen backgroundScreen;
         private OptionsMenuScreen optionsMenu;
-        private MessageBoxScreen messageBox;
+        private MessageBoxScreen confirmQuit;
 
         // Constructs a main menu screen.
         public MainMenuScreen(string menuTitle)
@@ -31,20 +30,20 @@ namespace GameStateManager
             Entries.Add(optionsEntry);
             Entries.Add(exitEntry);
 
-            backgroundScreen = new BackgroundScreen();
-
-            optionsMenu = new OptionsMenuScreen("Options");
-            optionsMenu.Hide += OptionsMenu_OnHide;
-
-            messageBox = new MessageBoxScreen("Are you sure you want to exit?");
-            messageBox.Entries.Add(new MenuEntry("Yes"));
-            messageBox.Entries.Add(new MenuEntry("No"));
-            messageBox.Entries[0].Selected += MessageBoxScreen_Yes;
-            messageBox.Entries[1].Selected += MessageBoxScreen_No;
-
             OnShow();
         }
 
+        public void Setup()
+        {
+            optionsMenu = ScreenManager.GetScreen("optionsMenu") as OptionsMenuScreen;
+            optionsMenu.Hide += OptionsMenu_OnHide;
+
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries.Add(new MenuEntry("Yes"));
+            confirmQuit.Entries.Add(new MenuEntry("No"));
+            confirmQuit.Entries[0].Selected += MessageBoxScreen_Yes;
+            confirmQuit.Entries[1].Selected += MessageBoxScreen_No;
+        }
 
         // Event handler for when the "Yes" entry is selected on the Message Box.
         private void MessageBoxScreen_Yes(User user)
@@ -57,15 +56,26 @@ namespace GameStateManager
         private void MessageBoxScreen_No(User user)
         {
             IsEnabled = true;
-            messageBox.OnHide();
+            confirmQuit.OnHide();
         }
 
 
         // Event handler for when the "Play Game" entry is selected.
         private void PlayGameEntry_OnSelected(User user)
         {
-            List<string> screens = new List<string> { "GameScreen", "PauseScreen", "MessageScreen" };
-            LoadingScreen.Load(true, screens);
+            Screen[] screens = new Screen[] { ScreenManager.GetScreen("mainMenuBackground"),
+                ScreenManager.GetScreen("mainMenu"), ScreenManager.GetScreen("optionsMenu"),
+            ScreenManager.GetScreen("pressAnyKey")};
+            LoadingScreen.Unload(screens);
+
+            GameScreen game = new GameScreen();
+            game.Name = nameof(game);
+            PauseMenuScreen pauseMenu = new PauseMenuScreen("Game Paused");
+            pauseMenu.Name = nameof(pauseMenu);
+            screens = new Screen[] { game, pauseMenu };
+            LoadingScreen.Load(screens, true);
+
+            game.Setup();
         }
 
 
@@ -89,7 +99,7 @@ namespace GameStateManager
             base.OnDismiss();
 
             IsEnabled = false;
-            messageBox.OnShow();
+            confirmQuit.OnShow();
         }
 
 

@@ -9,7 +9,7 @@ namespace GameStateManager
     public class PauseMenuScreen : MenuScreen
     {
         private readonly Texture2D texture;
-        private MessageBoxScreen messageBox;
+        private MessageBoxScreen confirmQuit;
 
         // Constructs the pause menu screen.
         public PauseMenuScreen(string menuTitle)
@@ -26,11 +26,9 @@ namespace GameStateManager
             Entries.Add(resumeGameEntry);
             Entries.Add(quitGameEntry);
 
-            messageBox = new MessageBoxScreen("Are you sure you want to quit?");
-            messageBox.Entries.Add(new MenuEntry("Yes"));
-            messageBox.Entries.Add(new MenuEntry("No"));
-            messageBox.Entries[0].Selected += MessageBox_Yes;
-            messageBox.Entries[1].Selected += MessageBox_No;
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries[0].Selected += MessageBox_Yes;
+            confirmQuit.Entries[1].Selected += MessageBox_No;
         }
 
 
@@ -38,7 +36,7 @@ namespace GameStateManager
         private void MessageBox_No(User user)
         {
             IsEnabled = true;
-            messageBox.OnHide();
+            confirmQuit.OnHide();
         }
 
 
@@ -46,7 +44,7 @@ namespace GameStateManager
         private void QuitGameEntry_OnSelected(User user)
         {
             IsEnabled = false;
-            messageBox.OnShow();
+            confirmQuit.OnShow();
         }
 
 
@@ -54,11 +52,12 @@ namespace GameStateManager
         // It uses the loading screen to transition from the game back to the main menu.
         private void MessageBox_Yes(User user)
         {
-            messageBox.OnHide();
+            confirmQuit.OnHide();
             OnHide();
 
-            List<string> screens = new List<string> { "MainMenuScreen" };
-            LoadingScreen.Load(false, screens);
+            MainMenuScreen mainMenu = new MainMenuScreen("Main Menu");
+            Screen[] screens = new Screen[] { mainMenu };
+            LoadingScreen.Load(screens);
         }
 
 

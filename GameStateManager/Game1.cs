@@ -35,8 +35,14 @@ namespace GameStateManager
 
             base.Initialize();
 
-            List<string> screens = new List<string> { "BackgroundScreen", "IISMessageBoxScreen" };
-            LoadingScreen.Load(false, screens);
+            BackgroundScreen mainMenuBackground = new BackgroundScreen();
+            mainMenuBackground.Name = nameof(mainMenuBackground);
+            IISMessageBoxScreen pressAnyKey = new IISMessageBoxScreen("Press any key to start");
+            pressAnyKey.Name = nameof(pressAnyKey);
+            MessageBoxScreen controllerDisconnected = new MessageBoxScreen("Controller disconnected.");
+            controllerDisconnected.Name = nameof(controllerDisconnected);
+            Screen[] screens = new Screen[] { mainMenuBackground, pressAnyKey, controllerDisconnected };
+            LoadingScreen.Load(screens);
         }
 
 
