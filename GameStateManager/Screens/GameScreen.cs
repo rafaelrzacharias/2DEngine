@@ -21,10 +21,14 @@ namespace GameStateManager
             texture = Resources.GetTexture("gameBackground");
             EnabledGestures = GestureType.Tap;
 
-            pauseMenu = new PauseMenuScreen("Pause Menu");
-            pauseMenu.Dismiss += PauseMenu_OnDismiss;
-
             OnShow();
+        }
+
+
+        public void Setup()
+        {
+            pauseMenu = ScreenManager.GetScreen("pauseMenu") as PauseMenuScreen;
+            pauseMenu.Dismiss += PauseMenu_OnDismiss;
         }
 
 
@@ -43,19 +47,19 @@ namespace GameStateManager
             // This requires us to keep track of whether a gamepad was ever plugged in, because we don't want
             // to pause on PC if they are playing with a keyboard and have no gamepad at all!
             // Specify further, how controller disconnection should display message and how pausing the game is handled!!!
-            if (Input.WasButtonPressed(Action.PAUSE).Count > 0)
+            if (Input.WasButtonPressed(Action.PAUSE, PrimaryUser))
                 OnDismiss();
 
-            if (Input.WasButtonPressed(Action.UI_CONFIRM).Count > 0)
+            if (Input.WasButtonPressed(Action.UI_CONFIRM, PrimaryUser))
                 Audio.PlaySong("song", true, 0.1f);
 
-            if (Input.WasButtonPressed(Action.UI_BACK).Count > 0)
+            if (Input.WasButtonPressed(Action.UI_BACK, PrimaryUser))
                 Audio.PauseOrResumeSong();
 
-            if (Input.WasButtonPressed(Action.UI_PAGE_LEFT).Count > 0)
+            if (Input.WasButtonPressed(Action.UI_PAGE_LEFT, PrimaryUser))
                 Audio.StopSong();
 
-            if (Input.WasButtonPressed(Action.UI_PAGE_RIGHT).Count > 0)
+            if (Input.WasButtonPressed(Action.UI_PAGE_RIGHT, PrimaryUser))
             {
                 foreach (KeyValuePair<string, SoundEffect> pair in Resources.SoundEffects)
                     Audio.PlaySound(pair.Key, new AudioEmitter(), false);
