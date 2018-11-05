@@ -60,6 +60,9 @@ namespace GameStateManager
         // Checks whether or no the screen should be updated.
         public bool IsEnabled { get; set; }
 
+        // The name of the screen.
+        public string Name { get; set; }
+
         // Gets the index of the player who is currently controlling this screen, or null if it is
         // accepting input from any player. Used to lock the game to a specific player profile.
         // The main menu responds to input from any connected gamepad, but whichever player makes a
@@ -152,8 +155,6 @@ namespace GameStateManager
             PrimaryUser = Input.GetPrimaryUser();
 
             OnHide();
-
-            ScreenManager.AddScreen(this);
         }
 
 
