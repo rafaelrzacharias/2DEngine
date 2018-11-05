@@ -10,7 +10,6 @@ namespace GameStateManager
     public class LoadingScreen : Screen
     {
         private readonly bool isLoadingSlow;
-        private List<Screen> screensToLoad;
         private readonly string loadingText;
         private Vector2 loadingTextSize;
         private Vector2 textPosition;
@@ -18,11 +17,12 @@ namespace GameStateManager
 
 
         // The constructor is private. Loading screens are activated via the static Load method instead.
-        private LoadingScreen(bool isLoadingSlow, List<string> screens)
+        private LoadingScreen(Screen[] screens, bool isLoadingSlow)
         {
             this.isLoadingSlow = isLoadingSlow;
-            screensToLoad = new List<Screen>();
-            SetScreensToLoad(screens);
+
+            for (int i = 0; i < screens.Length; i++)
+                ScreenManager.AddScreen(screens[i]);
 
             Font = Resources.GetFont("gameFont");
             loadingText = "Loading...";
@@ -34,44 +34,20 @@ namespace GameStateManager
         }
 
 
-        private void SetScreensToLoad(List<string> screens)
+        // Activates the loading screen.
+        public static void Load(Screen[] screensToLoad, bool isLoadingSlow = false)
         {
-            for (int i = 0; i < screens.Count; i++)
-            {
-                switch (screens[i])
-                {
-                    case "IISMessageBoxScreen":
-                        screensToLoad.Add(new IISMessageBoxScreen(""));
-                        break;
-                    case "GameScreen":
-                        screensToLoad.Add(new GameScreen());
-                        break;
-                    case "BackgroundScreen":
-                        screensToLoad.Add(new BackgroundScreen());
-                        break;
-                    case "MainMenuScreen":
-                        screensToLoad.Add(new MainMenuScreen("Main Menu"));
-                        break;
-                    case "MessageBoxScreen":
-                        screensToLoad.Add(new MessageBoxScreen(""));
-                        break;
-                    case "OptionsMenuScreen":
-                        screensToLoad.Add(new OptionsMenuScreen("Options"));
-                        break;
-                    case "PauseMenuScreen":
-                        screensToLoad.Add(new PauseMenuScreen("Pause Menu"));
-                        break;
-                }
-            }
+            //PreviousScreensCount = ScreenManager.Screens.Count;
+            //ScreenManager.TransitionOffPreviousScreens();
+            LoadingScreen loadingScreen = new LoadingScreen(screensToLoad, isLoadingSlow);
         }
 
 
-        // Activates the loading screen.
-        public static void Load(bool isLoadingSlow, List<string> screensToLoad)
+        // Activates the loading screen and transition off a screen.
+        public static void Unload(Screen[] screensToUnload)
         {
-            PreviousScreensCount = ScreenManager.Screens.Count;
-            ScreenManager.TransitionOffPreviousScreens();
-            LoadingScreen loadingScreen = new LoadingScreen(isLoadingSlow, screensToLoad);
+            for (int i = 0; i < screensToUnload.Length; i++)
+                screensToUnload[i].ExitScreen();
         }
 
 
