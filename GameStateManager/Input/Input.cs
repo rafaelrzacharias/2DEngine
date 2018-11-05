@@ -42,7 +42,7 @@ namespace GameStateManager
     {
         // Number of users that the Input system with keep track off.
         private const int MAX_USERS = 4;
-        public static List<User> Users;
+        public static User[] Users;
 
 #if DESKTOP
         // Key that pressed last frame.
@@ -56,7 +56,7 @@ namespace GameStateManager
 
         // Key repeat duration in seconds after the first key press.
         private static float keyRepeatDuration = 0.05f;
-        
+
         private static Dictionary<Action, List<Keys>> keys;
         private static Dictionary<Action, MouseButton> mouseButtons;
 #endif
@@ -65,10 +65,10 @@ namespace GameStateManager
 
         public static void Initialize()
         {
-            Users = new List<User>(MAX_USERS);
+            Users = new User[MAX_USERS];
 
             for (int i = 0; i < MAX_USERS; i++)
-                Users.Add(new User());
+                Users[i] = new User { Index = i };
 
             Users[0].IsPrimaryUser = true;
 #if DESKTOP
@@ -127,7 +127,7 @@ namespace GameStateManager
             for (int i = 0; i < MAX_USERS; i++)
                 Users[i].IsPrimaryUser = false;
 
-            Users[(int)user.Index].IsPrimaryUser = true;
+            Users[user.Index].IsPrimaryUser = true;
         }
 
 
@@ -138,19 +138,32 @@ namespace GameStateManager
                 Users[i].UpdateInput();
         }
 
+
         // Event raised when a controller is disconnected.
         public delegate void ControllerDisconnectedEventHandler(User user);
         public static event ControllerDisconnectedEventHandler ControllerDisconnected;
 
         public static void OnControllerDisconnected(User user)
         {
-            IISMessageBoxScreen messageBox = new IISMessageBoxScreen(
-                "Reconnect controller " + user.Index.ToString() + " and press any key to continue.");
+            Users[user.Index].InputType = InputType.NONE;
 
-            messageBox.OnShow();
+            ScreenManager.GetScreen("controllerDisconnected").OnShow();
 
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(user);
+        }
+
+
+        // Event raised when a controller is disconnected.
+        public delegate void ControllerConnectedEventHandler();
+        public static event ControllerConnectedEventHandler ControllerConnected;
+
+        public static void OnControllerConnected()
+        {
+            ScreenManager.GetScreen("controllerDisconnected").OnDismiss();
+
+            if (ControllerConnected != null)
+                ControllerConnected.Invoke();
         }
 
 
@@ -175,9 +188,6 @@ namespace GameStateManager
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
         public static bool WasAnyButtonPressed()
         {
-            if (WasButtonPressed(Action.DEBUG).Count > 0)
-                return false;
-
             for (int i = 0; i < MAX_USERS; i++)
             {
 #if DESKTOP
@@ -234,15 +244,18 @@ namespace GameStateManager
             return null;
         }
 
-
         // Checks if a key was pressed during this update. The controllingPlayer parameter specifies
         // which player to read input for. If this is null, it will accept input from any player.
         // When a keypress is detected, the output playerIndex reports which player pressed it.
-        public static List<User> WasButtonPressed(Action action)
+        public static bool WasButtonPressed(Action action, User user = null)
         {
-            List<User> users = new List<User>();
+            int i;
+            if (user != null)
+                i = user.Index;
+            else
+                i = 0;
 
-            for (int i = 0; i < MAX_USERS; i++)
+            while (i < MAX_USERS)
             {
                 switch (Users[i].InputType)
                 {
@@ -254,13 +267,10 @@ namespace GameStateManager
                                 {
                                     if (Users[i].LastKeyboardState.IsKeyUp(keys[action][j]) &&
                                         Users[i].CurrentKeyboardState.IsKeyDown(keys[action][j]))
-                                    {
-                                        users.Add(Users[i]);
-                                        break;
-                                    }
+                                        return true;
                                 }
                             }
-                            
+
                             if (mouseButtons.ContainsKey(action))
                             {
                                 switch (mouseButtons[action])
@@ -269,27 +279,21 @@ namespace GameStateManager
                                         {
                                             if (Users[i].LastMouseState.LeftButton == ButtonState.Released &&
                                                 Users[i].CurrentMouseState.LeftButton == ButtonState.Pressed)
-                                            {
-                                                users.Add(Users[i]);
-                                            }
+                                                return true;
                                         }
                                         break;
                                     case MouseButton.RIGHT:
                                         {
                                             if (Users[i].LastMouseState.RightButton == ButtonState.Released &&
                                                 Users[i].CurrentMouseState.RightButton == ButtonState.Pressed)
-                                            {
-                                                users.Add(Users[i]);
-                                            }
+                                                return true;
                                         }
                                         break;
                                     case MouseButton.MIDDLE:
                                         {
                                             if (Users[i].LastMouseState.MiddleButton == ButtonState.Released &&
                                                 Users[i].CurrentMouseState.MiddleButton == ButtonState.Pressed)
-                                            {
-                                                users.Add(Users[i]);
-                                            }
+                                                return true;
                                         }
                                         break;
                                 }
@@ -304,18 +308,20 @@ namespace GameStateManager
                                 {
                                     if (Users[i].LastGamePadState.IsButtonUp(buttons[action][j]) &&
                                         Users[i].CurrentGamePadState.IsButtonDown(buttons[action][j]))
-                                    {
-                                        users.Add(Users[i]);
-                                        break;
-                                    }
+                                        return true;
                                 }
                             }
                         }
                         break;
                 }
+
+                if (user != null && i == user.Index)
+                    return false;
+
+                i++;
             }
 
-            return users;
+            return false;
         }
 
 
@@ -393,49 +399,27 @@ namespace GameStateManager
         // Helper for checking if a mouse button is currently being pressed on this update. The controllingPlayer
         // parameter specifies which player to read input for. If this is null, it will accept input from any
         // player. When a mouse click is detected, the output playerIndex reports which player performed the click.
-        public static bool IsMouseDown(MouseButton mouseButton, out PlayerIndex playerIndex, User user = null)
+        public static bool IsMouseDown(MouseButton mouseButton)
         {
-            if (user != null)
+            for (int i = 0; i < MAX_USERS; i++)
             {
-                // Read mouse input from the specified player.
-                playerIndex = user.Index;
-
-                if (user.InputType == InputType.KEYBOARD)
+                if (Users[i].InputType == InputType.KEYBOARD)
                 {
                     switch (mouseButton)
                     {
                         case MouseButton.LEFT:
-                            return user.CurrentMouseState.LeftButton == ButtonState.Pressed;
+                                return Users[i].CurrentMouseState.LeftButton == ButtonState.Pressed;
                         case MouseButton.MIDDLE:
-                            return user.CurrentMouseState.MiddleButton == ButtonState.Pressed;
+                                return Users[i].CurrentMouseState.MiddleButton == ButtonState.Pressed;
                         case MouseButton.RIGHT:
-                            return user.CurrentMouseState.RightButton == ButtonState.Pressed;
+                                return Users[i].CurrentMouseState.RightButton == ButtonState.Pressed;
                     }
 
                     return false;
                 }
-
-                return false;
             }
-            else
-            {
-                bool result = false;
-                playerIndex = PlayerIndex.One;
 
-                // Accept input from any player.
-                for (int i = 0; i < Users.Count; i++)
-                {
-                    result = IsMouseDown(mouseButton, out playerIndex, Users[i]);
-
-                    if (result)
-                    {
-                        playerIndex = Users[i].Index;
-                        return result;
-                    }
-                }
-
-                return result;
-            }
+            return false;
         }
     }
 }
