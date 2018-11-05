@@ -171,8 +171,7 @@ namespace GameStateManager
             string cmdText = args[0];
             args.RemoveAt(0);
 
-            CommandInfo cmd;
-            if (commandTable.TryGetValue(cmdText.ToLower(), out cmd))
+            if (commandTable.TryGetValue(cmdText.ToLower(), out CommandInfo cmd))
             {
                 try
                 {
@@ -282,7 +281,7 @@ namespace GameStateManager
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.WasButtonPressed(Action.DEBUG).Count > 0)
+                    if (Input.WasButtonPressed(Action.DEBUG, Input.GetPrimaryUser()))
                         Show();
                     break;
                 case State.OPENING:
@@ -294,7 +293,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.WasButtonPressed(Action.DEBUG).Count > 0)
+                    if (Input.WasButtonPressed(Action.DEBUG, Input.GetPrimaryUser()))
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);
@@ -308,6 +307,8 @@ namespace GameStateManager
                     }
                     break;
             }
+
+            ActiveInputs = null;
         }
 
 
@@ -326,8 +327,7 @@ namespace GameStateManager
                 if (Input.IsKeyPressed(keys[i], dt) == false)
                     continue;
 
-                char ch;
-                if (KeyboardUtils.KeyToString(keys[i], shift, out ch))
+                if (KeyboardUtils.KeyToString(keys[i], shift, out char ch))
                 {
                     // Handle typical character input.
                     commandLine = commandLine.Insert(cursorIndex, new string(ch, 1));

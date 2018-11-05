@@ -35,15 +35,15 @@ namespace GameStateManager
             titleOrigin = Font.MeasureString(MenuTitle) / 2f;
             DrawOrder = 0.1f;
 
-            if (Input.GetPrimaryUser().InputType == InputType.TOUCH)
+            if (PrimaryUser.InputType == InputType.TOUCH)
                 highlightedEntry = -1;
         }
 
 
         private void UpdateEntriesHighlight()
         {
-            isMenuUp = Input.WasButtonPressed(Action.UI_UP).Count > 0 || Input.WasButtonPressed(Action.UI_LEFT).Count > 0;
-            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN).Count > 0 || Input.WasButtonPressed(Action.UI_RIGHT).Count > 0;
+            isMenuUp = Input.WasButtonPressed(Action.UI_UP, PrimaryUser);
+            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN, PrimaryUser);
 
             if (Input.HasMouseMoved())
             {
@@ -96,21 +96,17 @@ namespace GameStateManager
 
         private void UpdateEntriesSelected()
         {
-            List<User> users = Input.WasButtonPressed(Action.UI_CONFIRM);
-
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Entries[i].IsHighlighted && users.Count > 0)
+                if (Entries[i].IsHighlighted && Input.WasButtonPressed(Action.UI_CONFIRM, PrimaryUser))
                 {
-                    for (int u = 0; u < users.Count; u++)
-                        Entries[i].OnSelected(users[u]);
-
+                    Entries[i].OnSelected(PrimaryUser);
                     //Audio.PlaySound("entrySelected");
                     break;
                 }
             }
 
-            if (Input.WasButtonPressed(Action.UI_BACK).Count > 0)
+            if (Input.WasButtonPressed(Action.UI_BACK, PrimaryUser))
             {
                 OnDismiss();
                 //Audio.PlaySound("menuDismissed");
@@ -122,7 +118,7 @@ namespace GameStateManager
                 {
                     for (int j = 0; j < Entries.Count; j++)
                     {
-                        // Since gestures are only available on Mobile, we can safely pass PlayerIndex.One
+                        // Since gestures are only available on Mobile, we can safely pass Index 0
                         // to all entries since there will be only one player on Mobile.
                         if (Entries[j].Bounds.Contains(Input.Users[0].Gestures[i].Position))
                         {
