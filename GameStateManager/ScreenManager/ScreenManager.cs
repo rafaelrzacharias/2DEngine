@@ -41,6 +41,18 @@ namespace GameStateManager
         }
 
 
+        public static Screen GetScreen(string screenName)
+        {
+            for (int i = 0; i < Screens.Count; i++)
+            {
+                if (Screens[i].Name == screenName)
+                    return Screens[i];
+            }
+
+            return null;
+        }
+
+
         private static int CompareDrawOrder(Screen a, Screen b)
         {
             return a.DrawOrder.CompareTo(b.DrawOrder);
