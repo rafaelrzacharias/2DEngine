@@ -7,7 +7,7 @@ namespace GameStateManager
 {
     public class User
     {
-        public PlayerIndex Index;
+        public int Index;
         public bool IsPrimaryUser;
         public InputType InputType;
 #if DESKTOP
@@ -103,6 +103,9 @@ namespace GameStateManager
 
             if (CurrentGamePadState.IsConnected == false && LastGamePadState.IsConnected)
                 Input.OnControllerDisconnected(this);
+
+            if (CurrentGamePadState.IsConnected && LastGamePadState.IsConnected == false)
+                Input.OnControllerConnected();
 #if MOBILE
             TouchState = TouchPanel.GetState();
             Gestures.Clear();
