@@ -36,11 +36,9 @@ namespace GameStateManager
             SpriteBatch.DrawString(Font, "Mouse state: ", TextPosition, Color.Yellow);
             TextPosition.Y += Font.LineSpacing;
 
-            PlayerIndex controllingPlayer = Input.GetPrimaryUser().Index;
-
-            string mouseLeft = Input.IsMouseDown(MouseButton.LEFT, out PlayerIndex playerIndex) ? "Pressed" : "Released";
-            string mouseMiddle = Input.IsMouseDown(MouseButton.MIDDLE, out playerIndex) ? "Pressed" : "Released";
-            string mouseRight = Input.IsMouseDown(MouseButton.RIGHT, out playerIndex) ? "Pressed" : "Released";
+            string mouseLeft = Input.IsMouseDown(MouseButton.LEFT) ? "Pressed" : "Released";
+            string mouseMiddle = Input.IsMouseDown(MouseButton.MIDDLE) ? "Pressed" : "Released";
+            string mouseRight = Input.IsMouseDown(MouseButton.RIGHT) ? "Pressed" : "Released";
 
             string wheelValue = "0";
             string isDragging = "false";
@@ -54,7 +52,7 @@ namespace GameStateManager
             List<GamePadState> gamePads = new List<GamePadState>();
             Microsoft.Xna.Framework.Input.Touch.TouchCollection touchState = new Microsoft.Xna.Framework.Input.Touch.TouchCollection();
 
-            for (int i = 0; i < Input.Users.Count; i++)
+            for (int i = 0; i < Input.Users.Length; i++)
             {
                 User user = Input.Users[i];
 
