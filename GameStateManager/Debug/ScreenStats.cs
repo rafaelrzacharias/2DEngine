@@ -42,7 +42,7 @@ namespace GameStateManager
             for (int i = 0; i < screens.Count; i++)
             {
                 TextPosition.X = 0f;
-                SpriteBatch.DrawString(Font, screens[i].GetType().Name, TextPosition, Color.Yellow);
+                SpriteBatch.DrawString(Font, screens[i].Name + " (" + screens[i].GetType().Name + ")", TextPosition, Color.Yellow);
                 TextPosition.Y += Font.LineSpacing;
                 SpriteBatch.DrawString(Font, "Screen state: " + screens[i].TransitionState.ToString(), TextPosition, Color.White);
                 TextPosition.Y += Font.LineSpacing;
