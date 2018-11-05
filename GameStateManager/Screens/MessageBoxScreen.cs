@@ -7,7 +7,7 @@ namespace GameStateManager
     // A popup message box screen, used to display confirmation messages.
     public class MessageBoxScreen : MenuScreen
     {
-        private string Text;
+        public string Text;
         protected Color TextColor;
         private Vector2 TextPosition;
         private Texture2D Texture;
@@ -27,11 +27,7 @@ namespace GameStateManager
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
             ShouldDarkenBackground = true;
-
-            if (string.IsNullOrEmpty(message))
-                Text = "Press any key to start";
-            else
-                Text = message;
+            Text = message;
 
             TextColor = Color.Yellow;
             MenuTitle = menuTitle;
