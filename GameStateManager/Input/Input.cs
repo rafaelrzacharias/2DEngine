@@ -79,11 +79,11 @@ namespace GameStateManager
                 { Action.UI_LEFT, new List<Keys> { Keys.Left, Keys.A } },
                 { Action.UI_RIGHT, new List<Keys> { Keys.Right, Keys.D } },
                 { Action.UI_CONFIRM, new List<Keys> { Keys.Space } },
-                { Action.UI_BACK, new List<Keys> { Keys.Escape, Keys.Back } },
+                { Action.UI_BACK, new List<Keys> { Keys.Escape } },
                 { Action.UI_PAGE_LEFT, new List<Keys> { Keys.Q, Keys.PageUp } },
                 { Action.UI_PAGE_RIGHT, new List<Keys> { Keys.E, Keys.PageDown } },
                 { Action.DEBUG, new List<Keys> { Keys.OemTilde } },
-                { Action.PAUSE, new List<Keys> { Keys.Enter } }
+                { Action.PAUSE, new List<Keys> { Keys.Escape } }
             };
 
             mouseButtons = new Dictionary<Action, MouseButton>
@@ -160,7 +160,7 @@ namespace GameStateManager
 
         public static void OnControllerConnected()
         {
-            ScreenManager.GetScreen("controllerDisconnected").OnDismiss();
+            ScreenManager.GetScreen("controllerDisconnected").OnDismiss(GetPrimaryUser()); // Might not be the Primary User !!!!!!
 
             if (ControllerConnected != null)
                 ControllerConnected.Invoke();
