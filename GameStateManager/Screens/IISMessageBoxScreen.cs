@@ -6,8 +6,8 @@ namespace GameStateManager
     public class IISMessageBoxScreen : MessageBoxScreen
     {
         // Constructs an initialInteraction screen.
-        public IISMessageBoxScreen(string message) :
-            base(message)
+        public IISMessageBoxScreen(string screenName, string message) :
+            base(screenName, message)
         {
             ShouldDarkenBackground = false;
             OnShow();
@@ -21,16 +21,12 @@ namespace GameStateManager
             if (Input.WasAnyButtonPressed())
             {
                 OnHide();
-                MainMenuScreen mainMenu = new MainMenuScreen("Main Menu");
-                mainMenu.Name = nameof(mainMenu);
-                OptionsMenuScreen optionsMenu = new OptionsMenuScreen("Options Menu");
-                optionsMenu.Name = nameof(optionsMenu);
-                MessageBoxScreen confirmQuit = new MessageBoxScreen("Are you sure you want to quit?");
-                confirmQuit.Name = nameof(confirmQuit);
 
-                Screen[] screens = new Screen[] { mainMenu, optionsMenu, confirmQuit };
-                LoadingScreen.Load(screens);
-                mainMenu.Setup();
+                LoadingScreen.Unload(this);
+
+                LoadingScreen.Load(new MessageBoxScreen("confirmQuit", "Are you sure you want to quit?", "", MessageBoxType.YESNO));
+                LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
+                LoadingScreen.Load(new MainMenuScreen("mainMenu", "Main Menu"));
             }
         }
 
