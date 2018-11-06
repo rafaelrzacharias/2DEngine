@@ -108,7 +108,7 @@ namespace GameStateManager
 
             if (Input.WasButtonPressed(Action.UI_BACK, PrimaryUser))
             {
-                OnDismiss();
+                OnDismiss(PrimaryUser);
                 //Audio.PlaySound("menuDismissed");
             }
 #if MOBILE

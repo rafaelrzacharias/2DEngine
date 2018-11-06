@@ -12,8 +12,9 @@ namespace GameStateManager
 
 
         // Constructs a background screen.
-        public BackgroundScreen()
+        public BackgroundScreen(string screenName)
         {
+            Name = screenName;
             texture = Resources.GetTexture("background");
 
             OnShow();

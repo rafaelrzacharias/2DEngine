@@ -129,16 +129,16 @@ namespace GameStateManager
 
 
         // Callback for when the screen is dismissed.
-        public delegate void DismissCallback();
+        public delegate void DismissCallback(User user);
         public DismissCallback Dismiss;
 
-        public virtual void OnDismiss()
+        public virtual void OnDismiss(User user)
         {
             if (IsRootMenu == false)
                 OnHide();
 
             if (Dismiss != null)
-                Dismiss.Invoke();
+                Dismiss.Invoke(user);
         }
 
 
@@ -154,7 +154,7 @@ namespace GameStateManager
             BackgroundColor = Color.White;
             PrimaryUser = Input.GetPrimaryUser();
 
-            OnHide();
+            isTransitioningOff = true;
         }
 
 
