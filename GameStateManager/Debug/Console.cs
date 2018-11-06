@@ -307,8 +307,6 @@ namespace GameStateManager
                     }
                     break;
             }
-
-            ActiveInputs = null;
         }
 
 
