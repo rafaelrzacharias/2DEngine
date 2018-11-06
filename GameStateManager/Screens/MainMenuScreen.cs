@@ -10,9 +10,10 @@ namespace GameStateManager
         private MessageBoxScreen confirmQuit;
 
         // Constructs a main menu screen.
-        public MainMenuScreen(string menuTitle)
+        public MainMenuScreen(string screenName, string menuTitle)
             : base(menuTitle)
         {
+            Name = screenName;
             IsRootMenu = true;
 
             // Create our menu entries.
@@ -30,20 +31,12 @@ namespace GameStateManager
             Entries.Add(optionsEntry);
             Entries.Add(exitEntry);
 
-            OnShow();
-        }
-
-        public void Setup()
-        {
             optionsMenu = ScreenManager.GetScreen("optionsMenu") as OptionsMenuScreen;
             optionsMenu.Hide += OptionsMenu_OnHide;
 
-            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
-            confirmQuit.Entries.Add(new MenuEntry("Yes"));
-            confirmQuit.Entries.Add(new MenuEntry("No"));
-            confirmQuit.Entries[0].Selected += MessageBoxScreen_Yes;
-            confirmQuit.Entries[1].Selected += MessageBoxScreen_No;
+            OnShow();
         }
+
 
         // Event handler for when the "Yes" entry is selected on the Message Box.
         private void MessageBoxScreen_Yes(User user)
@@ -63,19 +56,13 @@ namespace GameStateManager
         // Event handler for when the "Play Game" entry is selected.
         private void PlayGameEntry_OnSelected(User user)
         {
-            Screen[] screens = new Screen[] { ScreenManager.GetScreen("mainMenuBackground"),
-                ScreenManager.GetScreen("mainMenu"), ScreenManager.GetScreen("optionsMenu"),
-            ScreenManager.GetScreen("pressAnyKey")};
-            LoadingScreen.Unload(screens);
+            OnHide();
+            LoadingScreen.Unload(ScreenManager.GetScreen("mainMenuBackground"));
+            LoadingScreen.Unload(ScreenManager.GetScreen("optionsMenu"));
+            LoadingScreen.Unload(this);
 
-            GameScreen game = new GameScreen();
-            game.Name = nameof(game);
-            PauseMenuScreen pauseMenu = new PauseMenuScreen("Game Paused");
-            pauseMenu.Name = nameof(pauseMenu);
-            screens = new Screen[] { game, pauseMenu };
-            LoadingScreen.Load(screens, true);
-
-            game.Setup();
+            LoadingScreen.Load(new PauseMenuScreen("pauseMenu", "Paused"));
+            LoadingScreen.Load(new GameScreen("gameScreen"), true);
         }
 
 
@@ -90,13 +77,35 @@ namespace GameStateManager
         // Event handler for when the "Exit" entry is selected. A popup message is displayed.
         private void ExitEntry_OnSelected(User user)
         {
-            OnDismiss();
+            OnDismiss(user);
         }
 
 
-        public override void OnDismiss()
+        public override void OnShow()
         {
-            base.OnDismiss();
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries[0].Selected += MessageBoxScreen_Yes;
+            confirmQuit.Entries[1].Selected += MessageBoxScreen_No;
+            confirmQuit.Dismiss += MessageBoxScreen_No;
+
+            base.OnShow();
+        }
+
+
+        public override void OnHide()
+        {
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries[0].Selected -= MessageBoxScreen_Yes;
+            confirmQuit.Entries[1].Selected -= MessageBoxScreen_No;
+            confirmQuit.Dismiss -= MessageBoxScreen_No;
+
+            base.OnHide();
+        }
+
+
+        public override void OnDismiss(User user)
+        {
+            base.OnDismiss(user);
 
             IsEnabled = false;
             confirmQuit.OnShow();

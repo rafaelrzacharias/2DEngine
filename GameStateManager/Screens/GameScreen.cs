@@ -15,25 +15,22 @@ namespace GameStateManager
         private PauseMenuScreen pauseMenu;
 
         // Constructs a gameplay screen.
-        public GameScreen()
+        public GameScreen(string screenName)
         {
+            Name = screenName;
             Font = Resources.GetFont("gameFont");
             texture = Resources.GetTexture("gameBackground");
             EnabledGestures = GestureType.Tap;
+
+            pauseMenu = ScreenManager.GetScreen("pauseMenu") as PauseMenuScreen;
+            pauseMenu.Dismiss += PauseMenu_OnDismiss;
 
             OnShow();
         }
 
 
-        public void Setup()
-        {
-            pauseMenu = ScreenManager.GetScreen("pauseMenu") as PauseMenuScreen;
-            pauseMenu.Dismiss += PauseMenu_OnDismiss;
-        }
-
-
         // Event handler for when the "Pause Menu" is dismissed.
-        private void PauseMenu_OnDismiss()
+        private void PauseMenu_OnDismiss(User user)
         {
             OnShow();
         }
@@ -48,7 +45,7 @@ namespace GameStateManager
             // to pause on PC if they are playing with a keyboard and have no gamepad at all!
             // Specify further, how controller disconnection should display message and how pausing the game is handled!!!
             if (Input.WasButtonPressed(Action.PAUSE, PrimaryUser))
-                OnDismiss();
+                OnDismiss(PrimaryUser);
 
             if (Input.WasButtonPressed(Action.UI_CONFIRM, PrimaryUser))
                 Audio.PlaySong("song", true, 0.1f);
@@ -76,9 +73,9 @@ namespace GameStateManager
             base.Draw(gameTime);
         }
 
-        public override void OnDismiss()
+        public override void OnDismiss(User user)
         {
-            base.OnDismiss();
+            base.OnDismiss(user);
             pauseMenu.OnShow();
         }
     }

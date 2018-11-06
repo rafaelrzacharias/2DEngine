@@ -28,9 +28,10 @@ namespace GameStateManager
 
 
         // Constructs an options menu screen.
-        public OptionsMenuScreen(string menuTitle)
+        public OptionsMenuScreen(string screenName, string menuTitle)
             : base(menuTitle)
         {
+            Name = screenName;
             languages = new List<string> { "C#", "French", "English" };
 
             // Create our menu entries.

@@ -12,9 +12,10 @@ namespace GameStateManager
         private MessageBoxScreen confirmQuit;
 
         // Constructs the pause menu screen.
-        public PauseMenuScreen(string menuTitle)
+        public PauseMenuScreen(string screenName, string menuTitle)
             : base(menuTitle)
         {
+            Name = screenName;
             texture = Resources.GetTexture("pauseBackground");
 
             MenuEntry resumeGameEntry = new MenuEntry("Resume Game");
@@ -25,10 +26,6 @@ namespace GameStateManager
 
             Entries.Add(resumeGameEntry);
             Entries.Add(quitGameEntry);
-
-            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
-            confirmQuit.Entries[0].Selected += MessageBox_Yes;
-            confirmQuit.Entries[1].Selected += MessageBox_No;
         }
 
 
@@ -55,22 +52,42 @@ namespace GameStateManager
             confirmQuit.OnHide();
             OnHide();
 
-            MainMenuScreen mainMenu = new MainMenuScreen("Main Menu");
-            Screen[] screens = new Screen[] { mainMenu };
-            LoadingScreen.Load(screens);
+            LoadingScreen.Unload(ScreenManager.GetScreen("gameScreen"));
+            LoadingScreen.Unload(this);
+
+            LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
+            LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
+            LoadingScreen.Load(new MainMenuScreen("mainMenu", "Main Menu"));
         }
 
 
         // Callback for when the "Resume Game" entry is selected.
         private void ResumeGameEntry_OnSelected(User user)
         {
-            OnDismiss();
+            OnDismiss(user);
+        }
+
+
+        // Overriden OnShow callback to resume all sounds.
+        public override void OnShow()
+        {
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries[0].Selected += MessageBox_Yes;
+            confirmQuit.Entries[1].Selected += MessageBox_No;
+            confirmQuit.Dismiss += MessageBox_No;
+
+            base.OnShow();
         }
 
 
         // Overriden OnHide callback to resume all sounds before exiting the screen.
         public override void OnHide()
         {
+            confirmQuit = ScreenManager.GetScreen("confirmQuit") as MessageBoxScreen;
+            confirmQuit.Entries[0].Selected -= MessageBox_Yes;
+            confirmQuit.Entries[1].Selected -= MessageBox_No;
+            confirmQuit.Dismiss -= MessageBox_No;
+
             base.OnHide();
             Audio.PauseOrResumeAllSounds();
             Audio.PauseOrResumeSong();

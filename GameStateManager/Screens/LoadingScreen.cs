@@ -17,12 +17,10 @@ namespace GameStateManager
 
 
         // The constructor is private. Loading screens are activated via the static Load method instead.
-        private LoadingScreen(Screen[] screens, bool isLoadingSlow)
+        private LoadingScreen(Screen screen, bool isLoadingSlow)
         {
             this.isLoadingSlow = isLoadingSlow;
-
-            for (int i = 0; i < screens.Length; i++)
-                ScreenManager.AddScreen(screens[i]);
+            ScreenManager.AddScreen(screen);
 
             Font = Resources.GetFont("gameFont");
             loadingText = "Loading...";
@@ -35,19 +33,18 @@ namespace GameStateManager
 
 
         // Activates the loading screen.
-        public static void Load(Screen[] screensToLoad, bool isLoadingSlow = false)
+        public static void Load(Screen screenToLoad, bool isLoadingSlow = false)
         {
             //PreviousScreensCount = ScreenManager.Screens.Count;
             //ScreenManager.TransitionOffPreviousScreens();
-            LoadingScreen loadingScreen = new LoadingScreen(screensToLoad, isLoadingSlow);
+            LoadingScreen loadingScreen = new LoadingScreen(screenToLoad, isLoadingSlow);
         }
 
 
         // Activates the loading screen and transition off a screen.
-        public static void Unload(Screen[] screensToUnload)
+        public static void Unload(Screen screenToUnload)
         {
-            for (int i = 0; i < screensToUnload.Length; i++)
-                screensToUnload[i].ExitScreen();
+            screenToUnload.ExitScreen();
         }
 
 
