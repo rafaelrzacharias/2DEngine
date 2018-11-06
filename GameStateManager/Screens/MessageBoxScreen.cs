@@ -4,6 +4,13 @@ using Microsoft.Xna.Framework.Input.Touch;
 
 namespace GameStateManager
 {
+    public enum MessageBoxType
+    {
+        NONE,
+        YESNO,
+        OK
+    }
+
     // A popup message box screen, used to display confirmation messages.
     public class MessageBoxScreen : MenuScreen
     {
@@ -16,11 +23,14 @@ namespace GameStateManager
         private Vector2 Padding;
         private Vector2 TextSize;
         private Vector2 Origin;
+        private MessageBoxType MessageBoxType;
 
         // Constructs a message box in which the caller specifies the prompt.
-        public MessageBoxScreen(string message, string menuTitle = "")
+        public MessageBoxScreen(string screenName, string message, string menuTitle = "", MessageBoxType type = MessageBoxType.NONE)
             : base(menuTitle)
         {
+            MessageBoxType = type;
+            Name = screenName;
             BackgroundColor = new Color(0, 0, 0, 128);
             Font = Resources.GetFont("menuFont");
             Texture = Resources.GetTexture("whiteTexture");
@@ -36,6 +46,17 @@ namespace GameStateManager
             Origin = TextSize * 0.5f;
             Padding = new Vector2(32, 32);
             BackgroundArea = Rectangle.Empty;
+
+            switch (MessageBoxType)
+            {
+                case MessageBoxType.YESNO:
+                        Entries.Add(new MenuEntry("Yes"));
+                        Entries.Add(new MenuEntry("No"));
+                    break;
+                case MessageBoxType.OK:
+                        Entries.Add(new MenuEntry("OK"));
+                    break;
+            }
         }
 
 
