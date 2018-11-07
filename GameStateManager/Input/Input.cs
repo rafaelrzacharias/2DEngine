@@ -41,7 +41,7 @@ namespace GameStateManager
     public static class Input
     {
         // Number of users that the Input system with keep track off.
-        private const int MAX_USERS = 4;
+        public const int MAX_USERS = 4;
         public static User[] Users;
 
 #if DESKTOP
@@ -145,10 +145,7 @@ namespace GameStateManager
 
         public static void OnControllerDisconnected(User user)
         {
-            Users[user.Index].InputType = InputType.NONE;
-
-            ScreenManager.GetScreen("controllerDisconnected").OnShow();
-
+            ScreenManager.GetScreen("controllerDisconnection").OnShow();
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(user);
         }
@@ -158,10 +155,8 @@ namespace GameStateManager
         public delegate void ControllerConnectedEventHandler();
         public static event ControllerConnectedEventHandler ControllerConnected;
 
-        public static void OnControllerConnected()
+        public static void OnControllerConnected(User user)
         {
-            ScreenManager.GetScreen("controllerDisconnected").OnDismiss(GetPrimaryUser()); // Might not be the Primary User !!!!!!
-
             if (ControllerConnected != null)
                 ControllerConnected.Invoke();
         }

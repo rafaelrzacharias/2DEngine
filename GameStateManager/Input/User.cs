@@ -105,7 +105,7 @@ namespace GameStateManager
                 Input.OnControllerDisconnected(this);
 
             if (CurrentGamePadState.IsConnected && LastGamePadState.IsConnected == false)
-                Input.OnControllerConnected();
+                Input.OnControllerConnected(this);
 #if MOBILE
             TouchState = TouchPanel.GetState();
             Gestures.Clear();
