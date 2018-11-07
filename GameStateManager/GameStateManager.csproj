@@ -67,6 +67,7 @@
     <Compile Include="ScreenManager\ScreenManager.cs" />
     <Compile Include="ScreenManager\Utils.cs" />
     <Compile Include="Screens\BackgroundScreen.cs" />
+    <Compile Include="Screens\ControllerDisconnectionScreen.cs" />
     <Compile Include="Screens\GameScreen.cs" />
     <Compile Include="Screens\IISMessageBoxScreen.cs" />
     <Compile Include="Screens\LoadingScreen.cs" />
