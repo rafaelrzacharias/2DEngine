@@ -1,10 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
-using System.Collections.Generic;
 
 namespace GameStateManager
 {
-    // Sample showing how to manage different game states, with transitions
-    // between menu screens, a loading screen, the game itself, and a pause menu.
     public class Game1 : Game
     {
         private readonly GraphicsDeviceManager graphics;
@@ -36,6 +33,7 @@ namespace GameStateManager
             base.Initialize();
 
             LoadingScreen.Load(new ControllerDisconnectionScreen("controllerDisconnection"));
+            ScreenManager.GetScreen("controllerDisconnection").OnShow();
             LoadingScreen.Load(new IISMessageBoxScreen("pressAnyKey", "Press any key to start"));
             LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
         }
