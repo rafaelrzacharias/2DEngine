@@ -36,6 +36,7 @@ namespace GameStateManager
             base.Initialize();
 
             LoadingScreen.Load(new ControllerDisconnectionScreen("controllerDisconnection"));
+            ScreenManager.GetScreen("controllerDisconnection").OnShow();
             LoadingScreen.Load(new IISMessageBoxScreen("pressAnyKey", "Press any key to start"));
             LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
         }
