@@ -92,7 +92,7 @@ namespace GameStateManager
                     else
                         inputTexture = controllerTexture;
 
-                    if (Input.Users[i].CurrentGamePadState.IsConnected)
+                    if (Input.CurrentGamePadState[i].IsConnected)
                         inputTextureColor = Color.Green;
                     else
                         inputTextureColor = Color.Red;
