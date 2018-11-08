@@ -20,7 +20,7 @@ namespace GameStateManager
         private Texture2D controllerTexture;
         private Texture2D keyboardTexture;
         private Texture2D inputTexture;
-        private Color inputTextureColor;
+        private Texture2D noInputTexture;
         private Vector2 controllerTexturePosition;
 
         // Constructs a new controller disconnection screen.
@@ -33,7 +33,7 @@ namespace GameStateManager
             Texture = Resources.GetTexture("whiteTexture");
             controllerTexture = Resources.GetTexture("controllerTexture");
             keyboardTexture = Resources.GetTexture("keyboardTexture");
-            inputTextureColor = Color.Red;
+            noInputTexture = Resources.GetTexture("noInputTexture");
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
             ShouldDarkenBackground = true;
@@ -87,17 +87,20 @@ namespace GameStateManager
                 Vector2 inputTexPos = controllerTexturePosition;
                 for (int i = 0; i < Input.MAX_USERS; i++)
                 {
-                    if (Input.Users[i].InputType == InputType.KEYBOARD)
-                        inputTexture = keyboardTexture;
-                    else
-                        inputTexture = controllerTexture;
+                    switch (Input.Users[i].InputType)
+                    {
+                        case InputType.KEYBOARD:
+                            inputTexture = keyboardTexture;
+                            break;
+                        case InputType.GAMEPAD:
+                            inputTexture = controllerTexture;
+                            break;
+                        default:
+                            inputTexture = noInputTexture;
+                            break;
+                    }                        
 
-                    if (Input.Users[i].CurrentGamePadState.IsConnected)
-                        inputTextureColor = Color.Green;
-                    else
-                        inputTextureColor = Color.Red;
-
-                    SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, inputTextureColor * TransitionAlpha,
+                    SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, Color.White * TransitionAlpha,
                         0f, Vector2.Zero, 0.2f, SpriteEffects.None, 0f);
                     inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
                 }
