@@ -72,6 +72,8 @@ namespace GameStateManager
 
             Users[0].IsPrimaryUser = true;
 #if DESKTOP
+            Users[0].InputType = InputType.KEYBOARD;
+
             keys = new Dictionary<Action, List<Keys>>
             {
                 { Action.UI_UP, new List<Keys> { Keys.Up, Keys.W } },
@@ -139,12 +141,46 @@ namespace GameStateManager
         }
 
 
+        // Returns true if a Desktop user is the only player.
+        private static bool IsUserAlone(User user)
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (i != user.Index && Users[i].InputType != InputType.NONE)
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        // Returns true if all slots are taken on a Desktop machine.
+        private static bool AreOtherUserSlotsTaken(User user)
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (i != user.Index && Users[i].InputType != InputType.NONE)
+                    return true;
+            }
+
+            return false;
+        }
+
+
         // Event raised when a controller is disconnected.
         public delegate void ControllerDisconnectedEventHandler(User user);
         public static event ControllerDisconnectedEventHandler ControllerDisconnected;
 
         public static void OnControllerDisconnected(User user)
         {
+#if DESKTOP
+            if (IsUserAlone(user))
+                user.InputType = InputType.KEYBOARD;
+            else
+                user.InputType = InputType.NONE;
+#else
+            user.InputType = InputType.NONE;
+#endif
             ScreenManager.GetScreen("controllerDisconnection").OnShow();
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(user);
@@ -157,6 +193,14 @@ namespace GameStateManager
 
         public static void OnControllerConnected(User user)
         {
+#if DESKTOP
+            if (user.InputType == InputType.KEYBOARD && AreOtherUserSlotsTaken(user) == false)
+                user.InputType = InputType.GAMEPAD;
+#else
+            user.InputType = InputType.GAMEPAD;
+#endif
+            SetPrimaryUser(user);
+
             if (ControllerConnected != null)
                 ControllerConnected.Invoke();
         }
