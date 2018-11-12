@@ -33,9 +33,9 @@ namespace GameStateManager
                 ScreenManager.Viewport.Height * 0.1f);
             titleOrigin = Font.MeasureString(MenuTitle) / 2f;
             DrawOrder = 0.1f;
-
-            if (PrimaryUser.InputType == InputType.TOUCH)
-                highlightedEntry = -1;
+#if MOBILE
+            highlightedEntry = -1;
+#endif
         }
 
 
