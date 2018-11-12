@@ -208,6 +208,43 @@ namespace GameStateManager
         }
 
 
+        // Checks if the user is the only one currently active.
+        public static int GetUserCount()
+        {
+#if DESKTOP || CONSOLE
+            int count = 0;
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Users[i].IsActive)
+                    count++;
+            }
+
+            return count;
+#endif
+#if MOBILE
+            return 1;
+#endif
+        }
+
+
+        // Returns the first available user slot.
+        public static int GetFirstAvailableSlot()
+        {
+#if DESKTOP || MOBILE
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Users[i].IsActive == false)
+                    return i;
+            }
+
+            return -1;
+#endif
+#if MOBILE
+            return 1;
+#endif
+        }
+
+
         // Reads the latest state of the keyboard and gamepad.
         public static void Update()
         {
@@ -263,11 +300,9 @@ namespace GameStateManager
 
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
-
-
-
             }
-
+#endif
+#if DESKTOP
             int controllerIndex = WasAnyButtonPressed(false, false);
 
             if (controllerIndex != -1)
@@ -279,18 +314,26 @@ namespace GameStateManager
 
                     switch (Users[i].InputType)
                     {
-                        case InputType.NONE:
-                            break;
                         case InputType.KEYBOARD:
                             {
                                 if (controllerIndex != MAX_USERS)
-                                    OnControllerTypeChanged(controllerIndex);
+                                {
+                                    Users[i].ControllerIndex = controllerIndex;
+                                    Users[i].InputType = InputType.GAMEPAD;
+
+                                    OnUserControllerTypeChanged(i);
+                                }
                             }
                             break;
                         case InputType.GAMEPAD:
                             {
                                 if (controllerIndex == MAX_USERS)
-                                    OnControllerTypeChanged(controllerIndex);
+                                {
+                                    Users[i].ControllerIndex = controllerIndex;
+                                    Users[i].InputType = InputType.KEYBOARD;
+
+                                    OnUserControllerTypeChanged(i);
+                                }
                             }
                             break;
                     }
@@ -341,10 +384,10 @@ namespace GameStateManager
         public delegate void ControllerTypeChangedEventHandler(int controllerIndex);
         public static event ControllerTypeChangedEventHandler ControllerTypeChanged;
 
-        public static void OnControllerTypeChanged(int controllerIndex)
+        public static void OnUserControllerTypeChanged(int userIndex)
         {
             if (ControllerTypeChanged != null)
-                ControllerTypeChanged.Invoke(controllerIndex);
+                ControllerTypeChanged.Invoke(userIndex);
         }
 #endif
 
@@ -353,8 +396,10 @@ namespace GameStateManager
         // Checks if the mouse is currently hovering an interactible area.
         public static bool IsMouseOver(Rectangle area)
         {
-            return (CurrentMouseState.Position.X > area.X && CurrentMouseState.Position.X < area.X + area.Width &&
-                CurrentMouseState.Position.Y > area.Y && CurrentMouseState.Position.Y < area.Y + area.Height);
+            return (CurrentMouseState.Position.X > area.X && 
+                CurrentMouseState.Position.X < area.X + area.Width &&
+                CurrentMouseState.Position.Y > area.Y && 
+                CurrentMouseState.Position.Y < area.Y + area.Height);
         }
 #endif
 
@@ -362,7 +407,8 @@ namespace GameStateManager
         public static int WasAnyButtonPressed(bool ignoreMouseMovement = true, bool ignoreThumbStickMovement = true)
         {
 #if DESKTOP
-            if (CurrentKeyboardState.IsKeyDown(Keys.OemTilde) || LastKeyboardState.IsKeyDown(Keys.OemTilde))
+            if (Console.State == State.OPENED || CurrentKeyboardState.IsKeyDown(Keys.OemTilde) || 
+                LastKeyboardState.IsKeyDown(Keys.OemTilde))
                 return -1;
 
             if (CurrentKeyboardState != LastKeyboardState)
@@ -377,7 +423,8 @@ namespace GameStateManager
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (CurrentGamePadState[i] != LastGamePadState[i] && CurrentGamePadState[i].IsConnected == LastGamePadState[i].IsConnected)
+                if (CurrentGamePadState[i] != LastGamePadState[i] && 
+                    CurrentGamePadState[i].IsConnected == LastGamePadState[i].IsConnected)
                 {
                     if (ignoreThumbStickMovement == false ||
                         (CurrentGamePadState[i].ThumbSticks.Left.Length() == LastGamePadState[i].ThumbSticks.Left.Length() &&
@@ -405,7 +452,8 @@ namespace GameStateManager
             {
                 for (int i = 0; i < keys[action].Count; i++)
                 {
-                    if (LastKeyboardState.IsKeyUp(keys[action][i]) && CurrentKeyboardState.IsKeyDown(keys[action][i]))
+                    if (LastKeyboardState.IsKeyUp(keys[action][i]) && 
+                        CurrentKeyboardState.IsKeyDown(keys[action][i]))
                         return true;
                 }
             }
@@ -416,19 +464,22 @@ namespace GameStateManager
                 {
                     case MouseButton.LEFT:
                         {
-                            if (LastMouseState.LeftButton == ButtonState.Released && CurrentMouseState.LeftButton == ButtonState.Pressed)
+                            if (LastMouseState.LeftButton == ButtonState.Released && 
+                                CurrentMouseState.LeftButton == ButtonState.Pressed)
                                 return true;
                         }
                         break;
                     case MouseButton.RIGHT:
                         {
-                            if (LastMouseState.RightButton == ButtonState.Released && CurrentMouseState.RightButton == ButtonState.Pressed)
+                            if (LastMouseState.RightButton == ButtonState.Released && 
+                                CurrentMouseState.RightButton == ButtonState.Pressed)
                                 return true;
                         }
                         break;
                     case MouseButton.MIDDLE:
                         {
-                            if (LastMouseState.MiddleButton == ButtonState.Released && CurrentMouseState.MiddleButton == ButtonState.Pressed)
+                            if (LastMouseState.MiddleButton == ButtonState.Released && 
+                                CurrentMouseState.MiddleButton == ButtonState.Pressed)
                                 return true;
                         }
                         break;
@@ -442,7 +493,8 @@ namespace GameStateManager
                 {
                     for (int j = 0; j < MAX_USERS; j++)
                     {
-                        if (LastGamePadState[j].IsButtonUp(buttons[action][i]) && CurrentGamePadState[j].IsButtonDown(buttons[action][i]))
+                        if (LastGamePadState[j].IsButtonUp(buttons[action][i]) && 
+                            CurrentGamePadState[j].IsButtonDown(buttons[action][i]))
                             return true;
                     }
                 }
@@ -452,79 +504,6 @@ namespace GameStateManager
 
 #endif
             return false;
-
-            //int i;
-            //if (user != null)
-            //    i = user.ControllerIndex;
-            //else
-            //    i = 0;
-
-            //while (i < MAX_USERS)
-            //{
-            //    switch (Users[i].InputType)
-            //    {
-            //        case InputType.KEYBOARD:
-            //            {
-            //                if (keys.ContainsKey(action))
-            //                {
-            //                    for (int j = 0; j < keys[action].Count; j++)
-            //                    {
-            //                        if (Users[i].LastKeyboardState.IsKeyUp(keys[action][j]) &&
-            //                            Users[i].CurrentKeyboardState.IsKeyDown(keys[action][j]))
-            //                            return true;
-            //                    }
-            //                }
-
-            //                if (mouseButtons.ContainsKey(action))
-            //                {
-            //                    switch (mouseButtons[action])
-            //                    {
-            //                        case MouseButton.LEFT:
-            //                            {
-            //                                if (Users[i].LastMouseState.LeftButton == ButtonState.Released &&
-            //                                    Users[i].CurrentMouseState.LeftButton == ButtonState.Pressed)
-            //                                    return true;
-            //                            }
-            //                            break;
-            //                        case MouseButton.RIGHT:
-            //                            {
-            //                                if (Users[i].LastMouseState.RightButton == ButtonState.Released &&
-            //                                    Users[i].CurrentMouseState.RightButton == ButtonState.Pressed)
-            //                                    return true;
-            //                            }
-            //                            break;
-            //                        case MouseButton.MIDDLE:
-            //                            {
-            //                                if (Users[i].LastMouseState.MiddleButton == ButtonState.Released &&
-            //                                    Users[i].CurrentMouseState.MiddleButton == ButtonState.Pressed)
-            //                                    return true;
-            //                            }
-            //                            break;
-            //                    }
-            //                }
-            //            }
-            //            break;
-            //        case InputType.GAMEPAD:
-            //            {
-            //                if (buttons.ContainsKey(action))
-            //                {
-            //                    for (int j = 0; j < buttons[action].Count; j++)
-            //                    {
-            //                        if (Users[i].LastGamePadState.IsButtonUp(buttons[action][j]) &&
-            //                            Users[i].CurrentGamePadState.IsButtonDown(buttons[action][j]))
-            //                            return true;
-            //                    }
-            //                }
-            //            }
-            //            break;
-            //    }
-
-            //    if (user != null && i == user.controllerIndex)
-            //        return false;
-
-            //    i++;
-            //}
-            //return false;
         }
 
 
