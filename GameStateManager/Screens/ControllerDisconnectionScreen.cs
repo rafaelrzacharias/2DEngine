@@ -31,7 +31,7 @@ namespace GameStateManager
             Texture = Resources.GetTexture("whiteTexture");
             controllerTexture = Resources.GetTexture("controllerTexture");
             keyboardTexture = Resources.GetTexture("keyboardTexture");
-            inputTextureColor = Color.Red;
+            inputTextureColor = Color.White;
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.2f;
             ShouldDarkenBackground = true;
@@ -63,7 +63,10 @@ namespace GameStateManager
 
                 Entries[i].UpdateBounds();
             }
-        }
+
+            Input.ControllerConnected += Input_ControllerConnected;
+            Input.ControllerDisconnected += Input_ControllerDisconnected;
+        } 
 
 
         // Override for the menu entries, so that they will not slide in/out of the screen.
@@ -85,19 +88,32 @@ namespace GameStateManager
                 Vector2 inputTexPos = controllerTexturePosition;
                 for (int i = 0; i < Input.MAX_USERS; i++)
                 {
-                    if (Input.Users[i].InputType == InputType.KEYBOARD)
-                        inputTexture = keyboardTexture;
-                    else
-                        inputTexture = controllerTexture;
+                    switch (Input.Users[i].InputType)
+                    {
+                        case InputType.NONE:
+                            inputTexture = null;
+                            break;
+                        case InputType.KEYBOARD:
+                            inputTexture = keyboardTexture;
+                            break;
+                        case InputType.GAMEPAD:
+                            inputTexture = controllerTexture;
+                            break;
+                        case InputType.TOUCH:
+                            break;
+                    }
 
-                    if (Input.CurrentGamePadState[i].IsConnected)
-                        inputTextureColor = Color.Green;
+                    if (Input.Users[i].IsActive)
+                        inputTextureColor = Color.White;
                     else
-                        inputTextureColor = Color.Red;
+                        inputTextureColor = Color.Gray;
 
-                    SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, inputTextureColor * TransitionAlpha,
-                        0f, Vector2.Zero, 0.2f, SpriteEffects.None, 0f);
-                    inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
+                    if (inputTexture != null)
+                    {
+                        SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, inputTextureColor * TransitionAlpha,
+                            0f, Vector2.Zero, 0.2f, SpriteEffects.None, 0f);
+                        inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
+                    }
                 }
 
                 Utils.PulseColor(ref TextColor);
@@ -106,6 +122,23 @@ namespace GameStateManager
             }
 
             base.Draw(gameTime);
+        }
+
+
+        // Event handler for when a controller is disconnected.
+        private void Input_ControllerDisconnected(int controllerIndex)
+        {
+            for (int i = 0; i < Input.MAX_USERS; i++)
+            {
+                if (Input.Users[i].ControllerIndex == controllerIndex && Input.Users[i].IsActive)
+                    OnShow();
+            }
+        }
+
+        // Event handler for when a controller is connected.
+        private void Input_ControllerConnected(int controllerIndex)
+        {
+
         }
     }
 }
