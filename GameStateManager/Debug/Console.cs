@@ -119,6 +119,12 @@ namespace GameStateManager
                 ScreenManager.Game.Exit();
             });
 
+            RegisterCommand("controller", "Displays the controller disconnection screen.",
+            delegate (IConsoleHost host, string command, List<string> args)
+            {
+                ScreenManager.GetScreen("controllerDisconnection").OnShow();
+            });
+
             IsActive = true;
         }
 
@@ -281,7 +287,7 @@ namespace GameStateManager
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.WasButtonPressed(Action.DEBUG, Input.GetPrimaryUser()))
+                    if (Input.WasButtonPressed(Action.CONSOLE, Input.GetPrimaryUser()))
                         Show();
                     break;
                 case State.OPENING:
@@ -293,7 +299,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.WasButtonPressed(Action.DEBUG, Input.GetPrimaryUser()))
+                    if (Input.WasButtonPressed(Action.CONSOLE, Input.GetPrimaryUser()))
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);
