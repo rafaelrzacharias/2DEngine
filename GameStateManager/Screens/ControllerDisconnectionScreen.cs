@@ -33,7 +33,7 @@ namespace GameStateManager
             keyboardTexture = Resources.GetTexture("keyboardTexture");
             inputTextureColor = Color.White;
             EnabledGestures = GestureType.Tap;
-            DrawOrder = 0.2f;
+            DrawOrder = 0.3f;
             ShouldDarkenBackground = true;
             Padding = new Vector2(16, 16);
 
@@ -128,17 +128,44 @@ namespace GameStateManager
         // Event handler for when a controller is disconnected.
         private void Input_ControllerDisconnected(int controllerIndex)
         {
-            for (int i = 0; i < Input.MAX_USERS; i++)
+            if (IsVisible == false)
             {
-                if (Input.Users[i].ControllerIndex == controllerIndex && Input.Users[i].IsActive)
-                    OnShow();
+                for (int i = 0; i < Input.MAX_USERS; i++)
+                {
+                    if (Input.Users[i].IsActive && Input.Users[i].ControllerIndex == controllerIndex)
+                    {
+                        OnShow();
+                        break;
+                    }
+                }
             }
         }
 
         // Event handler for when a controller is connected.
         private void Input_ControllerConnected(int controllerIndex)
         {
+            if (IsVisible)
+            {
+                int numUsers = Input.GetUserCount();
 
+                if (numUsers == 0)
+                {
+                    Input.SetPrimaryUser(Input.Users[0]);
+                    Input.SetUserControllerType(Input.Users[0], controllerIndex);
+                    OnHide();
+                }
+                else
+                {
+                    int slot = Input.GetFirstAvailableSlot();
+
+                    if (slot != -1)
+                    {
+                        Input.SetPrimaryUser(Input.Users[slot]);
+                        Input.SetUserControllerType(Input.Users[slot], controllerIndex);
+                        OnHide();
+                    }
+                }
+            }
         }
     }
 }
