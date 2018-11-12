@@ -32,6 +32,7 @@ namespace GameStateManager
         UI_PAGE_LEFT,
         UI_PAGE_RIGHT,
         DEBUG,
+        CONSOLE,
         PAUSE
     }
 
@@ -102,7 +103,8 @@ namespace GameStateManager
                 { Action.UI_BACK, new List<Keys> { Keys.Escape } },
                 { Action.UI_PAGE_LEFT, new List<Keys> { Keys.Q, Keys.PageUp } },
                 { Action.UI_PAGE_RIGHT, new List<Keys> { Keys.E, Keys.PageDown } },
-                { Action.DEBUG, new List<Keys> { Keys.OemTilde } },
+                { Action.DEBUG, new List<Keys> { Keys.F1 } },
+                { Action.CONSOLE, new List<Keys> {Keys.OemTilde } },
                 { Action.PAUSE, new List<Keys> { Keys.Escape } }
             };
 
@@ -153,14 +155,13 @@ namespace GameStateManager
 
             for (int i = 0; i < MAX_USERS; i++)
                 Users[i] = new User();
-
-            Users[0].IsPrimaryUser = true;
         }
 
 
         // Gets the primary user.
         public static User GetPrimaryUser()
         {
+#if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
                 if (Users[i].IsPrimaryUser)
@@ -168,16 +169,42 @@ namespace GameStateManager
             }
 
             return null;
+#endif
+#if MOBILE
+            return Users[0];
+#endif
         }
 
 
         // Sets the primary user.
         public static void SetPrimaryUser(User user)
         {
+#if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
                 Users[i].IsPrimaryUser = false;
 
             user.IsPrimaryUser = true;
+#endif
+#if MOBILE
+            Users[0].IsPrimaryUser = true;
+#endif
+        }
+
+
+        // Set the user controller type based on the given controller index.
+        public static void SetUserControllerType(User user, int controllerIndex)
+        {
+#if DESKTOP || CONSOLE
+            if (controllerIndex != MAX_USERS)
+                user.InputType = InputType.GAMEPAD;
+            else
+                user.InputType = InputType.KEYBOARD;
+
+            user.ControllerIndex = controllerIndex;
+#endif
+#if MOBILE
+            Users[0].InputType = InputType.TOUCH;
+#endif
         }
 
 
@@ -236,6 +263,33 @@ namespace GameStateManager
 
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
+
+            }
+
+            int controllerIndex = WasAnyButtonPressed(false, false);
+
+            if (controllerIndex != -1)
+            {
+                for (int i = 0; i < MAX_USERS; i++)
+                {
+                    switch (Users[i].InputType)
+                    {
+                        case InputType.NONE:
+                            break;
+                        case InputType.KEYBOARD:
+                            {
+                                if (controllerIndex != MAX_USERS)
+                                    OnControllerTypeChanged(controllerIndex);
+                            }
+                            break;
+                        case InputType.GAMEPAD:
+                            {
+                                if (controllerIndex == MAX_USERS)
+                                    OnControllerTypeChanged(controllerIndex);
+                            }
+                            break;
+                    }
+                }
             }
 #endif
 #if MOBILE
@@ -255,6 +309,7 @@ namespace GameStateManager
         }
 
 
+#if DESKTOP || CONSOLE
         // Event raised when a controller is disconnected.
         public delegate void ControllerDisconnectedEventHandler(int controllerIndex);
         public static event ControllerDisconnectedEventHandler ControllerDisconnected;
@@ -266,7 +321,7 @@ namespace GameStateManager
         }
 
 
-        // Event raised when a controller is disconnected.
+        // Event raised when a controller is connected.
         public delegate void ControllerConnectedEventHandler(int controllerIndex);
         public static event ControllerConnectedEventHandler ControllerConnected;
 
@@ -275,6 +330,18 @@ namespace GameStateManager
             if (ControllerConnected != null)
                 ControllerConnected.Invoke(controllerIndex);
         }
+
+
+        // Event raised when an active user changes its controller type.
+        public delegate void ControllerTypeChangedEventHandler(int controllerIndex);
+        public static event ControllerTypeChangedEventHandler ControllerTypeChanged;
+
+        public static void OnControllerTypeChanged(int controllerIndex)
+        {
+            if (ControllerTypeChanged != null)
+                ControllerTypeChanged.Invoke(controllerIndex);
+        }
+#endif
 
 
 #if DESKTOP
@@ -287,36 +354,39 @@ namespace GameStateManager
 #endif
 
         // Checks if any key was pressed on each connected gamepad, keyboard and mouse.
-        public static bool WasAnyButtonPressed(bool ignoreMouseMovement = true, bool ignoreThumbStickMovement = true)
+        public static int WasAnyButtonPressed(bool ignoreMouseMovement = true, bool ignoreThumbStickMovement = true)
         {
 #if DESKTOP
+            if (CurrentKeyboardState.IsKeyDown(Keys.OemTilde) || LastKeyboardState.IsKeyDown(Keys.OemTilde))
+                return -1;
+
             if (CurrentKeyboardState != LastKeyboardState)
-                return true;
+                return MAX_USERS;
 
             if (CurrentMouseState != LastMouseState)
             {
                 if (ignoreMouseMovement == false || CurrentMouseState.Position == LastMouseState.Position)
-                    return true;
+                    return MAX_USERS;
             }
 #endif
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (CurrentGamePadState[i] != LastGamePadState[i])
+                if (CurrentGamePadState[i] != LastGamePadState[i] && CurrentGamePadState[i].IsConnected == LastGamePadState[i].IsConnected)
                 {
                     if (ignoreThumbStickMovement == false ||
                         (CurrentGamePadState[i].ThumbSticks.Left.Length() == LastGamePadState[i].ThumbSticks.Left.Length() &&
                         CurrentGamePadState[i].ThumbSticks.Right.Length() == LastGamePadState[i].ThumbSticks.Right.Length()))
-                        return true;
+                        return i;
                 }
             }
 #endif
 #if MOBILE
             if (Gestures.Length != 0)
-                return true;
+                return MAX_USERS;
 #endif
 
-            return false;
+            return -1;
         }
 
 
@@ -497,7 +567,7 @@ namespace GameStateManager
 
         // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
         public static bool HasMouseMoved()
-        { 
+        {
             return CurrentMouseState.Position != LastMouseState.Position;
         }
 
@@ -526,6 +596,6 @@ namespace GameStateManager
 
             return false;
         }
-    }
 #endif
+    }
 }
