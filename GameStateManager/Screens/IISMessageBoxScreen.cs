@@ -17,8 +17,12 @@ namespace GameStateManager
         {
             base.HandleInput();
 
-            if (Input.WasAnyButtonPressed())
+            int controllerIndex = Input.WasAnyButtonPressed();
+            if (controllerIndex != -1)
             {
+                Input.SetPrimaryUser(Input.Users[0]);
+                Input.SetUserControllerType(Input.Users[0], controllerIndex);
+
                 OnHide();
 
                 LoadingScreen.Unload(this);
