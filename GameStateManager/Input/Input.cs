@@ -264,6 +264,8 @@ namespace GameStateManager
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
 
+
+
             }
 
             int controllerIndex = WasAnyButtonPressed(false, false);
@@ -272,6 +274,9 @@ namespace GameStateManager
             {
                 for (int i = 0; i < MAX_USERS; i++)
                 {
+                    if (Users[i].IsActive == false || Users[i].ControllerIndex == controllerIndex)
+                        continue;
+
                     switch (Users[i].InputType)
                     {
                         case InputType.NONE:
