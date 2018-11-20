@@ -76,6 +76,8 @@ namespace GameStateManager
             confirmQuit.Dismiss += MessageBox_No;
 
             base.OnShow();
+            Audio.PauseOrResumeAllSounds();
+            Audio.PauseOrResumeSong();
         }
 
 
