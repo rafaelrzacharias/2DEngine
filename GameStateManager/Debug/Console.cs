@@ -122,7 +122,12 @@ namespace GameStateManager
             RegisterCommand("controller", "Displays the controller disconnection screen.",
             delegate (IConsoleHost host, string command, List<string> args)
             {
-                ScreenManager.GetScreen("controllerDisconnection").OnShow();
+                Screen controllerDisconnection = ScreenManager.GetScreen("controllerDisconnection");
+
+                if (controllerDisconnection.IsVisible)
+                    controllerDisconnection.OnHide();
+                else
+                    controllerDisconnection.OnShow();
             });
 
             IsActive = true;
