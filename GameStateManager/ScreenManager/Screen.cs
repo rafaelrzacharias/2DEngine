@@ -68,7 +68,12 @@ namespace GameStateManager
         // The main menu responds to input from any connected gamepad, but whichever player makes a
         // selection from this menu is given control over all subsequent screens, so other gamepads
         // are inactive until the controlling player returns to the main menu.
-        public User PrimaryUser { get; set; }
+        protected User ControllingUser;
+        public User PrimaryUser
+        {
+            get { return ControllingUser != null ? ControllingUser : Input.GetPrimaryUser(); }
+            set { ControllingUser = value; }
+        }
 
         // Determines which order the screen is going to get drawn.
         public float DrawOrder;
@@ -152,7 +157,6 @@ namespace GameStateManager
             TransitionState = ScreenState.TransitionOn;
             Font = Resources.GetFont("gameFont");
             BackgroundColor = Color.White;
-            PrimaryUser = Input.GetPrimaryUser();
 
             isTransitioningOff = true;
         }
@@ -203,8 +207,6 @@ namespace GameStateManager
 
             // Gradually fade in or out when covered by another screen.
             pauseAlpha = Math.Max(pauseAlpha - 1f / 32, 0);
-
-            PrimaryUser = Input.GetPrimaryUser();
         }
 
 
