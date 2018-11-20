@@ -10,7 +10,7 @@ namespace GameStateManager
     // move up and down to select an entry, or cancel to back out of the screen.
     public abstract class MenuScreen : Screen
     {
-        private int highlightedEntry;
+        protected int highlightedEntry;
         private int previousHighlightedEntry;
         private Vector2 titlePosition;
         private Vector2 titleOrigin;
@@ -44,7 +44,7 @@ namespace GameStateManager
             isMenuUp = Input.WasButtonPressed(Action.UI_UP, PrimaryUser);
             isMenuDown = Input.WasButtonPressed(Action.UI_DOWN, PrimaryUser);
 
-            if (Input.HasMouseMoved())
+            if (PrimaryUser != null && PrimaryUser.InputType == InputType.KEYBOARD && Input.HasMouseMoved())
             {
                 for (int i = 0; i < Entries.Count; i++)
                 {
