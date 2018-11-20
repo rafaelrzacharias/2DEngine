@@ -18,8 +18,10 @@ namespace GameStateManager
         private Texture2D controllerTexture;
         private Texture2D keyboardTexture;
         private Texture2D inputTexture;
+        private Texture2D noInputTexture;
         private Color inputTextureColor;
         private Vector2 controllerTexturePosition;
+        private User temporaryUser;
 
         // Constructs a new controller disconnection screen.
         public ControllerDisconnectionScreen(string screenName, string menuTitle = "")
@@ -31,7 +33,9 @@ namespace GameStateManager
             Texture = Resources.GetTexture("whiteTexture");
             controllerTexture = Resources.GetTexture("controllerTexture");
             keyboardTexture = Resources.GetTexture("keyboardTexture");
+            noInputTexture = Resources.GetTexture("noInputTexture");
             inputTextureColor = Color.White;
+            temporaryUser = new User();
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.3f;
             ShouldDarkenBackground = true;
@@ -62,11 +66,12 @@ namespace GameStateManager
                 Entries[i].Position.Y = controllerTexturePosition.Y + controllerTexture.Height * 0.2f + Padding.Y;
 
                 Entries[i].UpdateBounds();
+                Entries[i].Selected += ControllerDisconnectionScreen_Selected;
             }
 
             Input.ControllerConnected += Input_ControllerConnected;
             Input.ControllerDisconnected += Input_ControllerDisconnected;
-        } 
+        }
 
 
         // Override for the menu entries, so that they will not slide in/out of the screen.
@@ -91,7 +96,7 @@ namespace GameStateManager
                     switch (Input.Users[i].InputType)
                     {
                         case InputType.NONE:
-                            inputTexture = null;
+                            inputTexture = noInputTexture;
                             break;
                         case InputType.KEYBOARD:
                             inputTexture = keyboardTexture;
@@ -106,14 +111,11 @@ namespace GameStateManager
                     if (Input.Users[i].IsActive)
                         inputTextureColor = Color.White;
                     else
-                        inputTextureColor = Color.Gray;
+                        inputTextureColor = BackgroundColor;
 
-                    if (inputTexture != null)
-                    {
-                        SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, inputTextureColor * TransitionAlpha,
-                            0f, Vector2.Zero, 0.2f, SpriteEffects.None, 0f);
-                        inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
-                    }
+                    SpriteBatch.Draw(inputTexture, inputTexPos, controllerTexture.Bounds, inputTextureColor * TransitionAlpha,
+                        0f, Vector2.Zero, 0.2f, SpriteEffects.None, 0f);
+                    inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
                 }
 
                 Utils.PulseColor(ref TextColor);
@@ -132,40 +134,49 @@ namespace GameStateManager
             {
                 for (int i = 0; i < Input.MAX_USERS; i++)
                 {
-                    if (Input.Users[i].IsActive && Input.Users[i].ControllerIndex == controllerIndex)
+                    User user = Input.Users[i];
+                    if (user.ControllerIndex == controllerIndex)
                     {
-                        OnShow();
+                        Input.ResetUser(user);
                         break;
                     }
                 }
+
+                OnShow();
             }
+
+            if (IsVisible && Input.GetUserCount() == 1)
+                ControllingUser = Input.GetPrimaryUser();
         }
 
         // Event handler for when a controller is connected.
         private void Input_ControllerConnected(int controllerIndex)
         {
-            if (IsVisible)
+            if (IsVisible || Input.GetPrimaryUser() != null)
             {
-                int numUsers = Input.GetUserCount();
-
-                if (numUsers == 0)
-                {
-                    Input.SetPrimaryUser(Input.Users[0]);
-                    Input.SetUserControllerType(Input.Users[0], controllerIndex);
-                    OnHide();
-                }
-                else
-                {
-                    int slot = Input.GetFirstAvailableSlot();
-
-                    if (slot != -1)
-                    {
-                        Input.SetPrimaryUser(Input.Users[slot]);
-                        Input.SetUserControllerType(Input.Users[slot], controllerIndex);
-                        OnHide();
-                    }
-                }
+                ControllingUser = temporaryUser;
+                ControllingUser.ControllerIndex = controllerIndex;
+                ControllingUser.InputType = InputType.GAMEPAD;
+                OnShow();
             }
+        }
+
+
+        private void ControllerDisconnectionScreen_Selected(User user)
+        {
+            Input.SetUserControllerType(Input.Users[highlightedEntry], user.ControllerIndex);
+
+            if (Input.GetUserCount() == 1)
+                Input.SetPrimaryUser(Input.Users[highlightedEntry]);
+
+            OnHide();
+        }
+
+
+        public override void OnHide()
+        {
+            ControllingUser = null;
+            base.OnHide();
         }
     }
 }
