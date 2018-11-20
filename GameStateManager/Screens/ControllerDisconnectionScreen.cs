@@ -130,7 +130,7 @@ namespace GameStateManager
         // Event handler for when a controller is disconnected.
         private void Input_ControllerDisconnected(int controllerIndex)
         {
-            if (IsVisible == false)
+            if (IsVisible == false && Input.GetPrimaryUser() != null)
             {
                 for (int i = 0; i < Input.MAX_USERS; i++)
                 {
@@ -157,7 +157,9 @@ namespace GameStateManager
                 ControllingUser = temporaryUser;
                 ControllingUser.ControllerIndex = controllerIndex;
                 ControllingUser.InputType = InputType.GAMEPAD;
-                OnShow();
+
+                if (IsVisible == false)
+                    OnShow();
             }
         }
 
@@ -176,7 +178,17 @@ namespace GameStateManager
         public override void OnHide()
         {
             ControllingUser = null;
+            Audio.PauseOrResumeAllSounds();
+            Audio.PauseOrResumeSong();
             base.OnHide();
+        }
+
+
+        public override void OnShow()
+        {
+            Audio.PauseOrResumeAllSounds();
+            Audio.PauseOrResumeSong();
+            base.OnShow();
         }
     }
 }
