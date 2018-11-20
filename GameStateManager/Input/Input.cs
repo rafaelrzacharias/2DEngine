@@ -201,10 +201,39 @@ namespace GameStateManager
                 user.InputType = InputType.KEYBOARD;
 
             user.ControllerIndex = controllerIndex;
+
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Users[i].ControllerIndex == controllerIndex && Users[i] != user)
+                {
+                    ResetUser(Users[i]);
+                    break;
+                }
+            }
 #endif
 #if MOBILE
             Users[0].InputType = InputType.TOUCH;
 #endif
+        }
+
+
+        // Reset the user to a default state.
+        public static void ResetUser(User user)
+        {
+#if DESKTOP
+            if (GetUserCount() == 1)
+            {
+                user.ControllerIndex = MAX_USERS;
+                user.InputType = InputType.KEYBOARD;
+                user.IsPrimaryUser = true;
+            }
+            else
+#endif
+            {
+                user.ControllerIndex = -1;
+                user.InputType = InputType.NONE;
+                user.IsPrimaryUser = false;
+            }
         }
 
 
@@ -230,10 +259,13 @@ namespace GameStateManager
         // Returns the first available user slot.
         public static int GetFirstAvailableSlot()
         {
-#if DESKTOP || MOBILE
+#if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i].IsActive == false)
+                if (Users[i].IsActive == false
+#if DESKTOP
+                    || Users[i].InputType == InputType.KEYBOARD)
+#endif
                     return i;
             }
 
@@ -302,23 +334,25 @@ namespace GameStateManager
                     OnControllerConnected(i);
             }
 #endif
-#if DESKTOP
-            int controllerIndex = WasAnyButtonPressed(false, false);
+#if !DESKTOP
+            int index = -1;
+            if (GetUserCount() == 0)
+                index = WasAnyButtonPressed(true, false);
 
-            if (controllerIndex != -1)
+            if (index != -1)
             {
                 for (int i = 0; i < MAX_USERS; i++)
                 {
-                    if (Users[i].IsActive == false || Users[i].ControllerIndex == controllerIndex)
+                    if (Users[i].ControllerIndex == index)
                         continue;
 
                     switch (Users[i].InputType)
                     {
                         case InputType.KEYBOARD:
                             {
-                                if (controllerIndex != MAX_USERS)
+                                if (index != MAX_USERS)
                                 {
-                                    Users[i].ControllerIndex = controllerIndex;
+                                    Users[i].ControllerIndex = index;
                                     Users[i].InputType = InputType.GAMEPAD;
 
                                     OnUserControllerTypeChanged(i);
@@ -327,9 +361,9 @@ namespace GameStateManager
                             break;
                         case InputType.GAMEPAD:
                             {
-                                if (controllerIndex == MAX_USERS)
+                                if (index == MAX_USERS)
                                 {
-                                    Users[i].ControllerIndex = controllerIndex;
+                                    Users[i].ControllerIndex = index;
                                     Users[i].InputType = InputType.KEYBOARD;
 
                                     OnUserControllerTypeChanged(i);
@@ -337,6 +371,8 @@ namespace GameStateManager
                             }
                             break;
                     }
+
+                    break;
                 }
             }
 #endif
@@ -407,8 +443,8 @@ namespace GameStateManager
         public static int WasAnyButtonPressed(bool ignoreMouseMovement = true, bool ignoreThumbStickMovement = true)
         {
 #if DESKTOP
-            if (Console.State == State.OPENED || CurrentKeyboardState.IsKeyDown(Keys.OemTilde) || 
-                LastKeyboardState.IsKeyDown(Keys.OemTilde))
+            if (Console.State == State.OPENED ||
+                CurrentKeyboardState.IsKeyDown(Keys.OemTilde) || LastKeyboardState.IsKeyDown(Keys.OemTilde))
                 return -1;
 
             if (CurrentKeyboardState != LastKeyboardState)
@@ -448,54 +484,74 @@ namespace GameStateManager
         public static bool WasButtonPressed(Action action, User user = null)
         {
 #if DESKTOP
-            if (keys.ContainsKey(action))
+            if (user == null || user.InputType == InputType.KEYBOARD)
             {
-                for (int i = 0; i < keys[action].Count; i++)
+                if (keys.ContainsKey(action))
                 {
-                    if (LastKeyboardState.IsKeyUp(keys[action][i]) && 
-                        CurrentKeyboardState.IsKeyDown(keys[action][i]))
-                        return true;
+                    for (int i = 0; i < keys[action].Count; i++)
+                    {
+                        if (LastKeyboardState.IsKeyUp(keys[action][i]) &&
+                            CurrentKeyboardState.IsKeyDown(keys[action][i]))
+                            return true;
+                    }
+                }
+
+                if (mouseButtons.ContainsKey(action))
+                {
+                    switch (mouseButtons[action])
+                    {
+                        case MouseButton.LEFT:
+                            {
+                                if (LastMouseState.LeftButton == ButtonState.Released &&
+                                    CurrentMouseState.LeftButton == ButtonState.Pressed)
+                                    return true;
+                            }
+                            break;
+                        case MouseButton.RIGHT:
+                            {
+                                if (LastMouseState.RightButton == ButtonState.Released &&
+                                    CurrentMouseState.RightButton == ButtonState.Pressed)
+                                    return true;
+                            }
+                            break;
+                        case MouseButton.MIDDLE:
+                            {
+                                if (LastMouseState.MiddleButton == ButtonState.Released &&
+                                    CurrentMouseState.MiddleButton == ButtonState.Pressed)
+                                    return true;
+                            }
+                            break;
+                    }
                 }
             }
 
-            if (mouseButtons.ContainsKey(action))
-            {
-                switch (mouseButtons[action])
-                {
-                    case MouseButton.LEFT:
-                        {
-                            if (LastMouseState.LeftButton == ButtonState.Released && 
-                                CurrentMouseState.LeftButton == ButtonState.Pressed)
-                                return true;
-                        }
-                        break;
-                    case MouseButton.RIGHT:
-                        {
-                            if (LastMouseState.RightButton == ButtonState.Released && 
-                                CurrentMouseState.RightButton == ButtonState.Pressed)
-                                return true;
-                        }
-                        break;
-                    case MouseButton.MIDDLE:
-                        {
-                            if (LastMouseState.MiddleButton == ButtonState.Released && 
-                                CurrentMouseState.MiddleButton == ButtonState.Pressed)
-                                return true;
-                        }
-                        break;
-                }
-            }
 #endif
 #if DESKTOP || CONSOLE
-            if (buttons.ContainsKey(action))
+            if (user == null || user.InputType == InputType.GAMEPAD)
             {
-                for (int i = 0; i < buttons[action].Count; i++)
+                int index = -1;
+                if (user != null)
+                    index = user.ControllerIndex;
+
+                if (buttons.ContainsKey(action))
                 {
-                    for (int j = 0; j < MAX_USERS; j++)
+                    for (int i = 0; i < buttons[action].Count; i++)
                     {
-                        if (LastGamePadState[j].IsButtonUp(buttons[action][i]) && 
-                            CurrentGamePadState[j].IsButtonDown(buttons[action][i]))
-                            return true;
+                        if (index != -1)
+                        {
+                            if (LastGamePadState[index].IsButtonUp(buttons[action][i]) &&
+                                CurrentGamePadState[index].IsButtonDown(buttons[action][i]))
+                                return true;
+                        }
+                        else
+                        {
+                            for (int j = 0; j < MAX_USERS; j++)
+                            {
+                                if (LastGamePadState[j].IsButtonUp(buttons[action][i]) &&
+                                    CurrentGamePadState[j].IsButtonDown(buttons[action][i]))
+                                    return true;
+                            }
+                        }
                     }
                 }
             }
