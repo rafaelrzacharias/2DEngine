@@ -484,6 +484,16 @@ namespace GameStateManager
         public static bool WasButtonPressed(Action action, User user = null)
         {
 #if DESKTOP
+            if (action == Action.CONSOLE)
+            {
+                for (int i = 0; i < keys[action].Count; i++)
+                {
+                    if (LastKeyboardState.IsKeyUp(keys[action][i]) &&
+                            CurrentKeyboardState.IsKeyDown(keys[action][i]))
+                        return true;
+                }
+            }
+
             if (user == null || user.InputType == InputType.KEYBOARD)
             {
                 if (keys.ContainsKey(action))
