@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace GameStateManager
@@ -76,6 +77,28 @@ namespace GameStateManager
         public static GamePadState[] CurrentGamePadState;
 
         private static Dictionary<Action, List<Buttons>> buttons;
+
+        // The last "real time" that new input was received. Slightly late button
+        // presses will not update this time; they are merged with previous input.
+        public static TimeSpan LastInputTime { get; private set; }
+
+        // The current sequence of pressed buttons.
+        private const int BUFFER_SIZE = 10;
+        public static List<Buttons>[] Buffers;
+
+        // This is how long to wait for input before all input data is expired.
+        // This prevents the player from performing half of a move, waiting, then
+        // performing the rest of the move after they forgot about the first half.
+        public static readonly TimeSpan BufferTimeout = TimeSpan.FromMilliseconds(500.0);
+
+        // The size of the "merge window" for combining button presses that occur at almost
+        // the same time. If too small, players will find it difficult to perform moves which
+        // require pressing several buttons simultaneously. If too large, players will find it
+        // difficult to perform moves which require pressing several buttons in sequence.
+        public static readonly TimeSpan MergeInputTime = TimeSpan.FromMilliseconds(100.0);
+
+        // Provides the map of non-directional gamePad buttons to keyboard keys.
+        public static Dictionary<Buttons, Keys> NonDirectionalButtons { get; private set; }
 #endif
 #if MOBILE
         public static TouchCollection TouchState;
@@ -136,6 +159,26 @@ namespace GameStateManager
                 { Action.UI_PAGE_RIGHT, new List<Buttons> { Buttons.RightShoulder } },
                 { Action.DEBUG, new List<Buttons> { Buttons.Back } },
                 { Action.PAUSE, new List<Buttons> { Buttons.Start } }
+            };
+
+            Buffers = new List<Buttons>[MAX_USERS];
+            for (int i = 0; i < MAX_USERS; i++)
+                Buffers[i] = new List<Buttons>(BUFFER_SIZE);
+
+            NonDirectionalButtons = new Dictionary<Buttons, Keys>
+            {
+                { Buttons.A, Keys.K },
+                { Buttons.B, Keys.L },
+                { Buttons.X, Keys.J },
+                { Buttons.Y, Keys.I },
+                { Buttons.Start, Keys.Enter },
+                { Buttons.Back, Keys.Escape },
+                { Buttons.LeftShoulder, Keys.Q },
+                { Buttons.LeftTrigger, Keys.D1 },
+                { Buttons.RightShoulder, Keys.O },
+                { Buttons.RightTrigger, Keys.D0 },
+                { Buttons.LeftStick, Keys.Z },
+                { Buttons.RightStick, Keys.M }
             };
 #endif
 #if MOBILE
@@ -277,7 +320,8 @@ namespace GameStateManager
         }
 
 
-        // Reads the latest state of the keyboard and gamepad.
+        // Reads the latest state of the keyboard and gamepad
+        // and uses it to update the input history buffer.
         public static void Update()
         {
 #if DESKTOP
@@ -285,6 +329,12 @@ namespace GameStateManager
             CurrentKeyboardState = Keyboard.GetState();
             LastMouseState = CurrentMouseState;
             CurrentMouseState = Mouse.GetState();
+
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Users[i].IsActive)
+                    UpdateNonDirectionalButtons(i);
+            }
 
             if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
             {
@@ -390,6 +440,74 @@ namespace GameStateManager
                 i++
             }
 #endif
+        }
+
+
+        private static void UpdateNonDirectionalButtons(int controllerIndex)
+        {
+            // Expire old input.
+            TimeSpan time = TimeSpan.FromMilliseconds(0.0);
+            if (ScreenManager.GameTime != null)
+                time = ScreenManager.GameTime.TotalGameTime;
+            TimeSpan timeSinceLast = time - LastInputTime;
+
+            if (timeSinceLast > BufferTimeout)
+                Buffers[controllerIndex].Clear();
+
+            // Get all of the non-directional buttons pressed.
+            Buttons buttons = 0;
+            foreach (KeyValuePair<Buttons, Keys> pair in NonDirectionalButtons)
+            {
+                Buttons button = pair.Key;
+                Keys key = pair.Value;
+
+                // Check the gamePad and keyboard for presses.
+                if ((LastGamePadState[controllerIndex].IsButtonUp(button) && CurrentGamePadState[controllerIndex].IsButtonDown(button)) ||
+                    (LastKeyboardState.IsKeyUp(key) && CurrentKeyboardState.IsKeyDown(key)))
+                {
+                    // Use the bitwise OR to accumulate button presses.
+                    buttons |= button;
+                }
+            }
+
+            // It is very hard to press two buttons on exactly the same frame.
+            // If they are close enough, consider them pressed at the same time.
+            bool mergeInput = Buffers[controllerIndex].Count > 0 && timeSinceLast < MergeInputTime;
+
+            // If there is a new direction.s
+            Buttons direction = Direction.FromInput(CurrentGamePadState[controllerIndex], CurrentKeyboardState);
+
+            if (Direction.FromInput(LastGamePadState[controllerIndex], LastKeyboardState) != direction)
+            {
+                // Combine the direction with the buttons.
+                buttons |= direction;
+
+                // Don't merge two opposite directions. This has the side effect that the direction needs
+                // to be pressed at the same time or slightly before the buttons for merging to work.
+                mergeInput = false;
+            }
+
+            // If there was any new input on this update, add it to the buffer.
+            if (buttons != 0)
+            {
+                if (mergeInput)
+                {
+                    // Use the bitwise OR to merge with the previous input.
+                    // LastInputTime isn't updated to prevent extending the merge window.
+                    Buffers[controllerIndex][Buffers[controllerIndex].Count - 1] |= buttons;
+                }
+                else
+                {
+                    // Append this input to the buffer, expiring old input if necessary.
+                    if (Buffers[controllerIndex].Count == Buffers[controllerIndex].Capacity)
+                        Buffers[controllerIndex].RemoveAt(0);
+
+                    Buffers[controllerIndex].Add(buttons);
+
+                    // Record the time of this input to begin the merge window.
+                    LastInputTime = time;
+                }
+            }
         }
 
 
@@ -647,5 +765,28 @@ namespace GameStateManager
             return false;
         }
 #endif
+
+        // Determines if a move matches the current input history of a user.
+        // Unless the move is a sub-move, the history is "consumed" to prevent it from matching twice.
+        public static bool Matches(Move move, int i)
+        {
+            // If the move is longer than the buffer, if can't possibly match.
+            if (move.Sequence.Length > Buffers[i].Count)
+                return false;
+
+            // Loop backwards to match against the most recent input.
+            for (int j = 1; j <= move.Sequence.Length; ++j)
+            {
+
+                if (Buffers[i][Buffers[i].Count - j] != move.Sequence[move.Sequence.Length - j])
+                    return false;
+            }
+
+            // Unless this move is a component of a larger sequence, consume it.
+            if (!move.IsSubMove)
+                Buffers[i].Clear();
+
+            return true;
+        }
     }
 }
