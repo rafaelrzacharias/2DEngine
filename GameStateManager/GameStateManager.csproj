@@ -56,6 +56,9 @@
     <Compile Include="Debug\ScreenStats.cs" />
     <Compile Include="Debug\StringBuilderExtensions.cs" />
     <Compile Include="Game1.cs" />
+    <Compile Include="Input\Direction.cs" />
+    <Compile Include="Input\Move.cs" />
+    <Compile Include="Input\MoveList.cs" />
     <Compile Include="Input\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
