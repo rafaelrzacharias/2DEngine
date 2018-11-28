@@ -4,6 +4,7 @@
     public class MainMenuScreen : MenuScreen
     {
         private OptionsMenuScreen optionsMenu;
+        private BufferedInputScreen bufferedInputMenu;
         private MessageBoxScreen confirmQuit;
 
         // Constructs a main menu screen.
@@ -16,20 +17,26 @@
             // Create our menu entries.
             MenuEntry playGameEntry = new MenuEntry("Play Game");
             MenuEntry optionsEntry = new MenuEntry("Options");
+            MenuEntry bufferedInputEntry = new MenuEntry("Buffered Input");
             MenuEntry exitEntry = new MenuEntry("Exit");
 
             // Add the menu event handlers.
             playGameEntry.Selected += PlayGameEntry_OnSelected;
             optionsEntry.Selected += OptionsEntry_OnSelected;
+            bufferedInputEntry.Selected += BufferedInputEntry_Selected;
             exitEntry.Selected += ExitEntry_OnSelected;
 
             // Add the entries to the menu.
             Entries.Add(playGameEntry);
             Entries.Add(optionsEntry);
+            Entries.Add(bufferedInputEntry);
             Entries.Add(exitEntry);
 
             optionsMenu = ScreenManager.GetScreen("optionsMenu") as OptionsMenuScreen;
             optionsMenu.Hide += OptionsMenu_OnHide;
+
+            bufferedInputMenu = ScreenManager.GetScreen("bufferedInputMenu") as BufferedInputScreen;
+            bufferedInputMenu.Hide += BufferedInputMenu_OnHide;
 
             OnShow();
         }
@@ -56,6 +63,7 @@
             OnHide();
             LoadingScreen.Unload(ScreenManager.GetScreen("mainMenuBackground"));
             LoadingScreen.Unload(ScreenManager.GetScreen("optionsMenu"));
+            LoadingScreen.Unload(ScreenManager.GetScreen("bufferedInputMenu"));
             LoadingScreen.Unload(this);
 
             LoadingScreen.Load(new PauseMenuScreen("pauseMenu", "Paused"));
@@ -68,6 +76,14 @@
         {
             OnHide();
             optionsMenu.OnShow();
+        }
+
+
+        // Event handler for when the "Buffered Input" entry is selected.
+        private void BufferedInputEntry_Selected(User user)
+        {
+            OnHide();
+            bufferedInputMenu.OnShow();
         }
 
 
@@ -111,6 +127,13 @@
 
         // Callback for when the "Options Menu" is dismissed.
         private void OptionsMenu_OnHide()
+        {
+            OnShow();
+        }
+
+
+        // Callback for when the "Buffered Input Menu" is dismissed.
+        private void BufferedInputMenu_OnHide()
         {
             OnShow();
         }
