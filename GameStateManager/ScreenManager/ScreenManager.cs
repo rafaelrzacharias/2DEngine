@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
+using System;
 using System.Collections.Generic;
 
 namespace GameStateManager
@@ -20,11 +21,13 @@ namespace GameStateManager
         public static Rectangle TitleSafeArea { get; private set; }
         public static Game Game { get; private set; }
         public static GameTime GameTime { get; private set; }
+        public static Random Random { get; private set; }
 
         // Initializes the screen manager component.
         public static void Initialize(Game game)
         {
             Game = game;
+            Random = new Random();
             Screens = new List<Screen>();
             screensToUpdate = new List<Screen>();
             screensToRemove = new List<Screen>();
@@ -82,7 +85,9 @@ namespace GameStateManager
                 Screen screen = screensToUpdate[screensToUpdate.Count - 1];
                 screensToUpdate.RemoveAt(screensToUpdate.Count - 1);
 
+                Debug.Profiler.BeginMark("Update: " + screen.Name, screen.ProfilerColor);
                 screen.Update(gameTime);
+                Debug.Profiler.EndMark("Update: " + screen.Name);
 
                 if (screen.TransitionState == ScreenState.TransitionOn || 
                     screen.TransitionState == ScreenState.Active)
@@ -121,7 +126,9 @@ namespace GameStateManager
                 if (Screens[i].TransitionState == ScreenState.Hidden)
                     continue;
 
+                Debug.Profiler.BeginMark("Draw: " + Screens[i].Name, Screens[i].ProfilerColor);
                 Screens[i].Draw(gameTime);
+                Debug.Profiler.EndMark("Draw: " + Screens[i].Name);
             }
 
             SpriteBatch.End();
