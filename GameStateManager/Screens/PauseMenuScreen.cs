@@ -56,6 +56,7 @@ namespace GameStateManager
 
             LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
             LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
+            LoadingScreen.Load(new BufferedInputScreen("bufferedInputMenu"));
             LoadingScreen.Load(new MainMenuScreen("mainMenu", "Main Menu"));
         }
 

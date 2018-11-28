@@ -29,6 +29,7 @@ namespace GameStateManager
 
                 LoadingScreen.Load(new MessageBoxScreen("confirmQuit", "Are you sure you want to quit?", "", MessageBoxType.YESNO));
                 LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
+                LoadingScreen.Load(new BufferedInputScreen("bufferedInputMenu"));
                 LoadingScreen.Load(new MainMenuScreen("mainMenu", "Main Menu"));
             }
         }
