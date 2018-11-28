@@ -55,7 +55,6 @@ namespace GameStateManager
     {
         public const int MAX_USERS = 4;
         public static User[] Users;
-        private static readonly Action[] Actions = (Action[])Enum.GetValues(typeof(Action));
 
         // This is the master list of moves in logical order. This array is kept
         // around in order to draw the move list on the screen in this order.
@@ -80,9 +79,6 @@ namespace GameStateManager
 
         // Time until the currently "active" move dissapears from the screen.
         public static readonly TimeSpan MOVE_TIMEOUT = TimeSpan.FromSeconds(1.0);
-
-
-
 #if DESKTOP
         public static KeyboardState LastKeyboardState;
         public static KeyboardState CurrentKeyboardState;
