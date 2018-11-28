@@ -56,7 +56,6 @@
     <Compile Include="Debug\ScreenStats.cs" />
     <Compile Include="Debug\StringBuilderExtensions.cs" />
     <Compile Include="Game1.cs" />
-    <Compile Include="Input\Direction.cs" />
     <Compile Include="Input\Move.cs" />
     <Compile Include="Input\MoveList.cs" />
     <Compile Include="Input\User.cs" />
@@ -70,6 +69,7 @@
     <Compile Include="ScreenManager\ScreenManager.cs" />
     <Compile Include="ScreenManager\Utils.cs" />
     <Compile Include="Screens\BackgroundScreen.cs" />
+    <Compile Include="Screens\BufferedInputScreen.cs" />
     <Compile Include="Screens\ControllerDisconnectionScreen.cs" />
     <Compile Include="Screens\GameScreen.cs" />
     <Compile Include="Screens\IISMessageBoxScreen.cs" />
