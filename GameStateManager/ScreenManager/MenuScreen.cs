@@ -41,8 +41,8 @@ namespace GameStateManager
 
         private void UpdateEntriesHighlight()
         {
-            isMenuUp = Input.WasButtonPressed(Action.UI_UP, PrimaryUser);
-            isMenuDown = Input.WasButtonPressed(Action.UI_DOWN, PrimaryUser);
+            isMenuUp = Input.WasButtonPressed(Action.UP, PrimaryUser);
+            isMenuDown = Input.WasButtonPressed(Action.DOWN, PrimaryUser);
 
             if (PrimaryUser != null && PrimaryUser.InputType == InputType.KEYBOARD && Input.HasMouseMoved())
             {
@@ -97,7 +97,7 @@ namespace GameStateManager
         {
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Entries[i].IsHighlighted && Input.WasButtonPressed(Action.UI_CONFIRM, PrimaryUser))
+                if (Entries[i].IsHighlighted && Input.WasButtonPressed(Action.LK, PrimaryUser))
                 {
                     Entries[i].OnSelected(PrimaryUser);
                     //Audio.PlaySound("entrySelected");
@@ -105,7 +105,7 @@ namespace GameStateManager
                 }
             }
 
-            if (Input.WasButtonPressed(Action.UI_BACK, PrimaryUser))
+            if (Input.WasButtonPressed(Action.HK, PrimaryUser))
             {
                 OnDismiss(PrimaryUser);
                 //Audio.PlaySound("menuDismissed");
