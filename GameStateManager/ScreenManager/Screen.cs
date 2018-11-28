@@ -106,6 +106,8 @@ namespace GameStateManager
 
         public bool IsTransitioning { get { return isTransitioningOn || isTransitioningOff; } }
 
+        // The color of the screen in the profiler tab.
+        public Color ProfilerColor { get; private set; }
 
         // Callback for when the screen needs to show itself.
         public delegate void ShowCallback();
@@ -159,6 +161,9 @@ namespace GameStateManager
             BackgroundColor = Color.White;
 
             isTransitioningOff = true;
+
+            Random rand = ScreenManager.Random;
+            ProfilerColor = new Color(rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255));
         }
 
 
