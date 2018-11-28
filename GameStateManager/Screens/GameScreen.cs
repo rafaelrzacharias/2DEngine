@@ -36,7 +36,7 @@ namespace GameStateManager
 
 
         // Lets the game respond to player input. Unlike the Update method,
-        // this will only be called when the gameplay screen is sactive.
+        // this will only be called when the gameplay screen is active.
         public override void HandleInput()
         {
             // The game pauses either if the user presses the pause button, or if they unplug the active gamepad.
@@ -46,16 +46,16 @@ namespace GameStateManager
             if (Input.WasButtonPressed(Action.PAUSE, PrimaryUser))
                 OnDismiss(PrimaryUser);
 
-            if (Input.WasButtonPressed(Action.UI_CONFIRM, PrimaryUser))
+            if (Input.WasButtonPressed(Action.LK, PrimaryUser))
                 Audio.PlaySong("song", true, 0.1f);
 
-            if (Input.WasButtonPressed(Action.UI_BACK, PrimaryUser))
+            if (Input.WasButtonPressed(Action.HK, PrimaryUser))
                 Audio.PauseOrResumeSong();
 
-            if (Input.WasButtonPressed(Action.UI_PAGE_LEFT, PrimaryUser))
+            if (Input.WasButtonPressed(Action.PAGE_LEFT, PrimaryUser))
                 Audio.StopSong();
 
-            if (Input.WasButtonPressed(Action.UI_PAGE_RIGHT, PrimaryUser))
+            if (Input.WasButtonPressed(Action.PAGE_RIGHT, PrimaryUser))
             {
                 foreach (KeyValuePair<string, SoundEffect> pair in Resources.SoundEffects)
                     Audio.PlaySound(pair.Key, new AudioEmitter(), false);
