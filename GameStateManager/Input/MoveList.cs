@@ -6,7 +6,7 @@ namespace GameStateManager
     // of this class is optimized for efficient match searches.
     public class MoveList
     {
-        Move[] moves;
+        private Move[] Moves;
 
         public MoveList(Move[] moves)
         {
@@ -14,7 +14,7 @@ namespace GameStateManager
             // This greatly simplifies the logic of the DetectMove method.
             Array.Sort(moves);
             Array.Reverse(moves);
-            this.moves = moves;
+            Moves = moves;
         }
 
 
@@ -23,10 +23,10 @@ namespace GameStateManager
         {
             // Perform a linear search for a move which matches the input. This relies
             // on the moves array being in order of decreasing sequence length.
-            for (int i = 0; i < moves.Length; i++)
+            for (int i = 0; i < Moves.Length; i++)
             {
-                if (Input.Matches(moves[i], controllerIndex))
-                    return moves[i];
+                if (Input.Matches(Moves[i], controllerIndex))
+                    return Moves[i];
             }
 
             return null;
@@ -36,7 +36,7 @@ namespace GameStateManager
         public int LongestMoveLength
         {
             // Since they are in decreasing order, the first move is the longest.
-            get { return moves[0].Sequence.Length; }
+            get { return Moves[0].Sequence.Length; }
         }
     }
 }

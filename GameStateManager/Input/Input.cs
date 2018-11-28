@@ -24,17 +24,28 @@ namespace GameStateManager
 
     public enum Action
     {
-        UI_UP,
-        UI_DOWN,
-        UI_LEFT,
-        UI_RIGHT,
-        UI_CONFIRM,
-        UI_BACK,
-        UI_PAGE_LEFT,
-        UI_PAGE_RIGHT,
-        DEBUG,
-        CONSOLE,
-        PAUSE
+        NONE = 0,
+        UP = Buttons.DPadUp | Buttons.LeftThumbstickUp,
+        DOWN = Buttons.DPadDown | Buttons.LeftThumbstickDown,
+        LEFT = Buttons.DPadLeft | Buttons.LeftThumbstickLeft,
+        RIGHT = Buttons.DPadRight | Buttons.LeftThumbstickRight,
+        UP_LEFT = UP | LEFT,
+        UP_RIGHT = UP | RIGHT,
+        DOWN_LEFT = DOWN | LEFT,
+        DOWN_RIGHT = DOWN | RIGHT,
+        LK = Buttons.A,
+        HK = Buttons.B,
+        LP = Buttons.X,
+        HP = Buttons.Y,
+        PAGE_LEFT = Buttons.LeftShoulder,
+        PAGE_RIGHT = Buttons.RightShoulder,
+        LT = Buttons.LeftTrigger,
+        RT = Buttons.RightTrigger,
+        PAUSE = Buttons.Start,
+        ANY = UP | DOWN | LEFT | RIGHT | LK | HK | LP | HP | PAGE_LEFT | PAGE_RIGHT | LT | RT | PAUSE,
+
+        DEBUG = Buttons.Back,
+        CONSOLE = Keys.OemTilde
     }
 
 
@@ -44,6 +55,34 @@ namespace GameStateManager
     {
         public const int MAX_USERS = 4;
         public static User[] Users;
+        private static readonly Action[] Actions = (Action[])Enum.GetValues(typeof(Action));
+
+        // This is the master list of moves in logical order. This array is kept
+        // around in order to draw the move list on the screen in this order.
+        public static readonly Move[] Moves = new Move[]
+            {
+                new Move("Jump", Action.LK) { IsSubMove = true },
+                new Move("Punch", Action.LP) { IsSubMove = true },
+                new Move("Double Jump", Action.LK, Action.LK),
+                new Move("Jump Kick", Action.LK | Action.LK),
+                new Move("Quad Punch", Action.LP, Action.HP, Action.LP, Action.HP),
+                new Move("Fireball", Action.DOWN, Action.DOWN_RIGHT, Action.RIGHT | Action.LP),
+                new Move("Long Jump", Action.UP, Action.UP, Action.LK),
+                new Move("Back Flip", Action.DOWN, Action.DOWN | Action.LK),
+                new Move("30 Lives", Action.UP, Action.UP, Action.DOWN, Action.DOWN, Action.LEFT, Action.RIGHT, Action.LEFT, Action.RIGHT, Action.HK, Action.LK),
+            };
+
+        public static readonly MoveList moveList = new MoveList(Moves);
+
+        // Stores each players' most recent move and when they pressed it.
+        public static Move[] PlayersMove;
+        public static TimeSpan[] PlayersMoveTime;
+
+        // Time until the currently "active" move dissapears from the screen.
+        public static readonly TimeSpan MOVE_TIMEOUT = TimeSpan.FromSeconds(1.0);
+
+
+
 #if DESKTOP
         public static KeyboardState LastKeyboardState;
         public static KeyboardState CurrentKeyboardState;
@@ -69,14 +108,14 @@ namespace GameStateManager
         public static Vector2 MouseDragDelta { get; private set; }
         public static float MouseDragDistance { get; private set; }
 
-        private static Dictionary<Action, List<Keys>> keys;
+        private static Dictionary<Action, Keys[]> keys;
         private static Dictionary<Action, MouseButton> mouseButtons;
 #endif
 #if DESKTOP || CONSOLE
         public static GamePadState[] LastGamePadState;
         public static GamePadState[] CurrentGamePadState;
 
-        private static Dictionary<Action, List<Buttons>> buttons;
+        private static Dictionary<Action, Buttons[]> buttons;
 
         // The last "real time" that new input was received. Slightly late button
         // presses will not update this time; they are merged with previous input.
@@ -116,25 +155,25 @@ namespace GameStateManager
             LastMouseState = new MouseState();
             CurrentKeyboardState = new KeyboardState();
 
-            keys = new Dictionary<Action, List<Keys>>
+            keys = new Dictionary<Action, Keys[]>
             {
-                { Action.UI_UP, new List<Keys> { Keys.Up, Keys.W } },
-                { Action.UI_DOWN, new List<Keys> { Keys.Down, Keys.S } },
-                { Action.UI_LEFT, new List<Keys> { Keys.Left, Keys.A } },
-                { Action.UI_RIGHT, new List<Keys> { Keys.Right, Keys.D } },
-                { Action.UI_CONFIRM, new List<Keys> { Keys.Space } },
-                { Action.UI_BACK, new List<Keys> { Keys.Escape } },
-                { Action.UI_PAGE_LEFT, new List<Keys> { Keys.Q, Keys.PageUp } },
-                { Action.UI_PAGE_RIGHT, new List<Keys> { Keys.E, Keys.PageDown } },
-                { Action.DEBUG, new List<Keys> { Keys.F1 } },
-                { Action.CONSOLE, new List<Keys> {Keys.OemTilde } },
-                { Action.PAUSE, new List<Keys> { Keys.Escape } }
+                { Action.UP, new Keys[] { Keys.Up, Keys.W } },
+                { Action.DOWN, new Keys[] { Keys.Down, Keys.S } },
+                { Action.LEFT, new Keys[] { Keys.Left, Keys.A } },
+                { Action.RIGHT, new Keys[] { Keys.Right, Keys.D } },
+                { Action.LK, new Keys[] { Keys.Space } },
+                { Action.HK, new Keys[] { Keys.Escape } },
+                { Action.PAGE_LEFT, new Keys[] { Keys.Q, Keys.PageUp } },
+                { Action.PAGE_RIGHT, new Keys[] { Keys.E, Keys.PageDown } },
+                { Action.DEBUG, new Keys[] { Keys.F1 } },
+                { Action.CONSOLE, new Keys[] {Keys.OemTilde } },
+                { Action.PAUSE, new Keys[] { Keys.Escape } }
             };
 
             mouseButtons = new Dictionary<Action, MouseButton>
             {
-                { Action.UI_CONFIRM, MouseButton.LEFT },
-                { Action.UI_BACK, MouseButton.RIGHT }
+                { Action.LK, MouseButton.LEFT },
+                { Action.HK, MouseButton.RIGHT }
             };
 #endif
 #if DESKTOP || CONSOLE
@@ -147,23 +186,27 @@ namespace GameStateManager
                 CurrentGamePadState[i] = new GamePadState();
             }
 
-            buttons = new Dictionary<Action, List<Buttons>>
+            buttons = new Dictionary<Action, Buttons[]>
             {
-                { Action.UI_UP, new List<Buttons> { Buttons.DPadUp, Buttons.LeftThumbstickUp } },
-                { Action.UI_DOWN, new List<Buttons> { Buttons.DPadDown, Buttons.LeftThumbstickDown } },
-                { Action.UI_LEFT, new List<Buttons> { Buttons.DPadLeft, Buttons.LeftThumbstickLeft } },
-                { Action.UI_RIGHT, new List<Buttons> { Buttons.DPadRight, Buttons.LeftThumbstickRight } },
-                { Action.UI_CONFIRM, new List<Buttons> { Buttons.A } },
-                { Action.UI_BACK, new List<Buttons> { Buttons.B } },
-                { Action.UI_PAGE_LEFT, new List<Buttons> { Buttons.LeftShoulder } },
-                { Action.UI_PAGE_RIGHT, new List<Buttons> { Buttons.RightShoulder } },
-                { Action.DEBUG, new List<Buttons> { Buttons.Back } },
-                { Action.PAUSE, new List<Buttons> { Buttons.Start } }
+                { Action.UP, new Buttons[] { Buttons.DPadUp, Buttons.LeftThumbstickUp } },
+                { Action.DOWN, new Buttons[] { Buttons.DPadDown, Buttons.LeftThumbstickDown } },
+                { Action.LEFT, new Buttons[] { Buttons.DPadLeft, Buttons.LeftThumbstickLeft } },
+                { Action.RIGHT, new Buttons[] { Buttons.DPadRight, Buttons.LeftThumbstickRight } },
+                { Action.LK, new Buttons[] { Buttons.A } },
+                { Action.HK, new Buttons[] { Buttons.B } },
+                { Action.PAGE_LEFT, new Buttons[] { Buttons.LeftShoulder } },
+                { Action.PAGE_RIGHT, new Buttons[] { Buttons.RightShoulder } },
+                { Action.DEBUG, new Buttons[] { Buttons.Back } },
+                { Action.PAUSE, new Buttons[] { Buttons.Start } }
             };
 
             Buffers = new List<Buttons>[MAX_USERS];
             for (int i = 0; i < MAX_USERS; i++)
                 Buffers[i] = new List<Buttons>(BUFFER_SIZE);
+
+            // Give each player a location to store their most recent move.
+            PlayersMove = new Move[MAX_USERS];
+            PlayersMoveTime = new TimeSpan[MAX_USERS];
 
             NonDirectionalButtons = new Dictionary<Buttons, Keys>
             {
@@ -174,9 +217,9 @@ namespace GameStateManager
                 { Buttons.Start, Keys.Enter },
                 { Buttons.Back, Keys.Escape },
                 { Buttons.LeftShoulder, Keys.Q },
-                { Buttons.LeftTrigger, Keys.D1 },
-                { Buttons.RightShoulder, Keys.O },
-                { Buttons.RightTrigger, Keys.D0 },
+                { Buttons.LeftTrigger, Keys.U },
+                { Buttons.RightShoulder, Keys.E },
+                { Buttons.RightTrigger, Keys.O },
                 { Buttons.LeftStick, Keys.Z },
                 { Buttons.RightStick, Keys.M }
             };
@@ -330,12 +373,6 @@ namespace GameStateManager
             LastMouseState = CurrentMouseState;
             CurrentMouseState = Mouse.GetState();
 
-            for (int i = 0; i < MAX_USERS; i++)
-            {
-                if (Users[i].IsActive)
-                    UpdateNonDirectionalButtons(i);
-            }
-
             if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
             {
                 isLeftMouseDown = false;
@@ -382,6 +419,24 @@ namespace GameStateManager
 
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
+
+                if (Users[i].IsActive)
+                {
+                    UpdateNonDirectionalButtons(i);
+
+                    // Expire old moves.
+                    if (ScreenManager.GameTime.TotalGameTime - PlayersMoveTime[i] > MOVE_TIMEOUT)
+                        PlayersMove[i] = null;
+
+                    // Detection and record of current player's most recent move.
+                    Move newMove = moveList.DetectMoves(i);
+
+                    if (newMove != null)
+                    {
+                        PlayersMove[i] = newMove;
+                        PlayersMoveTime[i] = ScreenManager.GameTime.TotalGameTime;
+                    }
+                }
             }
 #endif
 #if !DESKTOP
@@ -443,7 +498,15 @@ namespace GameStateManager
         }
 
 
-        private static void UpdateNonDirectionalButtons(int controllerIndex)
+        // Clears the input buffer of all players.
+        public static void ClearInputBuffers()
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+                Buffers[i].Clear();
+        }
+
+
+        private static void UpdateNonDirectionalButtons(int userIndex)
         {
             // Expire old input.
             TimeSpan time = TimeSpan.FromMilliseconds(0.0);
@@ -452,35 +515,63 @@ namespace GameStateManager
             TimeSpan timeSinceLast = time - LastInputTime;
 
             if (timeSinceLast > BufferTimeout)
-                Buffers[controllerIndex].Clear();
+                Buffers[userIndex].Clear();
 
             // Get all of the non-directional buttons pressed.
             Buttons buttons = 0;
-            foreach (KeyValuePair<Buttons, Keys> pair in NonDirectionalButtons)
-            {
-                Buttons button = pair.Key;
-                Keys key = pair.Value;
 
-                // Check the gamePad and keyboard for presses.
-                if ((LastGamePadState[controllerIndex].IsButtonUp(button) && CurrentGamePadState[controllerIndex].IsButtonDown(button)) ||
-                    (LastKeyboardState.IsKeyUp(key) && CurrentKeyboardState.IsKeyDown(key)))
-                {
-                    // Use the bitwise OR to accumulate button presses.
-                    buttons |= button;
-                }
+            switch (Users[userIndex].InputType)
+            {
+                case InputType.KEYBOARD:
+                    {
+                        foreach (KeyValuePair<Buttons, Keys> pair in NonDirectionalButtons)
+                        {
+                            Keys key = pair.Value;
+
+                            // Check the keyboard for presses and OR them to accumulate buttons.
+                            if (LastKeyboardState.IsKeyUp(key) && CurrentKeyboardState.IsKeyDown(key))
+                                buttons |= pair.Key;
+                        }
+                    }
+                    break;
+                case InputType.GAMEPAD:
+                    {
+                        foreach (KeyValuePair<Buttons, Keys> pair in NonDirectionalButtons)
+                        {
+                            Buttons button = pair.Key;
+
+                            // Check the keyboard for presses and OR them to accumulate buttons.
+                            if (LastGamePadState[Users[userIndex].ControllerIndex].IsButtonUp(button) &&
+                                CurrentGamePadState[Users[userIndex].ControllerIndex].IsButtonDown(button))
+                                buttons |= button;
+                        }
+                    }
+                    break;
             }
 
             // It is very hard to press two buttons on exactly the same frame.
             // If they are close enough, consider them pressed at the same time.
-            bool mergeInput = Buffers[controllerIndex].Count > 0 && timeSinceLast < MergeInputTime;
+            bool mergeInput = Buffers[userIndex].Count > 0 && timeSinceLast < MergeInputTime;
 
-            // If there is a new direction.s
-            Buttons direction = Direction.FromInput(CurrentGamePadState[controllerIndex], CurrentKeyboardState);
+            // If there is a new direction.
+            Buttons currentDirection = 0;
+            Buttons lastDirection = 0;
+            switch (Users[userIndex].InputType)
+            {
+                case InputType.KEYBOARD:
+                    currentDirection = GetDirectionFromInput(Users[userIndex], InputState.CURRENT);
+                    lastDirection = GetDirectionFromInput(Users[userIndex], InputState.LAST);
+                    break;
+                case InputType.GAMEPAD:
+                    currentDirection = GetDirectionFromInput(Users[userIndex], InputState.CURRENT);
+                    lastDirection = GetDirectionFromInput(Users[userIndex], InputState.LAST);
+                    break;
+            }
 
-            if (Direction.FromInput(LastGamePadState[controllerIndex], LastKeyboardState) != direction)
+            if (lastDirection != currentDirection)
             {
                 // Combine the direction with the buttons.
-                buttons |= direction;
+                buttons |= currentDirection;
 
                 // Don't merge two opposite directions. This has the side effect that the direction needs
                 // to be pressed at the same time or slightly before the buttons for merging to work.
@@ -494,15 +585,15 @@ namespace GameStateManager
                 {
                     // Use the bitwise OR to merge with the previous input.
                     // LastInputTime isn't updated to prevent extending the merge window.
-                    Buffers[controllerIndex][Buffers[controllerIndex].Count - 1] |= buttons;
+                    Buffers[userIndex][Buffers[userIndex].Count - 1] |= buttons;
                 }
                 else
                 {
                     // Append this input to the buffer, expiring old input if necessary.
-                    if (Buffers[controllerIndex].Count == Buffers[controllerIndex].Capacity)
-                        Buffers[controllerIndex].RemoveAt(0);
+                    if (Buffers[userIndex].Count == Buffers[userIndex].Capacity)
+                        Buffers[userIndex].RemoveAt(0);
 
-                    Buffers[controllerIndex].Add(buttons);
+                    Buffers[userIndex].Add(buttons);
 
                     // Record the time of this input to begin the merge window.
                     LastInputTime = time;
@@ -604,7 +695,7 @@ namespace GameStateManager
 #if DESKTOP
             if (action == Action.CONSOLE)
             {
-                for (int i = 0; i < keys[action].Count; i++)
+                for (int i = 0; i < keys[action].Length; i++)
                 {
                     if (LastKeyboardState.IsKeyUp(keys[action][i]) &&
                             CurrentKeyboardState.IsKeyDown(keys[action][i]))
@@ -616,7 +707,7 @@ namespace GameStateManager
             {
                 if (keys.ContainsKey(action))
                 {
-                    for (int i = 0; i < keys[action].Count; i++)
+                    for (int i = 0; i < keys[action].Length; i++)
                     {
                         if (LastKeyboardState.IsKeyUp(keys[action][i]) &&
                             CurrentKeyboardState.IsKeyDown(keys[action][i]))
@@ -663,7 +754,7 @@ namespace GameStateManager
 
                 if (buttons.ContainsKey(action))
                 {
-                    for (int i = 0; i < buttons[action].Count; i++)
+                    for (int i = 0; i < buttons[action].Length; i++)
                     {
                         if (index != -1)
                         {
@@ -777,8 +868,7 @@ namespace GameStateManager
             // Loop backwards to match against the most recent input.
             for (int j = 1; j <= move.Sequence.Length; ++j)
             {
-
-                if (Buffers[i][Buffers[i].Count - j] != move.Sequence[move.Sequence.Length - j])
+                if (Buffers[i][Buffers[i].Count - j] != (Buttons)move.Sequence[move.Sequence.Length - j])
                     return false;
             }
 
@@ -787,6 +877,75 @@ namespace GameStateManager
                 Buffers[i].Clear();
 
             return true;
+        }
+
+
+        private enum InputState { CURRENT, LAST }
+
+        private static Buttons GetDirectionFromInput(User user, InputState state)
+        {
+            Buttons direction = (Buttons)Action.NONE;
+
+            switch (user.InputType)
+            {
+                case InputType.KEYBOARD:
+                    {
+                        KeyboardState keyboard;
+                        if (state == InputState.CURRENT)
+                            keyboard = CurrentKeyboardState;
+                        else
+                            keyboard = LastKeyboardState;
+
+                        // Get the vertical direction.
+                        if (keyboard.IsKeyDown(Keys.Up))
+                            direction |= (Buttons)Action.UP;
+                        else if (keyboard.IsKeyDown(Keys.Down))
+                            direction |= (Buttons)Action.DOWN;
+
+                        // Combine it with the horizontal direction.
+                        if (keyboard.IsKeyDown(Keys.Left))
+                            direction |= (Buttons)Action.LEFT;
+                        else if (keyboard.IsKeyDown(Keys.Right))
+                            direction |= (Buttons)Action.RIGHT;
+                    }
+                    break;
+                case InputType.GAMEPAD:
+                    {
+                        GamePadState gamePad;
+                        if (state == InputState.CURRENT)
+                            gamePad = CurrentGamePadState[user.ControllerIndex];
+                        else
+                            gamePad = LastGamePadState[user.ControllerIndex];
+
+                        // Get the vertical direction.
+                        if (gamePad.IsButtonDown(Buttons.DPadUp) ||
+                            gamePad.IsButtonDown(Buttons.LeftThumbstickUp))
+                            direction |= (Buttons)Action.UP;
+                        else if (gamePad.IsButtonDown(Buttons.DPadDown) ||
+                            gamePad.IsButtonDown(Buttons.LeftThumbstickDown))
+                            direction |= (Buttons)Action.DOWN;
+
+                        // Combine it with the horizontal direction.
+                        if (gamePad.IsButtonDown(Buttons.DPadLeft) ||
+                            gamePad.IsButtonDown(Buttons.LeftThumbstickLeft))
+                            direction |= (Buttons)Action.LEFT;
+                        else if (gamePad.IsButtonDown(Buttons.DPadRight) ||
+                            gamePad.IsButtonDown(Buttons.LeftThumbstickRight))
+                            direction |= (Buttons)Action.RIGHT;
+                    }
+                    break;
+            }
+            
+
+            return direction;
+        }
+        
+
+        // Gets the direction without non-direction buttons from the Button enum
+        // and extract the direction from a full set of buttons using the bitmask.
+        public static Buttons GetDirectionFromButtons(Buttons buttons)
+        {
+            return buttons & (Buttons)(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT);
         }
     }
 }
