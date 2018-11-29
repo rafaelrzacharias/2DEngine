@@ -26,7 +26,14 @@ namespace GameStateManager
         // Default implementation of IComparable.
         public int CompareTo(object obj)
         {
-            return Sequence.Length;
+            if (obj == null)
+                return 1;
+
+            Move move = obj as Move;
+            if (move == null)
+                return 1;
+
+            return move.Sequence.Length - Sequence.Length;
         }
 
 

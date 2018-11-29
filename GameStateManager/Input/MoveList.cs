@@ -13,7 +13,6 @@ namespace GameStateManager
             // Store the list of moves in order of decreasing sequence length.
             // This greatly simplifies the logic of the DetectMove method.
             Array.Sort(moves);
-            Array.Reverse(moves);
             Moves = moves;
         }
 
