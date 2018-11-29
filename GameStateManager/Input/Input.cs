@@ -56,22 +56,7 @@ namespace GameStateManager
         public const int MAX_USERS = 4;
         public static User[] Users;
 
-        // This is the master list of moves in logical order. This array is kept
-        // around in order to draw the move list on the screen in this order.
-        public static readonly Move[] Moves = new Move[]
-            {
-                new Move("Jump", Action.LK) { IsSubMove = true },
-                new Move("Punch", Action.LP) { IsSubMove = true },
-                new Move("Double Jump", Action.LK, Action.LK),
-                new Move("Jump Kick", Action.LK | Action.LK),
-                new Move("Quad Punch", Action.LP, Action.HP, Action.LP, Action.HP),
-                new Move("Fireball", Action.DOWN, Action.DOWN_RIGHT, Action.RIGHT | Action.LP),
-                new Move("Long Jump", Action.UP, Action.UP, Action.LK),
-                new Move("Back Flip", Action.DOWN, Action.DOWN | Action.LK),
-                new Move("30 Lives", Action.UP, Action.UP, Action.DOWN, Action.DOWN, Action.LEFT, Action.RIGHT, Action.LEFT, Action.RIGHT, Action.HK, Action.LK),
-            };
-
-        public static readonly MoveList moveList = new MoveList(Moves);
+        public static readonly MoveList MoveList = new MoveList();
 
         // Stores each players' most recent move and when they pressed it.
         public static Move[] PlayersMove;
@@ -425,7 +410,7 @@ namespace GameStateManager
                         PlayersMove[i] = null;
 
                     // Detection and record of current player's most recent move.
-                    Move newMove = moveList.DetectMoves(i);
+                    Move newMove = MoveList.DetectMoves(i);
 
                     if (newMove != null)
                     {
