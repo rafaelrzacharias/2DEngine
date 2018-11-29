@@ -43,7 +43,7 @@ namespace GameStateManager
             // This requires us to keep track of whether a gamepad was ever plugged in, because we don't want
             // to pause on PC if they are playing with a keyboard and have no gamepad at all!
             // Specify further, how controller disconnection should display message and how pausing the game is handled!!!
-            if (Input.WasButtonPressed(Action.PAUSE, PrimaryUser))
+            if (Input.WasButtonPressed(Action.START, PrimaryUser))
                 OnDismiss(PrimaryUser);
 
             if (Input.WasButtonPressed(Action.LK, PrimaryUser))
@@ -52,10 +52,10 @@ namespace GameStateManager
             if (Input.WasButtonPressed(Action.HK, PrimaryUser))
                 Audio.PauseOrResumeSong();
 
-            if (Input.WasButtonPressed(Action.PAGE_LEFT, PrimaryUser))
+            if (Input.WasButtonPressed(Action.LB, PrimaryUser))
                 Audio.StopSong();
 
-            if (Input.WasButtonPressed(Action.PAGE_RIGHT, PrimaryUser))
+            if (Input.WasButtonPressed(Action.RB, PrimaryUser))
             {
                 foreach (KeyValuePair<string, SoundEffect> pair in Resources.SoundEffects)
                     Audio.PlaySound(pair.Key, new AudioEmitter(), false);
