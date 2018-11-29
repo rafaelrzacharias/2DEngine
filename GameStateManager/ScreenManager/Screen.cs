@@ -149,6 +149,19 @@ namespace GameStateManager
         }
 
 
+        // Method for when the screen has finished transition on.
+        protected virtual void OnFinishTransitionOn() { }
+
+        // Method for when the screen has finished transition off.
+        protected virtual void OnFinishTransitionOff() { }
+
+        // Method for when the screen has started transition on.
+        protected virtual void OnStartTransitionOn() { }
+
+        // Method for when the screen has started transition off.
+        protected virtual void OnStartTransitionOff() { }
+
+
         // Constructs a new GameScreen and assign the default values.
         public Screen()
         {
@@ -179,19 +192,26 @@ namespace GameStateManager
 
                 // When the transition finishes, remove this screen.
                 if (UpdateTransition(gameTime, TransitionOffTime, 1) == false)
+                {
+                    OnFinishTransitionOff();
                     ScreenManager.RemoveScreen(this);
+                }
             }
             else if (isTransitioningOff)
             {
                 // If the screen is covered by another, it should transition off.
                 if (UpdateTransition(gameTime, TransitionOffTime, 1))
+                {
                     TransitionState = ScreenState.TransitionOff;
+                    OnStartTransitionOff();
+                }
                 else
                 {
                     IsEnabled = false;
                     IsVisible = false;
                     isTransitioningOff = false;
                     TransitionState = ScreenState.Hidden;
+                    OnFinishTransitionOff();
                 }
             }
             else if (isTransitioningOn)
@@ -202,11 +222,13 @@ namespace GameStateManager
                     IsEnabled = true;
                     IsVisible = true;
                     TransitionState = ScreenState.TransitionOn;
+                    OnStartTransitionOn();
                 }
                 else
                 {
                     isTransitioningOn = false;
                     TransitionState = ScreenState.Active;
+                    OnFinishTransitionOn();
                 }
             }
 
