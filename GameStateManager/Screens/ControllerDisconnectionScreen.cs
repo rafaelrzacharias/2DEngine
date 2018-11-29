@@ -44,20 +44,16 @@ namespace GameStateManager
             PanelPosition = new Vector2(ScreenManager.Viewport.Width * 0.5f, ScreenManager.Viewport.Height * 0.5f);
 
             BackgroundArea = Rectangle.Empty;
-            BackgroundArea.Width = (int)((controllerTexture.Width * 0.2f + Padding.X) * Input.MAX_USERS);
+            BackgroundArea.Width = (int)((controllerTexture.Width * 0.25f + Padding.X) * Input.MAX_USERS);
             BackgroundArea.Height = (int)(controllerTexture.Height * 0.2f + 2f * Font.LineSpacing + 3f * Padding.Y);
             BackgroundArea.X = (int)(PanelPosition.X - BackgroundArea.Width * 0.5f);
             BackgroundArea.Y = (int)(PanelPosition.Y - BackgroundArea.Height * 0.5f);
-
-
-            Text = "Controller Disconnected!";
-            TextSize = Font.MeasureString(Text);
-            TextColor = Color.Yellow;
-            TextPosition = new Vector2(PanelPosition.X - TextSize.X * 0.5f, BackgroundArea.Top + Padding.Y);
+            
+            SetText("Controller disconnected: Connect controller or press Cancel.", Color.Yellow);
 
             controllerTexturePosition.X = PanelPosition.X - (Input.MAX_USERS - 1) * Padding.X * 0.5f - 
                 (Input.MAX_USERS - 1) * 0.5f * controllerTexture.Width * 0.2f - controllerTexture.Width * 0.2f * 0.5f;
-            controllerTexturePosition.Y = TextPosition.Y + TextSize.Y + Padding.Y;
+            controllerTexturePosition.Y = TextPosition.Y + Font.LineSpacing + Padding.Y;
 
             for (int i = 0; i < Input.MAX_USERS; i++)
             {
@@ -118,7 +114,6 @@ namespace GameStateManager
                     inputTexPos.X += (int)(controllerTexture.Width * 0.2f + Padding.X);
                 }
 
-                Utils.PulseColor(ref TextColor);
                 SpriteBatch.DrawString(Font, Text, TextPosition, TextColor * TransitionAlpha,
                     0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             }
@@ -130,6 +125,13 @@ namespace GameStateManager
         // Event handler for when a controller is disconnected.
         private void Input_ControllerDisconnected(int controllerIndex)
         {
+#if CONSOLE
+            if (Input.GetUserCount() == 0)
+                SetText("Controller disconnected: Connect a controller.", Color.Yellow);
+            else
+#endif
+            SetText("Controller disconnected: Connect controller, choose slot or press Cancel.", Color.Yellow);
+
             if (IsVisible == false && Input.GetPrimaryUser() != null)
             {
                 for (int i = 0; i < Input.MAX_USERS; i++)
@@ -154,6 +156,8 @@ namespace GameStateManager
         {
             if (IsVisible || Input.GetPrimaryUser() != null)
             {
+                SetText("Controller connected: Choose a slot or press Cancel.", Color.Green);
+
                 ControllingUser = temporaryUser;
                 ControllingUser.ControllerIndex = controllerIndex;
                 ControllingUser.InputType = InputType.GAMEPAD;
@@ -174,6 +178,14 @@ namespace GameStateManager
             OnHide();
         }
 
+        private void SetText(string text, Color color)
+        {
+            Text = text;
+            TextSize = Font.MeasureString(Text);
+            TextPosition = new Vector2(PanelPosition.X - TextSize.X * 0.5f, BackgroundArea.Top + Padding.Y);
+            TextColor = color;
+        }
+
 
         public override void OnHide()
         {
@@ -186,9 +198,16 @@ namespace GameStateManager
 
         public override void OnShow()
         {
+            Input.CanSwapControllerType = false;
             Audio.PauseOrResumeAllSounds();
             Audio.PauseOrResumeSong();
             base.OnShow();
+        }
+
+
+        protected override void OnFinishTransitionOff()
+        {
+            Input.CanSwapControllerType = true;
         }
     }
 }
