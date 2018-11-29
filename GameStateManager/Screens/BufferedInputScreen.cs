@@ -267,13 +267,13 @@ namespace GameStateManager
                     return leftTexture;
                 case Action.RIGHT:
                     return rightTexture;
-                case Action.UP_LEFT:
+                case Action.UP | Action.LEFT:
                     return upLeftTexture;
-                case Action.UP_RIGHT:
+                case Action.UP | Action.RIGHT:
                     return upRightTexture;
-                case Action.DOWN_LEFT:
+                case Action.DOWN | Action.LEFT:
                     return downLeftTexture;
-                case Action.DOWN_RIGHT:
+                case Action.DOWN | Action.RIGHT:
                     return downRightTexture;
                 default:
                     return null;

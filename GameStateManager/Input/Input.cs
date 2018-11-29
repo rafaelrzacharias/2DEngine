@@ -24,7 +24,6 @@ namespace GameStateManager
 
     public enum Action
     {
-        NONE = 0,
         UP = Buttons.DPadUp | Buttons.LeftThumbstickUp,
         DOWN = Buttons.DPadDown | Buttons.LeftThumbstickDown,
         LEFT = Buttons.DPadLeft | Buttons.LeftThumbstickLeft,
@@ -37,12 +36,12 @@ namespace GameStateManager
         HK = Buttons.B,
         LP = Buttons.X,
         HP = Buttons.Y,
-        PAGE_LEFT = Buttons.LeftShoulder,
-        PAGE_RIGHT = Buttons.RightShoulder,
+        LB = Buttons.LeftShoulder,
+        RB = Buttons.RightShoulder,
         LT = Buttons.LeftTrigger,
         RT = Buttons.RightTrigger,
-        PAUSE = Buttons.Start,
-        ANY = UP | DOWN | LEFT | RIGHT | LK | HK | LP | HP | PAGE_LEFT | PAGE_RIGHT | LT | RT | PAUSE,
+        START = Buttons.Start,
+        ANY = UP | DOWN | LEFT | RIGHT | LK | HK | LP | HP | LB | RB | LT | RT | START,
 
         DEBUG = Buttons.Back,
         CONSOLE = Keys.OemTilde
@@ -144,11 +143,11 @@ namespace GameStateManager
                 { Action.RIGHT, new Keys[] { Keys.Right, Keys.D } },
                 { Action.LK, new Keys[] { Keys.Space } },
                 { Action.HK, new Keys[] { Keys.Escape } },
-                { Action.PAGE_LEFT, new Keys[] { Keys.Q, Keys.PageUp } },
-                { Action.PAGE_RIGHT, new Keys[] { Keys.E, Keys.PageDown } },
+                { Action.LB, new Keys[] { Keys.Q, Keys.PageUp } },
+                { Action.RB, new Keys[] { Keys.E, Keys.PageDown } },
                 { Action.DEBUG, new Keys[] { Keys.F1 } },
                 { Action.CONSOLE, new Keys[] {Keys.OemTilde } },
-                { Action.PAUSE, new Keys[] { Keys.Escape } }
+                { Action.START, new Keys[] { Keys.Escape } }
             };
 
             mouseButtons = new Dictionary<Action, MouseButton>
@@ -175,10 +174,10 @@ namespace GameStateManager
                 { Action.RIGHT, new Buttons[] { Buttons.DPadRight, Buttons.LeftThumbstickRight } },
                 { Action.LK, new Buttons[] { Buttons.A } },
                 { Action.HK, new Buttons[] { Buttons.B } },
-                { Action.PAGE_LEFT, new Buttons[] { Buttons.LeftShoulder } },
-                { Action.PAGE_RIGHT, new Buttons[] { Buttons.RightShoulder } },
+                { Action.LB, new Buttons[] { Buttons.LeftShoulder } },
+                { Action.RB, new Buttons[] { Buttons.RightShoulder } },
                 { Action.DEBUG, new Buttons[] { Buttons.Back } },
-                { Action.PAUSE, new Buttons[] { Buttons.Start } }
+                { Action.START, new Buttons[] { Buttons.Start } }
             };
 
             Buffers = new List<Buttons>[MAX_USERS];
@@ -865,7 +864,7 @@ namespace GameStateManager
 
         private static Buttons GetDirectionFromInput(User user, InputState state)
         {
-            Buttons direction = (Buttons)Action.NONE;
+            Buttons direction = 0;
 
             switch (user.InputType)
             {
