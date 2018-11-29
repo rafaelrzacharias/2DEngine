@@ -85,6 +85,8 @@ namespace GameStateManager
 
         private static Dictionary<Action, Keys[]> keys;
         private static Dictionary<Action, MouseButton> mouseButtons;
+
+        public static bool CanSwapControllerType = true;
 #endif
 #if DESKTOP || CONSOLE
         public static GamePadState[] LastGamePadState;
@@ -414,9 +416,9 @@ namespace GameStateManager
                 }
             }
 #endif
-#if !DESKTOP
+#if DESKTOP
             int index = -1;
-            if (GetUserCount() == 0)
+            if (CanSwapControllerType && GetUserCount() == 1)
                 index = WasAnyButtonPressed(true, false);
 
             if (index != -1)
@@ -426,14 +428,15 @@ namespace GameStateManager
                     if (Users[i].ControllerIndex == index)
                         continue;
 
-                    switch (Users[i].InputType)
+                    User user = GetPrimaryUser();
+                    switch (user.InputType)
                     {
                         case InputType.KEYBOARD:
                             {
                                 if (index != MAX_USERS)
                                 {
-                                    Users[i].ControllerIndex = index;
-                                    Users[i].InputType = InputType.GAMEPAD;
+                                    user.ControllerIndex = index;
+                                    user.InputType = InputType.GAMEPAD;
 
                                     OnUserControllerTypeChanged(i);
                                 }
@@ -443,8 +446,8 @@ namespace GameStateManager
                             {
                                 if (index == MAX_USERS)
                                 {
-                                    Users[i].ControllerIndex = index;
-                                    Users[i].InputType = InputType.KEYBOARD;
+                                    user.ControllerIndex = index;
+                                    user.InputType = InputType.KEYBOARD;
 
                                     OnUserControllerTypeChanged(i);
                                 }
