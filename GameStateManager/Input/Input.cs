@@ -37,7 +37,6 @@ namespace GameStateManager
         LT = Buttons.LeftTrigger,
         RT = Buttons.RightTrigger,
         START = Buttons.Start,
-        ANY = UP | DOWN | LEFT | RIGHT | LK | HK | LP | HP | LB | RB | LT | RT | START,
 
         DEBUG = Buttons.Back,
         CONSOLE = Keys.OemTilde
@@ -141,9 +140,9 @@ namespace GameStateManager
                 { Action.HK, new Keys[] { Keys.Escape } },
                 { Action.LB, new Keys[] { Keys.Q, Keys.PageUp } },
                 { Action.RB, new Keys[] { Keys.E, Keys.PageDown } },
-                { Action.DEBUG, new Keys[] { Keys.F1 } },
+                { Action.START, new Keys[] { Keys.Escape } },
                 { Action.CONSOLE, new Keys[] {Keys.OemTilde } },
-                { Action.START, new Keys[] { Keys.Escape } }
+                { Action.DEBUG, new Keys[] { Keys.F1 } },
             };
 
             mouseButtons = new Dictionary<Action, MouseButton>
