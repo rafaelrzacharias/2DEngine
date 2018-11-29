@@ -73,9 +73,9 @@ namespace GameStateManager
                 Vector2 position = TopLeft;
 
                 // Draw the list of all moves, backwards, since they were reversed inside the moveList.
-                for (int i = Input.Moves.Length - 1; i >= 0; i--)
+                for (int i = Input.MoveList.Length - 1; i >= 0; i--)
                 {
-                    Vector2 size = MeasureMove(Input.Moves[i]);
+                    Vector2 size = MeasureMove(Input.MoveList[i]);
 
                     // If this move would fall off the right edge of the screen.
                     if (position.X + size.X > BottomRight.X)
@@ -85,7 +85,7 @@ namespace GameStateManager
                         position.Y += size.Y;
                     }
 
-                    DrawMove(Input.Moves[i], position);
+                    DrawMove(Input.MoveList[i], position);
                     position.X += size.X + 30f;
                 }
 
