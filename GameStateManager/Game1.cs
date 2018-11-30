@@ -26,7 +26,7 @@ namespace GameStateManager
         protected override void Initialize()
         {
             Resources.Initialize(Content);
-            Input.Initialize();
+            Input.Initialize(this);
             Audio.Initialize();
             ScreenManager.Initialize(this);
             Debug.Initialize();
@@ -45,14 +45,14 @@ namespace GameStateManager
 
             Debug.Update(gameTime);
 
-            Debug.Profiler.BeginMark("Update: Input", Color.Black);
+            //Debug.Profiler.BeginMark("Update: Input", Color.Black);
             Input.Update();
-            Debug.Profiler.EndMark("Update: Input");
+            //Debug.Profiler.EndMark("Update: Input");
 
-            Debug.Profiler.BeginMark("Update: Audio", Color.Red);
+            //Debug.Profiler.BeginMark("Update: Audio", Color.Red);
             Audio.Update(gameTime);
             Audio.UpdateListener();
-            Debug.Profiler.EndMark("Update: Audio");
+            //Debug.Profiler.EndMark("Update: Audio");
 
             ScreenManager.Update(gameTime);
 
