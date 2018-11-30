@@ -63,6 +63,7 @@ namespace GameStateManager
         public static KeyboardState CurrentKeyboardState;
         public static MouseState LastMouseState;
         public static MouseState CurrentMouseState;
+        private static GameWindow Window;
 
         private static Keys lastPressedKey;
         private static float keyRepeatTimer;
@@ -123,14 +124,14 @@ namespace GameStateManager
         private static Dictionary<Action, List<GestureSample>> gestures;
 #endif
 
-
-        public static void Initialize()
+        public static void Initialize(Game game)
         {
 #if DESKTOP
+            Window = game.Window;
             LastKeyboardState = new KeyboardState();
-            CurrentMouseState = new MouseState();
-            LastMouseState = new MouseState();
             CurrentKeyboardState = new KeyboardState();
+            LastMouseState = new MouseState();
+            CurrentMouseState = new MouseState();
 
             keys = new Dictionary<Action, Keys[]>
             {
@@ -348,7 +349,7 @@ namespace GameStateManager
             LastKeyboardState = CurrentKeyboardState;
             CurrentKeyboardState = Keyboard.GetState();
             LastMouseState = CurrentMouseState;
-            CurrentMouseState = Mouse.GetState();
+            CurrentMouseState = Mouse.GetState(Window);
 
             if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
             {
@@ -419,16 +420,16 @@ namespace GameStateManager
 #if DESKTOP
             int index = -1;
             if (CanSwapControllerType && GetUserCount() == 1)
-                index = WasAnyButtonPressed(true, false);
+                index = WasAnyButtonPressed(false, false);
 
             if (index != -1)
             {
+                User user = GetPrimaryUser();
                 for (int i = 0; i < MAX_USERS; i++)
                 {
                     if (Users[i].ControllerIndex == index)
                         continue;
 
-                    User user = GetPrimaryUser();
                     switch (user.InputType)
                     {
                         case InputType.KEYBOARD:
@@ -646,8 +647,7 @@ namespace GameStateManager
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (CurrentGamePadState[i] != LastGamePadState[i] && 
-                    CurrentGamePadState[i].IsConnected == LastGamePadState[i].IsConnected)
+                if (HasGamePadStateChanged(CurrentGamePadState[i], LastGamePadState[i]))
                 {
                     if (ignoreThumbStickMovement == false ||
                         (CurrentGamePadState[i].ThumbSticks.Left.Length() == LastGamePadState[i].ThumbSticks.Left.Length() &&
@@ -665,10 +665,28 @@ namespace GameStateManager
         }
 
 
-        // Checks if a key was pressed during this update. The controllingPlayer parameter specifies
-        // which player to read input for. If this is null, it will accept input from any player.
-        // When a keypress is detected, the output playerIndex reports which player pressed it.
-        public static bool WasButtonPressed(Action action, User user = null)
+        private static Buttons[] buttonList = (Buttons[])Enum.GetValues(typeof(Buttons));      
+
+        private static bool HasGamePadStateChanged(GamePadState currentGamePadState, GamePadState lastGamePadState)
+        {
+            if (currentGamePadState.IsConnected)
+            {
+                for (int b = 0; b < buttonList.Length; b++)
+                {
+                    Buttons button = buttonList[b];
+                    if (currentGamePadState.IsButtonDown(button) != lastGamePadState.IsButtonDown(button) &&
+                        currentGamePadState.IsButtonUp(button) != lastGamePadState.IsButtonUp(button))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+    // Checks if a key was pressed during this update. The controllingPlayer parameter specifies
+    // which player to read input for. If this is null, it will accept input from any player.
+    // When a keypress is detected, the output playerIndex reports which player pressed it.
+    public static bool WasButtonPressed(Action action, User user = null)
         {
 #if DESKTOP
             if (action == Action.CONSOLE)
@@ -851,7 +869,7 @@ namespace GameStateManager
             }
 
             // Unless this move is a component of a larger sequence, consume it.
-            if (!move.IsSubMove)
+            if (move.IsSubMove == false)
                 Buffers[i].Clear();
 
             return true;
