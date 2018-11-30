@@ -85,9 +85,9 @@ namespace GameStateManager
                 Screen screen = screensToUpdate[screensToUpdate.Count - 1];
                 screensToUpdate.RemoveAt(screensToUpdate.Count - 1);
 
-                Debug.Profiler.BeginMark("Update: " + screen.Name, screen.ProfilerColor);
+                //Debug.Profiler.BeginMark("Update: " + screen.Name, screen.ProfilerColor);
                 screen.Update(gameTime);
-                Debug.Profiler.EndMark("Update: " + screen.Name);
+                //Debug.Profiler.EndMark("Update: " + screen.Name);
 
                 if (screen.TransitionState == ScreenState.TransitionOn || 
                     screen.TransitionState == ScreenState.Active)
@@ -126,9 +126,9 @@ namespace GameStateManager
                 if (Screens[i].TransitionState == ScreenState.Hidden)
                     continue;
 
-                Debug.Profiler.BeginMark("Draw: " + Screens[i].Name, Screens[i].ProfilerColor);
+                //Debug.Profiler.BeginMark("Draw: " + Screens[i].Name, Screens[i].ProfilerColor);
                 Screens[i].Draw(gameTime);
-                Debug.Profiler.EndMark("Draw: " + Screens[i].Name);
+                //Debug.Profiler.EndMark("Draw: " + Screens[i].Name);
             }
 
             SpriteBatch.End();
