@@ -70,6 +70,8 @@ namespace GameStateManager
 
                 if (highlightedEntry < 0)
                     highlightedEntry = Entries.Count - 1;
+
+                previousHighlightedEntry = highlightedEntry;
             }
 
             if (isMenuDown)
@@ -81,6 +83,8 @@ namespace GameStateManager
 
                 if (highlightedEntry >= Entries.Count)
                     highlightedEntry = 0;
+
+                previousHighlightedEntry = highlightedEntry;
             }
 
             for (int i = 0; i < Entries.Count; i++)
