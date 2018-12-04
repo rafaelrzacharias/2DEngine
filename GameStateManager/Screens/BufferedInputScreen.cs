@@ -59,7 +59,7 @@ namespace GameStateManager
         // Handles the input to control the screen transitions.
         public override void HandleInput()
         {
-            if (Input.WasButtonPressed(Action.HK, PrimaryUser))
+            if (Input.IsActionPressed(Action.HK, PrimaryUser))
                 OnDismiss(PrimaryUser);
         }
 
@@ -117,11 +117,11 @@ namespace GameStateManager
         {
             Vector2 textSize = Font.MeasureString(move.Name);
 
-            Buttons[] buttons = new Buttons[move.Sequence.Length];
+            Action[] actions = new Action[move.Sequence.Length];
             for (int i = 0; i < move.Sequence.Length; i++)
-                buttons[i] = (Buttons)move.Sequence[i];
+                actions[i] = move.Sequence[i];
 
-            Vector2 sequenceSize = MeasureSequence(buttons);
+            Vector2 sequenceSize = MeasureSequence(actions);
             return new Vector2(Math.Max(textSize.X, sequenceSize.X), textSize.Y + sequenceSize.Y);
         }
 
@@ -132,11 +132,11 @@ namespace GameStateManager
             DrawString(move.Name, position, Color.White);
             position.Y += Font.MeasureString(move.Name).Y;
 
-            Buttons[] buttons = new Buttons[move.Sequence.Length];
+            Action[] actions = new Action[move.Sequence.Length];
             for (int i = 0; i < move.Sequence.Length; i++)
-                buttons[i] = (Buttons)move.Sequence[i];
+                actions[i] = move.Sequence[i];
 
-            DrawSequence(buttons, position);
+            DrawSequence(actions, position);
         }
 
 
@@ -169,41 +169,41 @@ namespace GameStateManager
 
 
         // Calculates the size of what would be drawn by a call to DrawSequence.
-        Vector2 MeasureSequence(IEnumerable<Buttons> sequence)
+        Vector2 MeasureSequence(IEnumerable<Action> sequence)
         {
             float width = 0f;
 
-            foreach (Buttons button in sequence)
-                width += MeasureButtons(button).X;
+            foreach (Action action in sequence)
+                width += MeasureButtons(action).X;
 
             return new Vector2(width, padFaceTexture.Height);
         }
 
 
         // Draws a horizontal series of input steps in a sequence.
-        void DrawSequence(IEnumerable<Buttons> sequence, Vector2 position)
+        void DrawSequence(IEnumerable<Action> sequence, Vector2 position)
         {
-            foreach (Buttons button in sequence)
+            foreach (Action action in sequence)
             {
-                DrawButtons(button, position);
-                position.X += MeasureButtons(button).X;
+                DrawButtons(action, position);
+                position.X += MeasureButtons(action).X;
             }
         }
 
 
         // Calculates the size of what would be drawn by a call to DrawButtons.
-        Vector2 MeasureButtons(Buttons buttons)
+        Vector2 MeasureButtons(Action action)
         {
-            Buttons direction = Input.GetDirectionFromButtons(buttons);
+            Action direction = Input.GetDirectionFromAction(action);
             float width = 0f;
 
             // If the buttons have a direction.
-            if (direction > 0)
+            if (direction != Action.NONE)
             {
                 width = GetDirectionTexture(direction).Width;
 
                 // If the buttons have at least one non-directional button.
-                if ((buttons & ~direction) > 0)
+                if ((action & ~direction) != Action.NONE)
                     width += plusTexture.Width + padFaceTexture.Width;
             }
             else
@@ -215,10 +215,10 @@ namespace GameStateManager
 
         // Draws the combined state of a set of buttons flags. The rendered output looks like a
         // directional arrow, a group of buttons, or both concatenated with a plus sign operator.
-        void DrawButtons(Buttons buttons, Vector2 position)
+        void DrawButtons(Action action, Vector2 position)
         {
             // Get the texture to draw for the direction.
-            Buttons direction = Input.GetDirectionFromButtons(buttons);
+            Action direction = Input.GetDirectionFromAction(action);
             Texture2D directionTexture = GetDirectionTexture(direction);
 
             // If there is a direction, draw it.
@@ -229,7 +229,7 @@ namespace GameStateManager
             }
 
             // If any non-directional button is pressed
-            if ((buttons & ~direction) > 0)
+            if ((action & ~direction) != Action.NONE)
             {
                 // Draw a plus if both a direction and one more button is pressed.
                 if (directionTexture != null)
@@ -242,22 +242,22 @@ namespace GameStateManager
                 SpriteBatch.Draw(padFaceTexture, position, Color.White);
 
                 // Draw each active button over the inactive gamePad face.
-                if ((buttons & Buttons.A) > 0)
+                if ((action & Action.LK) != Action.NONE)
                     SpriteBatch.Draw(aButtonTexture, position, Color.White);
-                if ((buttons & Buttons.B) > 0)
+                if ((action & Action.HK) != Action.NONE)
                     SpriteBatch.Draw(bButtonTexture, position, Color.White);
-                if ((buttons & Buttons.X) > 0)
+                if ((action & Action.LP) != Action.NONE)
                     SpriteBatch.Draw(xButtonTexture, position, Color.White);
-                if ((buttons & Buttons.Y) > 0)
+                if ((action & Action.HP) != Action.NONE)
                     SpriteBatch.Draw(yButtonTexture, position, Color.White);
             }
         }
 
 
         // Gets the texture for a given direction.
-        Texture2D GetDirectionTexture(Buttons direction)
+        Texture2D GetDirectionTexture(Action direction)
         {
-            switch ((Action)direction)
+            switch (direction)
             {
                 case Action.UP:
                     return upTexture;
