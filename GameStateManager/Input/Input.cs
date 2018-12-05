@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
+
 namespace GameStateManager
 {
     public enum InputType
@@ -69,16 +70,6 @@ namespace GameStateManager
         public static ActionMap[] ActionMaps { get; private set; }
         public static Action[] Actions { get; private set; }
         public static string[] ActionNames { get; private set; }
-
-        // The moves available to be performed by the players.
-        public static readonly MoveList MoveList = new MoveList();
-
-        // Stores each players' most recent move and when they pressed it.
-        public static Move[] PlayersMove;
-        public static TimeSpan[] PlayersMoveTime;
-
-        // Time until the currently "active" move dissapears from the screen.
-        public static readonly TimeSpan MOVE_TIMEOUT = TimeSpan.FromSeconds(1.0);
 #if DESKTOP
         public static KeyboardState LastKeyboardState;
         public static KeyboardState CurrentKeyboardState;
@@ -110,28 +101,6 @@ namespace GameStateManager
 #if DESKTOP || CONSOLE
         public static GamePadState[] LastGamePadState;
         public static GamePadState[] CurrentGamePadState;
-
-        // The last "real time" that new input was received. Slightly late button
-        // presses will not update this time; they are merged with previous input.
-        public static TimeSpan LastInputTime { get; private set; }
-
-        // The current sequence of pressed buttons.
-        private const int BUFFER_SIZE = 10;
-        public static List<Action>[] Buffers;
-
-        // This is how long to wait for input before all input data is expired.
-        // This prevents the player from performing half of a move, waiting, then
-        // performing the rest of the move after they forgot about the first half.
-        public static readonly TimeSpan BufferTimeout = TimeSpan.FromMilliseconds(500.0);
-
-        // The size of the "merge window" for combining button presses that occur at almost
-        // the same time. If too small, players will find it difficult to perform moves which
-        // require pressing several buttons simultaneously. If too large, players will find it
-        // difficult to perform moves which require pressing several buttons in sequence.
-        public static readonly TimeSpan MergeInputTime = TimeSpan.FromMilliseconds(100.0);
-
-        // Provides the map of non-directional gamePad buttons to keyboard keys.
-        public static Dictionary<Buttons, Keys> NonDirectionalButtons { get; private set; }
 #endif
 #if MOBILE
         public static TouchCollection TouchState;
@@ -149,6 +118,9 @@ namespace GameStateManager
             ActionMaps = new ActionMap[Actions.Length];
             ResetActionMaps();
 
+            // The buffered input for each player
+            BufferedInput.Initialize();
+
             LastKeyboardState = new KeyboardState();
             CurrentKeyboardState = new KeyboardState();
             LastMouseState = new MouseState();
@@ -163,14 +135,6 @@ namespace GameStateManager
                 LastGamePadState[i] = new GamePadState();
                 CurrentGamePadState[i] = new GamePadState();
             }
-
-            Buffers = new List<Action>[MAX_USERS];
-            for (int i = 0; i < MAX_USERS; i++)
-                Buffers[i] = new List<Action>(BUFFER_SIZE);
-
-            // Give each player a location to store their most recent move.
-            PlayersMove = new Move[MAX_USERS];
-            PlayersMoveTime = new TimeSpan[MAX_USERS];
 #endif
 #if MOBILE
             TouchState = new TouchState();
@@ -267,6 +231,18 @@ namespace GameStateManager
                 user.InputType = InputType.NONE;
                 user.IsPrimaryUser = false;
             }
+
+            if (GetUserCount() == 1)
+            {
+                for (int i = 0; i < MAX_USERS; i++)
+                {
+                    if (Users[i].IsActive)
+                    {
+                        Users[i].IsPrimaryUser = true;
+                        break;
+                    }
+                }
+            }
         }
 
 
@@ -282,27 +258,6 @@ namespace GameStateManager
             }
 
             return count;
-#endif
-#if MOBILE
-            return 1;
-#endif
-        }
-
-
-        // Returns the first available user slot.
-        public static int GetFirstAvailableSlot()
-        {
-#if DESKTOP || CONSOLE
-            for (int i = 0; i < MAX_USERS; i++)
-            {
-                if (Users[i].IsActive == false
-#if DESKTOP
-                    || Users[i].InputType == InputType.KEYBOARD)
-#endif
-                    return i;
-            }
-
-            return -1;
 #endif
 #if MOBILE
             return 1;
@@ -343,12 +298,11 @@ namespace GameStateManager
                     CurrentMouseState.Equals(LastMouseState) == false)
                 isLeftMouseDown = false;
 
-            // If dragging distance was above threshold (5 pixels), set dragging to true.
             if (isLeftMouseDown && isDragging == false)
             {
                 Vector2 delta = dragMouseStart - CurrentMouseState.Position.ToVector2();
 
-                if (delta.Length() > dragThreshold)
+                if (delta.Length() > dragThreshold) // if above threshold (5 px), set dragging to true
                 {
                     isDragging = true;
                     dragMouseStart = CurrentMouseState.Position.ToVector2();
@@ -367,23 +321,8 @@ namespace GameStateManager
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
 
-                if (Users[i].IsActive)
-                {
-                    UpdateNonDirectionalButtons(i);
-
-                    // Expire old moves.
-                    if (ScreenManager.GameTime.TotalGameTime - PlayersMoveTime[i] > MOVE_TIMEOUT)
-                        PlayersMove[i] = null;
-
-                    // Detection and record of current player's most recent move.
-                    Move newMove = MoveList.DetectMoves(i);
-
-                    if (newMove != null)
-                    {
-                        PlayersMove[i] = newMove;
-                        PlayersMoveTime[i] = ScreenManager.GameTime.TotalGameTime;
-                    }
-                }
+                if (Users[i].IsActive) ;
+                    BufferedInput.Update(i);
             }
 #endif
 #if DESKTOP
@@ -446,80 +385,6 @@ namespace GameStateManager
         }
 
 
-        // Clears the input buffer of all players.
-        public static void ClearInputBuffers()
-        {
-            for (int i = 0; i < MAX_USERS; i++)
-                Buffers[i].Clear();
-        }
-
-
-        private static void UpdateNonDirectionalButtons(int userIndex)
-        {
-            // Expire old input.
-            TimeSpan time = TimeSpan.FromMilliseconds(0.0);
-            if (ScreenManager.GameTime != null)
-                time = ScreenManager.GameTime.TotalGameTime;
-            TimeSpan timeSinceLast = time - LastInputTime;
-
-            if (timeSinceLast > BufferTimeout)
-                Buffers[userIndex].Clear();
-
-            // Get all of the non-directional buttons pressed.
-            Action action = Action.NONE;
-
-            for (int i = 1; i < Actions.Length; i++)
-            {
-                // If the action is a direction, skip it.
-                if ((Actions[i] & ~(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT)) == Action.NONE)
-                    continue;
-
-                if (IsActionPressed(Actions[i], Users[userIndex]))
-                    action |= Actions[i];
-            }
-
-            // It is very hard to press two buttons on exactly the same frame.
-            // If they are close enough, consider them pressed at the same time.
-            bool mergeInput = Buffers[userIndex].Count > 0 && timeSinceLast < MergeInputTime;
-
-            // If there is a new direction.
-            Action currentAction = GetActionFromInput(Users[userIndex], false);
-            Action lastAction = GetActionFromInput(Users[userIndex], true);
-
-            if (lastAction != currentAction)
-            {
-                // Combine the direction with the buttons.
-                action |= currentAction;
-
-                // Don't merge two opposite directions. This has the side effect that the direction needs
-                // to be pressed at the same time or slightly before the buttons for merging to work.
-                mergeInput = false;
-            }
-
-            // If there was any new input on this update, add it to the buffer.
-            if (action != Action.NONE)
-            {
-                if (mergeInput)
-                {
-                    // Use the bitwise OR to merge with the previous input.
-                    // LastInputTime isn't updated to prevent extending the merge window.
-                    Buffers[userIndex][Buffers[userIndex].Count - 1] |= action;
-                }
-                else
-                {
-                    // Append this input to the buffer, expiring old input if necessary.
-                    if (Buffers[userIndex].Count == Buffers[userIndex].Capacity)
-                        Buffers[userIndex].RemoveAt(0);
-
-                    Buffers[userIndex].Add(action);
-
-                    // Record the time of this input to begin the merge window.
-                    LastInputTime = time;
-                }
-            }
-        }
-
-
 #if DESKTOP || CONSOLE
         // Event raised when a controller is disconnected.
         public delegate void ControllerDisconnectedEventHandler(int controllerIndex);
@@ -527,6 +392,15 @@ namespace GameStateManager
 
         public static void OnControllerDisconnected(int controllerIndex)
         {
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Users[i].ControllerIndex == controllerIndex)
+                {
+                    ResetUser(Users[i]);
+                    break;
+                }
+            }
+
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(controllerIndex);
         }
@@ -598,7 +472,6 @@ namespace GameStateManager
             if (Gestures.Length != 0)
                 return MAX_USERS;
 #endif
-
             return -1;
         }
 
@@ -696,189 +569,6 @@ namespace GameStateManager
             return false;
         }
 #endif
-
-        // Determines if a move matches the current input history of a user.
-        // Unless the move is a sub-move, the history is "consumed" to prevent it from matching twice.
-        public static bool Matches(Move move, int i)
-        {
-            // If the move is longer than the buffer, if can't possibly match.
-            if (move.Sequence.Length > Buffers[i].Count)
-                return false;
-
-            // Loop backwards to match against the most recent input.
-            for (int j = 1; j <= move.Sequence.Length; ++j)
-            {
-                if (Buffers[i][Buffers[i].Count - j] != move.Sequence[move.Sequence.Length - j])
-                    return false;
-            }
-
-            // Unless this move is a component of a larger sequence, consume it.
-            if (move.IsSubMove == false)
-                Buffers[i].Clear();
-
-            return true;
-        }
-
-
-        // NOTE: This input system assumes that UP and LEFT has priority over other directions.
-        private static Action GetActionFromInput(User user, bool sampleLastFrame)
-        {
-            Action action = Action.NONE;
-            ActionMap upMap = ActionMaps[GetActionIndex(Action.UP)];
-            ActionMap downMap = ActionMaps[GetActionIndex(Action.DOWN)];
-            ActionMap leftMap = ActionMaps[GetActionIndex(Action.LEFT)];
-            ActionMap rightMap = ActionMaps[GetActionIndex(Action.RIGHT)];
-
-            switch (user.InputType)
-            {
-                case InputType.KEYBOARD:
-                    {
-                        KeyboardState keyboardState = CurrentKeyboardState;
-
-                        if (sampleLastFrame)
-                            keyboardState = LastKeyboardState;
-
-                        List<Keys> upKeys = upMap.Keys;
-                        List<Keys> downKeys = downMap.Keys;
-                        List<Keys> leftKeys = leftMap.Keys;
-                        List<Keys> rightKeys = rightMap.Keys;
-
-                        for (int i = 0; i < upKeys.Count; i++)
-                        {
-                            if (keyboardState.IsKeyDown(upKeys[i]))
-                            {
-                                action |= Action.UP;
-                                break;
-                            }
-                        }
-
-                        // If the action already contains UP, don't add DOWN.
-                        if ((action & Action.UP) == Action.NONE)
-                        {
-                            for (int i = 0; i < downKeys.Count; i++)
-                            {
-                                if (keyboardState.IsKeyDown(downKeys[i]))
-                                {
-                                    action |= Action.DOWN;
-                                    break;
-                                }
-                            }
-                        }
-
-                        for (int i = 0; i < leftKeys.Count; i++)
-                        {
-                            if (keyboardState.IsKeyDown(leftKeys[i]))
-                            {
-                                action |= Action.LEFT;
-                                break;
-                            }
-                        }
-
-                        // If the action already contains UP, UP_LEFT or DOWN_LEFT, don't add RIGHT.
-                        if ((action & (Action.UP | Action.LEFT)) == Action.NONE || 
-                            (action & (Action.DOWN | Action.LEFT)) == Action.NONE)
-                        {
-                            for (int i = 0; i < rightKeys.Count; i++)
-                            {
-                                if (keyboardState.IsKeyDown(rightKeys[i]))
-                                {
-                                    action |= Action.RIGHT;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case InputType.GAMEPAD:
-                    {
-                        GamePadState gamePadState = CurrentGamePadState[user.ControllerIndex];
-
-                        if (sampleLastFrame)
-                            gamePadState = LastGamePadState[user.ControllerIndex];
-
-                        List<Buttons> upButtons = upMap.Buttons;
-                        List<Buttons> downButtons = downMap.Buttons;
-                        List<Buttons> leftButtons = leftMap.Buttons;
-                        List<Buttons> rightButtons = rightMap.Buttons;
-
-                        for (int i = 0; i < upButtons.Count; i++)
-                        {
-                            if (gamePadState.IsButtonDown(upButtons[i]))
-                            {
-                                action |= Action.UP;
-                                break;
-                            }
-                        }
-
-                        // If the action already contains UP, don't add DOWN.
-                        if ((action & Action.UP) == Action.NONE)
-                        {
-                            for (int i = 0; i < downButtons.Count; i++)
-                            {
-                                if (gamePadState.IsButtonDown(downButtons[i]))
-                                {
-                                    action |= Action.DOWN;
-                                    break;
-                                }
-                            }
-                        }
-
-                        for (int i = 0; i < leftButtons.Count; i++)
-                        {
-                            if (gamePadState.IsButtonDown(leftButtons[i]))
-                            {
-                                action |= Action.LEFT;
-                                break;
-                            }
-                        }
-
-                        // If the action already contains UP, UP_LEFT or DOWN_LEFT, don't add RIGHT.
-                        if ((action & (Action.UP | Action.LEFT)) == Action.NONE ||
-                            (action & (Action.DOWN | Action.LEFT)) == Action.NONE)
-                        {
-                            for (int i = 0; i < rightButtons.Count; i++)
-                            {
-                                if (gamePadState.IsButtonDown(rightButtons[i]))
-                                {
-                                    action |= Action.RIGHT;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-            }
-
-            return action;
-        }
-        
-
-        // Gets the direction without non-direction buttons from the Button enum
-        // and extract the direction from a full set of buttons using the bitmask.
-        public static Action GetDirectionFromAction(Action action)
-        {
-            switch (action)
-            {
-                case Action.UP:
-                    return Action.UP;
-                case Action.DOWN:
-                    return Action.DOWN;
-                case Action.LEFT:
-                    return Action.LEFT;
-                case Action.RIGHT:
-                    return Action.RIGHT;
-                case Action.UP | Action.LEFT:
-                    return Action.UP | Action.LEFT;
-                case Action.UP | Action.RIGHT:
-                    return Action.UP | Action.RIGHT;
-                case Action.DOWN | Action.LEFT:
-                    return Action.DOWN | Action.LEFT;
-                case Action.DOWN | Action.RIGHT:
-                    return Action.DOWN | Action.RIGHT;
-                default:
-                    return action & (Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT);
-            }
-        }
 
 
         // Reset the action maps to their default values.
