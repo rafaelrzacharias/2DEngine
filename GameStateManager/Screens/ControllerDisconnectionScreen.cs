@@ -49,7 +49,7 @@ namespace GameStateManager
             BackgroundArea.X = (int)(PanelPosition.X - BackgroundArea.Width * 0.5f);
             BackgroundArea.Y = (int)(PanelPosition.Y - BackgroundArea.Height * 0.5f);
             
-            SetText("Controller disconnected: Connect controller or press Cancel.", Color.Yellow);
+            SetText("Controller disconnected: Connect a controller.", Color.Yellow);
 
             controllerTexturePosition.X = PanelPosition.X - (Input.MAX_USERS - 1) * Padding.X * 0.5f - 
                 (Input.MAX_USERS - 1) * 0.5f * controllerTexture.Width * 0.2f - controllerTexture.Width * 0.2f * 0.5f;
@@ -125,29 +125,12 @@ namespace GameStateManager
         // Event handler for when a controller is disconnected.
         private void Input_ControllerDisconnected(int controllerIndex)
         {
-#if CONSOLE
-            if (Input.GetUserCount() == 0)
-                SetText("Controller disconnected: Connect a controller.", Color.Yellow);
-            else
-#endif
-            SetText("Controller disconnected: Connect controller, choose slot or press Cancel.", Color.Yellow);
+            SetText("Controller disconnected: Connect a controller.", Color.Yellow);
 
             if (IsVisible == false && Input.GetPrimaryUser() != null)
-            {
-                for (int i = 0; i < Input.MAX_USERS; i++)
-                {
-                    User user = Input.Users[i];
-                    if (user.ControllerIndex == controllerIndex)
-                    {
-                        Input.ResetUser(user);
-                        break;
-                    }
-                }
-
                 OnShow();
-            }
 
-            if (IsVisible && Input.GetUserCount() == 1)
+            if (IsVisible)
                 ControllingUser = Input.GetPrimaryUser();
         }
 
@@ -156,7 +139,7 @@ namespace GameStateManager
         {
             if (IsVisible || Input.GetPrimaryUser() != null)
             {
-                SetText("Controller connected: Choose a slot or press Cancel.", Color.Green);
+                SetText("Controller connected: Choose a slot.", Color.Green);
 
                 ControllingUser = temporaryUser;
                 ControllingUser.ControllerIndex = controllerIndex;
