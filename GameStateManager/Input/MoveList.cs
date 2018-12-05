@@ -40,7 +40,7 @@ namespace GameStateManager
             // on the moves array being in order of decreasing sequence length.
             for (int i = 0; i < Moves.Length; i++)
             {
-                if (Input.Matches(Moves[i], controllerIndex))
+                if (BufferedInput.Matches(Moves[i], controllerIndex))
                     return Moves[i];
             }
 

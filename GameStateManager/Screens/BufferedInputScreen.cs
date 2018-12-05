@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
@@ -73,9 +72,9 @@ namespace GameStateManager
                 Vector2 position = TopLeft;
 
                 // Draw the list of all moves, backwards, since they were reversed inside the moveList.
-                for (int i = Input.MoveList.Length - 1; i >= 0; i--)
+                for (int i = BufferedInput.MoveList.Length - 1; i >= 0; i--)
                 {
-                    Vector2 size = MeasureMove(Input.MoveList[i]);
+                    Vector2 size = MeasureMove(BufferedInput.MoveList[i]);
 
                     // If this move would fall off the right edge of the screen.
                     if (position.X + size.X > BottomRight.X)
@@ -85,7 +84,7 @@ namespace GameStateManager
                         position.Y += size.Y;
                     }
 
-                    DrawMove(Input.MoveList[i], position);
+                    DrawMove(BufferedInput.MoveList[i], position);
                     position.X += size.X + 30f;
                 }
 
@@ -107,7 +106,7 @@ namespace GameStateManager
         // Overrides the OnHide default implementation to clear the buffer.
         public override void OnHide()
         {
-            Input.ClearInputBuffers();
+            BufferedInput.ClearInputBuffers();
             base.OnHide();
         }
 
@@ -148,15 +147,15 @@ namespace GameStateManager
             Vector2 textSize = Font.MeasureString(text);
             DrawString(text, position, Color.White);
 
-            if (Input.PlayersMove[i] != null)
+            if (BufferedInput.PlayersMove[i] != null)
             {
-                DrawString(Input.PlayersMove[i].Name, new Vector2(
+                DrawString(BufferedInput.PlayersMove[i].Name, new Vector2(
                     position.X + textSize.X, position.Y), Color.Red);
             }
 
             // Draw the player's input buffer.
             position.Y += textSize.Y;
-            DrawSequence(Input.Buffers[i], position);
+            DrawSequence(BufferedInput.Buffers[i], position);
         }
 
 
@@ -194,7 +193,7 @@ namespace GameStateManager
         // Calculates the size of what would be drawn by a call to DrawButtons.
         Vector2 MeasureButtons(Action action)
         {
-            Action direction = Input.GetDirectionFromAction(action);
+            Action direction = GetDirectionFromAction(action);
             float width = 0f;
 
             // If the buttons have a direction.
@@ -218,7 +217,7 @@ namespace GameStateManager
         void DrawButtons(Action action, Vector2 position)
         {
             // Get the texture to draw for the direction.
-            Action direction = Input.GetDirectionFromAction(action);
+            Action direction = GetDirectionFromAction(action);
             Texture2D directionTexture = GetDirectionTexture(direction);
 
             // If there is a direction, draw it.
@@ -250,6 +249,34 @@ namespace GameStateManager
                     SpriteBatch.Draw(xButtonTexture, position, Color.White);
                 if ((action & Action.HP) != Action.NONE)
                     SpriteBatch.Draw(yButtonTexture, position, Color.White);
+            }
+        }
+
+
+        // Gets the direction without non-direction buttons from the Button enum
+        // and extract the direction from a full set of buttons using the bitmask.
+        public static Action GetDirectionFromAction(Action action)
+        {
+            switch (action)
+            {
+                case Action.UP:
+                    return Action.UP;
+                case Action.DOWN:
+                    return Action.DOWN;
+                case Action.LEFT:
+                    return Action.LEFT;
+                case Action.RIGHT:
+                    return Action.RIGHT;
+                case Action.UP | Action.LEFT:
+                    return Action.UP | Action.LEFT;
+                case Action.UP | Action.RIGHT:
+                    return Action.UP | Action.RIGHT;
+                case Action.DOWN | Action.LEFT:
+                    return Action.DOWN | Action.LEFT;
+                case Action.DOWN | Action.RIGHT:
+                    return Action.DOWN | Action.RIGHT;
+                default:
+                    return action & (Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT);
             }
         }
 
