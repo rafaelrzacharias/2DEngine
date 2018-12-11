@@ -56,6 +56,7 @@
     <Compile Include="Debug\ScreenStats.cs" />
     <Compile Include="Debug\StringBuilderExtensions.cs" />
     <Compile Include="Game1.cs" />
+    <Compile Include="Input\ActionMap.cs" />
     <Compile Include="Input\BufferedInput.cs" />
     <Compile Include="Input\Move.cs" />
     <Compile Include="Input\MoveList.cs" />
@@ -74,11 +75,14 @@
     <Compile Include="Screens\ControllerDisconnectionScreen.cs" />
     <Compile Include="Screens\GameScreen.cs" />
     <Compile Include="Screens\IISMessageBoxScreen.cs" />
+    <Compile Include="Screens\InputMappingScreen.cs" />
     <Compile Include="Screens\LoadingScreen.cs" />
     <Compile Include="Screens\MainMenuScreen.cs" />
     <Compile Include="Screens\MessageBoxScreen.cs" />
     <Compile Include="Screens\OptionsMenuScreen.cs" />
     <Compile Include="Screens\PauseMenuScreen.cs" />
+    <Compile Include="Screens\SaveInputMapMessageBoxScreen.cs" />
+    <Compile Include="Screens\UnassignedInputMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">
