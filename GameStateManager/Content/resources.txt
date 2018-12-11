@@ -28,6 +28,7 @@ whiteTexture
 noInputTexture
 controllerTexture
 keyboardTexture
+gamePad
 up
 down
 left
