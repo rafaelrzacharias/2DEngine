@@ -193,7 +193,8 @@ namespace GameStateManager
         // Calculates the size of what would be drawn by a call to DrawButtons.
         Vector2 MeasureButtons(Action action)
         {
-            Action direction = GetDirectionFromAction(action);
+            //Action direction = GetDirectionFromAction(action);
+            Action direction = action & (Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT);
             float width = 0f;
 
             // If the buttons have a direction.
@@ -217,7 +218,8 @@ namespace GameStateManager
         void DrawButtons(Action action, Vector2 position)
         {
             // Get the texture to draw for the direction.
-            Action direction = GetDirectionFromAction(action);
+            Action direction = action & (Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT);
+            //Action direction = GetDirectionFromAction(action);
             Texture2D directionTexture = GetDirectionTexture(direction);
 
             // If there is a direction, draw it.
@@ -255,7 +257,7 @@ namespace GameStateManager
 
         // Gets the direction without non-direction buttons from the Button enum
         // and extract the direction from a full set of buttons using the bitmask.
-        public static Action GetDirectionFromAction(Action action)
+        private Action GetDirectionFromAction(Action action)
         {
             switch (action)
             {
@@ -282,7 +284,7 @@ namespace GameStateManager
 
 
         // Gets the texture for a given direction.
-        Texture2D GetDirectionTexture(Action direction)
+        private Texture2D GetDirectionTexture(Action direction)
         {
             switch (direction)
             {
