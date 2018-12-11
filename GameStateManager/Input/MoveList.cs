@@ -47,6 +47,14 @@ namespace GameStateManager
             return null;
         }
 
+
+        public int LongestMoveLength
+        {
+            // Since they are in decreasing order, the first move is the longest.
+            get { return Moves[0].Sequence.Length; }
+        }
+
+
         public int Length { get { return Moves.Length; } }
 
         public Move this[int i] { get { return Moves[i]; } }

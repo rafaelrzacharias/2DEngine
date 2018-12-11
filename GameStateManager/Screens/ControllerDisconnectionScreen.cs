@@ -71,7 +71,7 @@ namespace GameStateManager
 
 
         // Override for the menu entries, so that they will not slide in/out of the screen.
-        protected override void UpdateMenuEntries() { }
+        protected override void UpdateMenuEntryLocations() { }
 
 
         // Draws the message box.

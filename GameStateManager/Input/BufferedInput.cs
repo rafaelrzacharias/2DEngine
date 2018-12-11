@@ -48,20 +48,9 @@ namespace GameStateManager
             // Give each player a location to store their most recent move.
             PlayersMove = new Move[Buffers.Length];
             PlayersMoveTime = new TimeSpan[Buffers.Length];
-
-            Input.ControllerConnected += BufferedInput_OnControllerStatusChanged;
-            Input.ControllerDisconnected += BufferedInput_OnControllerStatusChanged;
         }
 
 
-        // Callback to clear the buffered inputs upon controller connection/disconnection.
-        private static void BufferedInput_OnControllerStatusChanged(int controllerIndex)
-        {
-            ClearInputBuffers();
-        }
-
-
-        // Updates the BuffereInput for a given user.
         public static void Update(int userIndex)
         {
             UpdatePlayerActions(userIndex);
@@ -184,10 +173,10 @@ namespace GameStateManager
         private static Action GetActionFromInput(User user, bool sampleLastFrame)
         {
             Action action = Action.NONE;
-            ActionMap upMap = user.ActionMaps[Input.GetActionIndex(Action.UP)];
-            ActionMap downMap = user.ActionMaps[Input.GetActionIndex(Action.DOWN)];
-            ActionMap leftMap = user.ActionMaps[Input.GetActionIndex(Action.LEFT)];
-            ActionMap rightMap = user.ActionMaps[Input.GetActionIndex(Action.RIGHT)];
+            ActionMap upMap = Input.ActionMaps[Input.GetActionIndex(Action.UP)];
+            ActionMap downMap = Input.ActionMaps[Input.GetActionIndex(Action.DOWN)];
+            ActionMap leftMap = Input.ActionMaps[Input.GetActionIndex(Action.LEFT)];
+            ActionMap rightMap = Input.ActionMaps[Input.GetActionIndex(Action.RIGHT)];
 
             switch (user.InputType)
             {
