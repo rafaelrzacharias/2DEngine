@@ -5,6 +5,7 @@
     {
         private OptionsMenuScreen optionsMenu;
         private BufferedInputScreen bufferedInputMenu;
+        private InputMappingScreen inputMappingMenu;
         private MessageBoxScreen confirmQuit;
 
         // Constructs a main menu screen.
@@ -18,18 +19,21 @@
             MenuEntry playGameEntry = new MenuEntry("Play Game");
             MenuEntry optionsEntry = new MenuEntry("Options");
             MenuEntry bufferedInputEntry = new MenuEntry("Buffered Input");
+            MenuEntry inputMappingEntry = new MenuEntry("Input Mapping");
             MenuEntry exitEntry = new MenuEntry("Exit");
 
             // Add the menu event handlers.
             playGameEntry.Selected += PlayGameEntry_OnSelected;
             optionsEntry.Selected += OptionsEntry_OnSelected;
             bufferedInputEntry.Selected += BufferedInputEntry_Selected;
+            inputMappingEntry.Selected += InputMappingEntry_Selected;
             exitEntry.Selected += ExitEntry_OnSelected;
 
             // Add the entries to the menu.
             Entries.Add(playGameEntry);
             Entries.Add(optionsEntry);
             Entries.Add(bufferedInputEntry);
+            Entries.Add(inputMappingEntry);
             Entries.Add(exitEntry);
 
             optionsMenu = ScreenManager.GetScreen("optionsMenu") as OptionsMenuScreen;
@@ -37,6 +41,9 @@
 
             bufferedInputMenu = ScreenManager.GetScreen("bufferedInputMenu") as BufferedInputScreen;
             bufferedInputMenu.Hide += BufferedInputMenu_OnHide;
+
+            inputMappingMenu = ScreenManager.GetScreen("inputMappingMenu") as InputMappingScreen;
+            inputMappingMenu.Hide += InputMappingMenu_OnHide;
 
             OnShow();
         }
@@ -64,6 +71,9 @@
             LoadingScreen.Unload(ScreenManager.GetScreen("mainMenuBackground"));
             LoadingScreen.Unload(ScreenManager.GetScreen("optionsMenu"));
             LoadingScreen.Unload(ScreenManager.GetScreen("bufferedInputMenu"));
+            LoadingScreen.Unload(ScreenManager.GetScreen("inputMappingMenu"));
+            LoadingScreen.Unload(ScreenManager.GetScreen("saveInputMap"));
+            LoadingScreen.Unload(ScreenManager.GetScreen("unassignedInputMessage"));
             LoadingScreen.Unload(this);
 
             LoadingScreen.Load(new PauseMenuScreen("pauseMenu", "Paused"));
@@ -84,6 +94,14 @@
         {
             OnHide();
             bufferedInputMenu.OnShow();
+        }
+
+
+        // Event handler for when the "Input Mapping" entry is selected.
+        private void InputMappingEntry_Selected(User user)
+        {
+            OnHide();
+            inputMappingMenu.OnShow();
         }
 
 
@@ -134,6 +152,13 @@
 
         // Callback for when the "Buffered Input Menu" is dismissed.
         private void BufferedInputMenu_OnHide()
+        {
+            OnShow();
+        }
+
+
+        // Callback for when the "Input Mapping Menu" is dismissed.
+        private void InputMappingMenu_OnHide()
         {
             OnShow();
         }

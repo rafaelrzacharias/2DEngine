@@ -35,9 +35,9 @@ namespace GameStateManager
             SpriteBatch.DrawString(Font, "Mouse state: ", TextPosition, Color.Yellow);
             TextPosition.Y += Font.LineSpacing;
 
-            string mouseLeft = Input.IsMouseDown(MouseButton.LEFT) ? "Pressed" : "Released";
-            string mouseMiddle = Input.IsMouseDown(MouseButton.MIDDLE) ? "Pressed" : "Released";
-            string mouseRight = Input.IsMouseDown(MouseButton.RIGHT) ? "Pressed" : "Released";
+            string mouseLeft = Input.IsMouseDown(MouseButtons.LEFT) ? "Pressed" : "Released";
+            string mouseMiddle = Input.IsMouseDown(MouseButtons.MIDDLE) ? "Pressed" : "Released";
+            string mouseRight = Input.IsMouseDown(MouseButtons.RIGHT) ? "Pressed" : "Released";
             string wheelValue = Input.CurrentMouseState.ScrollWheelValue.ToString();
             string isDragging = Input.isDragging.ToString();
             string isDragComplete = Input.isDragComplete.ToString();

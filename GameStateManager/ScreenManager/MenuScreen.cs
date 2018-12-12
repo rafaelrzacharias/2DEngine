@@ -144,7 +144,7 @@ namespace GameStateManager
 
         // Allows the screen the chance to position the menu entries. By default,
         // all menu entries are lined up in a vertical list, centered on the screen.
-        protected virtual void UpdateMenuEntryLocations()
+        protected virtual void UpdateMenuEntries()
         {
             // Slides the menu into place during transitions, using a power curve to make
             // things look more interesting (the movement slows down near the end).
@@ -174,7 +174,7 @@ namespace GameStateManager
             if (IsEnabled)
             {
                 // Make sure our entries are in the right place before we draw them.
-                UpdateMenuEntryLocations();
+                UpdateMenuEntries();
 
                 // Update each nested MenuEntry object.
                 for (int i = 0; i < Entries.Count; i++)
