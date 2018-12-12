@@ -58,11 +58,27 @@ namespace GameStateManager
 
         public virtual void OnSelected(User user)
         {
+            IsSelected = true;
             //Audio.PlaySound("entrySelected");
 
             if (Selected != null)
                 Selected.Invoke(user);
         }
+
+
+        // Event raised when the menu entry is deselected.
+        public delegate void DeselectedEventHandler(User user);
+        public event DeselectedEventHandler Deselected;
+
+        public virtual void OnDeselected(User user)
+        {
+            IsSelected = false;
+            //Audio.PlaySound("entrySelected");
+
+            if (Deselected != null)
+                Deselected.Invoke(user);
+        }
+
 
         // Event raised when the menu entry is highlighted.
         public delegate void BeginHighlightedEventHandler();

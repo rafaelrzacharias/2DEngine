@@ -101,6 +101,8 @@ namespace GameStateManager
         {
             for (int i = 0; i < Entries.Count; i++)
             {
+                Entries[i].IsSelected = false;
+
                 if (Entries[i].IsHighlighted && Input.IsActionPressed(Action.LK, PrimaryUser))
                 {
                     Entries[i].OnSelected(PrimaryUser);
