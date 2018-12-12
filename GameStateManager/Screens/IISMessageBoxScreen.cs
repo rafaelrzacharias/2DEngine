@@ -29,7 +29,7 @@ namespace GameStateManager
 
                 LoadingScreen.Load(new MessageBoxScreen("confirmQuit", "Are you sure you want to quit?", "", MessageBoxType.YESNO));
                 LoadingScreen.Load(new UnassignedInputMessage("unassignedInputMessage", "There are still unassigned inputs.", ""));
-                LoadingScreen.Load(new SaveInputMapMessageBoxScreen("saveInputMap", "New Input Maps Detected!\nWould you like to save?", ""));
+                LoadingScreen.Load(new SaveInputMapMessageBoxScreen("saveInputMap", "Would you like to save?", ""));
                 LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
                 LoadingScreen.Load(new BufferedInputScreen("bufferedInputMenu"));
                 LoadingScreen.Load(new InputMappingScreen("inputMappingMenu", "Input Mapping"));

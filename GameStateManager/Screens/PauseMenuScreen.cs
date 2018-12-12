@@ -55,7 +55,7 @@ namespace GameStateManager
             LoadingScreen.Unload(this);
 
             LoadingScreen.Load(new UnassignedInputMessage("unassignedInputMessage", "There are still unassigned inputs.", ""));
-            LoadingScreen.Load(new SaveInputMapMessageBoxScreen("saveInputMap", "Would you like to save?", "New Input Maps Detected!"));
+            LoadingScreen.Load(new SaveInputMapMessageBoxScreen("saveInputMap", "Would you like to save?", ""));
             LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
             LoadingScreen.Load(new OptionsMenuScreen("optionsMenu", "Options"));
             LoadingScreen.Load(new BufferedInputScreen("bufferedInputMenu"));
