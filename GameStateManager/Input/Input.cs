@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
@@ -27,22 +28,24 @@ namespace GameStateManager
     public enum Action
     {
         NONE = 0,
-        UP = 1 << 0,
-        DOWN = 1 << 1,
-        LEFT = 1 << 2,
-        RIGHT = 1 << 3,
-        LP = 1 << 4,
-        HP = 1 << 5,
-        LK = 1 << 6,
-        HK = 1 << 7,
-        LB = 1 << 8,
-        LT = 1 << 9,
-        RB = 1 << 10,
-        RT = 1 << 11,
-        START = 1 << 12,
+        UI_SELECT = 1 << 0,
+        UI_BACK = 1 << 1,
+        UP = 1 << 2,
+        DOWN = 1 << 3,
+        LEFT = 1 << 4,
+        RIGHT = 1 << 5,
+        LP = 1 << 6,
+        HP = 1 << 7,
+        LK = 1 << 8,
+        HK = 1 << 9,
+        LB = 1 << 10,
+        LT = 1 << 11,
+        RB = 1 << 12,
+        RT = 1 << 13,
+        START = 1 << 14,
 
-        DEBUG = 1 << 13,
-        CONSOLE = 1 << 14
+        DEBUG = 1 << 15,
+        CONSOLE = 1 << 16
     }
 
 
@@ -55,6 +58,8 @@ namespace GameStateManager
 
         public static Action[] Actions { get; private set; }
         public static string[] ActionNames { get; private set; }
+
+        private static Dictionary<Buttons, Texture2D> platformButtons;
 #if DESKTOP
         public static KeyboardState LastKeyboardState;
         public static KeyboardState CurrentKeyboardState;
@@ -102,6 +107,8 @@ namespace GameStateManager
             ActionNames = new string[]
             {
                 "None",
+                "Select",
+                "Back",
                 "Up",
                 "Down",
                 "Left",
@@ -118,6 +125,25 @@ namespace GameStateManager
 
                 "Debug",
                 "Console"
+            };
+
+            platformButtons = new Dictionary<Buttons, Texture2D>()
+            {
+                { (Buttons)0, Resources.GetTexture("none") },
+                { Buttons.DPadUp, Resources.GetTexture("up") },
+                { Buttons.DPadDown, Resources.GetTexture("down") },
+                { Buttons.DPadLeft, Resources.GetTexture("left") },
+                { Buttons.DPadRight, Resources.GetTexture("right") },
+                { Buttons.A, Resources.GetTexture("aButton") },
+                { Buttons.B, Resources.GetTexture("bButton") },
+                { Buttons.X, Resources.GetTexture("xButton") },
+                { Buttons.Y, Resources.GetTexture("yButton") },
+                { Buttons.LeftShoulder, Resources.GetTexture("lbButton") },
+                { Buttons.LeftTrigger, Resources.GetTexture("ltButton") },
+                { Buttons.RightShoulder, Resources.GetTexture("rbButton") },
+                { Buttons.RightTrigger, Resources.GetTexture("rtButton") },
+                { Buttons.Start, Resources.GetTexture("menuButton") },
+                { Buttons.Back, Resources.GetTexture("windowsButton") },
             };
 
             // The buffered input for each player
@@ -579,7 +605,23 @@ namespace GameStateManager
             for (int action = 0; action < actionMaps.Length; action++)
                 actionMaps[action] = new ActionMap();
 
-            int i = GetActionIndex(Action.UP);
+            int i = GetActionIndex(Action.UI_SELECT);
+#if DESKTOP
+            actionMaps[i].Keys.Add(Keys.Space);
+            actionMaps[i].MouseButtons.Add(MouseButtons.LEFT);
+#endif
+#if DESKTOP || CONSOLE
+            actionMaps[i].Buttons.Add(Buttons.A);
+#endif
+            i = GetActionIndex(Action.UI_BACK);
+#if DESKTOP
+            actionMaps[i].Keys.Add(Keys.Escape);
+            actionMaps[i].MouseButtons.Add(MouseButtons.RIGHT);
+#endif
+#if DESKTOP || CONSOLE
+            actionMaps[i].Buttons.Add(Buttons.B);
+#endif
+            i = GetActionIndex(Action.UP);
 #if DESKTOP
             actionMaps[i].Keys.Add(Keys.W);
             actionMaps[i].Keys.Add(Keys.Up);
@@ -618,8 +660,6 @@ namespace GameStateManager
             i = GetActionIndex(Action.LK);
 #if DESKTOP
             actionMaps[i].Keys.Add(Keys.K);
-            actionMaps[i].Keys.Add(Keys.Space);
-            actionMaps[i].MouseButtons.Add(MouseButtons.LEFT);
 #endif
 #if DESKTOP || CONSOLE
             actionMaps[i].Buttons.Add(Buttons.A);
@@ -627,8 +667,6 @@ namespace GameStateManager
             i = GetActionIndex(Action.HK);
 #if DESKTOP
             actionMaps[i].Keys.Add(Keys.L);
-            actionMaps[i].Keys.Add(Keys.Escape);
-            actionMaps[i].MouseButtons.Add(MouseButtons.RIGHT);
 #endif
 #if DESKTOP || CONSOLE
             actionMaps[i].Buttons.Add(Buttons.B);
@@ -696,14 +734,11 @@ namespace GameStateManager
 #endif
         }
 
-        private static Dictionary<User, List<Action>> ignoredActions = new Dictionary<User, List<Action>>(MAX_USERS);
 
-        // For a chosen user, adds the given action to a list of ignored actions, consuming it
-        // each frame, for as many frames as the given action remains on the list.
-        public static void IgnoreAction(User user, Action action)
+        // Returns a platform button, given an action.
+        public static Texture2D GetPlatformButton(Buttons button)
         {
-            if (action != Action.NONE && ignoredActions[user].Contains(action) == false)
-                ignoredActions[user].Add(action);
+            return platformButtons[button];
         }
 
 
