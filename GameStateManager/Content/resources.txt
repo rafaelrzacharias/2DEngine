@@ -60,6 +60,7 @@ keyboardTexture
 
 gamePad
 
+none
 up
 
 down
