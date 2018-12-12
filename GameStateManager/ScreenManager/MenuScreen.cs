@@ -41,8 +41,8 @@ namespace GameStateManager
 
         private void UpdateEntriesHighlight()
         {
-            isMenuUp = Input.IsActionPressed(Action.UP, PrimaryUser);
-            isMenuDown = Input.IsActionPressed(Action.DOWN, PrimaryUser);
+            isMenuUp = Input.IsTimedActionPressed(Action.UP, PrimaryUser);
+            isMenuDown = Input.IsTimedActionPressed(Action.DOWN, PrimaryUser);
 
             if (PrimaryUser != null && PrimaryUser.InputType == InputType.KEYBOARD && Input.HasMouseMoved())
             {

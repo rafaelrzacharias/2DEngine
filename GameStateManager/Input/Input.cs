@@ -91,6 +91,11 @@ namespace GameStateManager
 #if DESKTOP || CONSOLE
         public static GamePadState[] LastGamePadState;
         public static GamePadState[] CurrentGamePadState;
+
+        private static Keys previousKey;
+        private static Buttons previousButton;
+        private static float elapsedTime;
+        private const float ELAPSED_LIMIT = 0.2f;
 #endif
 #if MOBILE
         public static TouchCollection TouchState;
@@ -844,6 +849,97 @@ namespace GameStateManager
                     break;
             }
 
+            return false;
+        }
+
+
+        // Returns true if the given action was just pressed on this frame,
+        // or if it's still being pressed after a certain amount of time.
+        public static bool IsTimedActionPressed(Action action, User user)
+        {
+            if (user == null)
+                return false;
+
+            ActionMap actionMap = user.ActionMaps[GetActionIndex(action)];
+
+            switch (user.InputType)
+            {
+                case InputType.KEYBOARD:
+                    {
+                        for (int i = 0; i < actionMap.Keys.Count; i++)
+                        {
+                            Keys key = actionMap.Keys[i];
+                            bool isKeyDown = CurrentKeyboardState.IsKeyDown(key);
+
+                            // If its a new key press, return true and restart the timer.
+                            if (LastKeyboardState.IsKeyUp(key) && isKeyDown)
+                            {
+                                previousKey = key;
+                                elapsedTime = 0f;
+                                return true;
+                            }
+
+                            // If we are currently holding down the key
+                            if (isKeyDown && previousKey == key)
+                            {
+                                // Return true if holding for long enough and reset the timer.
+                                if (elapsedTime >= ELAPSED_LIMIT)
+                                {
+                                    elapsedTime = 0f;
+                                    return true;
+                                }
+                                else
+                                {
+                                    // Otherwise, increase the timer by a frame's worth of time and do nothing.
+                                    float dt = (float)ScreenManager.GameTime.ElapsedGameTime.TotalSeconds;
+                                    elapsedTime += dt;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case InputType.GAMEPAD:
+                    {
+                        GamePadState currentGamePadState = CurrentGamePadState[user.ControllerIndex];
+                        GamePadState lastGamePadState = LastGamePadState[user.ControllerIndex];
+
+                        for (int i = 0; i < actionMap.Buttons.Count; i++)
+                        {
+                            Buttons button = actionMap.Buttons[i];
+
+                            bool isButtonDown = currentGamePadState.IsButtonDown(button);
+
+                            // If its a new button press, return true and restart the timer.
+                            if (lastGamePadState.IsButtonUp(button) && isButtonDown)
+                            {
+                                previousButton = button;
+                                elapsedTime = 0f;
+                                return true;
+                            }
+
+                            // If we are currently holding down the button
+                            if (isButtonDown && previousButton == button)
+                            {
+                                // Return true if holding for long enough and reset the timer.
+                                if (elapsedTime >= ELAPSED_LIMIT)
+                                {
+                                    elapsedTime = 0f;
+                                    return true;
+                                }
+                                else
+                                {
+                                    // Otherwise, increase the timer by a frame's worth of time and do nothing.
+                                    float dt = (float)ScreenManager.GameTime.ElapsedGameTime.TotalSeconds;
+                                    elapsedTime += dt;
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            // Return false if we either don't have a new key press,
+            // or we have one but haven't held it for long enough.
             return false;
         }
 
