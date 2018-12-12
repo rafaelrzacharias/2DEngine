@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace GameStateManager
 {
-    public struct ButtonLabel
+    public struct Label
     {
         public string Text;
         public Vector2 Position;
@@ -18,11 +18,16 @@ namespace GameStateManager
         private Texture2D gamePadTexture;
         private Vector2 gamePadPosition;
         private Vector2 gamePadOrigin;
-        private ButtonLabel[] buttonLabels;
+        private Vector2[] keyLabels;
+        private Vector2[] buttonLabels;
         private bool anyEntrySelected;
         private List<ActionMap[]> actionMaps;
         private MessageBoxScreen saveInputMap;
         private MessageBoxScreen unassignedInputMessage;
+        private Label actionsLabel;
+        private Label keyboardLabel;
+        private Label gamePadLabel;
+        private const int NUM_SKIPPED_KEYS = 7;
 
         // Constructs a new InputMapping screen.
         public InputMappingScreen(string screenName, string menuTitle)
@@ -34,7 +39,7 @@ namespace GameStateManager
             gamePadTexture = Resources.GetTexture("gamePad");
 
             Viewport viewport = ScreenManager.Viewport;
-            gamePadPosition = new Vector2(viewport.Width * 0.6f, viewport.Height * 0.5f);
+            gamePadPosition = new Vector2(viewport.Width * 0.6f, viewport.Height * 0.45f);
             gamePadOrigin = new Vector2(gamePadTexture.Width * 0.5f, gamePadTexture.Height * 0.5f);
 
             actionMaps = new List<ActionMap[]>(Input.MAX_USERS);
@@ -44,33 +49,71 @@ namespace GameStateManager
                 Input.ResetActionMaps(actionMaps[i]);
             }
 
+            actionsLabel = new Label();
+            actionsLabel.Text = "Actions";
+            actionsLabel.Position = new Vector2(viewport.Width * 0.1f, viewport.Height * 0.3f);
+
             float longestWord = 0f;
+            float width = Font.MeasureString(actionsLabel.Text).X;
+
+            if (width > longestWord)
+                longestWord = width;
 
             // Ignore the NONE, START, DEBUG, CONSOLE, and all 4 directional actions.
-            for (int i = 5; i < Input.ActionNames.Length - 3; i++)
+            for (int i = NUM_SKIPPED_KEYS; i < Input.ActionNames.Length - 3; i++)
             {
                 Entries.Add(new MenuEntry(Input.ActionNames[i]));
-                Entries[i - 5].Position.X = viewport.Width * 0.1f;
-                Entries[i - 5].Position.Y += (viewport.Height * 0.3f + (i - 5) * Font.LineSpacing * 1.2f);
-                Entries[i - 5].Origin = Vector2.Zero;
-                Entries[i - 5].UpdateBounds();
-                //Entries[i - 5].Selected += InputMappingScreen_Selected;
+                Entries[i - NUM_SKIPPED_KEYS].Position.X = actionsLabel.Position.X;
+                Entries[i - NUM_SKIPPED_KEYS].Position.Y += (actionsLabel.Position.Y + (i + 1 - NUM_SKIPPED_KEYS) * Font.LineSpacing * 1.2f);
+                Entries[i - NUM_SKIPPED_KEYS].Origin = Vector2.Zero;
+                Entries[i - NUM_SKIPPED_KEYS].UpdateBounds();
 
-                float width = Font.MeasureString(Input.ActionNames[i]).X;
+                width = Font.MeasureString(Input.ActionNames[i]).X;
 
                 if (width > longestWord)
                     longestWord = width;
             }
 
-            buttonLabels = new ButtonLabel[Entries.Count];
+            keyLabels = new Vector2[Entries.Count];
             float offset = longestWord * 1.5f;
 
-            UpdateMenuEntries();
+            keyboardLabel = new Label();
+            keyboardLabel.Text = "Keyboard";
+            keyboardLabel.Position = new Vector2(actionsLabel.Position.X + offset, actionsLabel.Position.Y);
+
+            int userIndex = GetUserIndex(PrimaryUser);
+
+            longestWord = 0;
+            width = Font.MeasureString(keyboardLabel.Text).X;
+
+            if (width > longestWord)
+                longestWord = width;
 
             for (int i = 0; i < Entries.Count; i++)
             {
-                buttonLabels[i].Position = Entries[i].Position;
-                buttonLabels[i].Position.X += offset;
+                keyLabels[i] = Entries[i].Position;
+                keyLabels[i].X += offset;
+
+                width = Font.MeasureString(actionMaps[userIndex][i + NUM_SKIPPED_KEYS].Keys[0].ToString()).X;
+
+                if (width > longestWord)
+                    longestWord = width;
+            }
+
+            offset = longestWord * 1.2f;
+
+            gamePadLabel = new Label();
+            gamePadLabel.Text = "GamePad";
+            gamePadLabel.Position = new Vector2(keyboardLabel.Position.X + offset, actionsLabel.Position.Y);
+            offset *= 1.4f;
+
+            buttonLabels = new Vector2[Entries.Count];
+
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                buttonLabels[i] = keyLabels[i];
+                buttonLabels[i].X += offset;
+                buttonLabels[i].Y += Font.LineSpacing * 0.5f;
             }
 
             saveInputMap = ScreenManager.GetScreen("saveInputMap") as MessageBoxScreen;
@@ -93,9 +136,11 @@ namespace GameStateManager
             {
                 if (Entries[i].IsSelected)
                 {
-                    for (int j = 5; j < Input.Actions.Length - 3; j++)
+                    Input.CanSwapControllerType = false;
+
+                    for (int j = NUM_SKIPPED_KEYS; j < Input.Actions.Length - 3; j++)
                     {
-                        ActionMap currentActionMap = actionMaps[userIndex][i + 5];
+                        ActionMap currentActionMap = actionMaps[userIndex][i + NUM_SKIPPED_KEYS];
 
                         if (Input.IsActionPressed(Input.Actions[j], PrimaryUser, true))
                         {
@@ -109,18 +154,12 @@ namespace GameStateManager
                                         if (oldKey == newKey)
                                             break;
 
-                                        string keyName = newKey.ToString();
-
-                                        buttonLabels[i].Text = keyName;
                                         currentActionMap.Keys[0] = newKey;
 
-                                        for (int k = 0; k < buttonLabels.Length; k++)
+                                        for (int k = NUM_SKIPPED_KEYS; k < actionMaps[userIndex].Length - 3; k++)
                                         {
-                                            if (k != i && buttonLabels[k].Text == keyName)
-                                            {
-                                                buttonLabels[k].Text = "--";
-                                                actionMaps[userIndex][k + 5].Keys[0] = 0;
-                                            }
+                                            if (k - NUM_SKIPPED_KEYS != i && actionMaps[userIndex][k].Keys[0] == newKey)
+                                                actionMaps[userIndex][k].Keys[0] = 0;
                                         }
                                     }
                                     break;
@@ -132,24 +171,19 @@ namespace GameStateManager
                                         if (oldButton == newButton)
                                             break;
 
-                                        string buttonName = newButton.ToString();
-
-                                        buttonLabels[i].Text = buttonName;
                                         currentActionMap.Buttons[0] = newButton;
 
-                                        for (int k = 0; k < buttonLabels.Length; k++)
+                                        for (int k = NUM_SKIPPED_KEYS; k < actionMaps[userIndex].Length - 3; k++)
                                         {
-                                            if (k != i && buttonLabels[k].Text == buttonName)
-                                            {
-                                                buttonLabels[k].Text = "--";
-                                                actionMaps[userIndex][k + 5].Buttons[0] = 0;
-                                            }
+                                            if (k - NUM_SKIPPED_KEYS != i && actionMaps[userIndex][k].Buttons[0] == newButton)
+                                                actionMaps[userIndex][k].Buttons[0] = 0;
                                         }
                                     }
                                     break;
                             }
 
                             Entries[i].OnDeselected(PrimaryUser);
+                            Input.CanSwapControllerType = true;
                         }
 
                     }
@@ -162,6 +196,10 @@ namespace GameStateManager
         }
 
 
+        // Overrides the default implementation of UpdateMenuEntries.
+        protected override void UpdateMenuEntries() { }
+
+
         // Overrides the default implementation of HandleInputs
         public override void HandleInput()
         {
@@ -172,73 +210,65 @@ namespace GameStateManager
         }
 
 
-        // Overrides the default positions of the menu entries.
-        protected override void UpdateMenuEntries()
-        {
-            int userIndex = GetUserIndex(PrimaryUser);
-
-            if (userIndex != -1)
-            {
-                string text = string.Empty;
-
-                switch (PrimaryUser.InputType)
-                {
-                    case InputType.KEYBOARD:
-                        {
-                            for (int i = 0; i < Entries.Count; i++)
-                            {
-                                Keys key = actionMaps[userIndex][i + 5].Keys[0];
-
-                                if (key != 0)
-                                    text = key.ToString();
-                                else
-                                    text = "--";
-
-                                // Allow only one key mapping for non-directional buttons.
-                                buttonLabels[i].Text = text;
-                            }
-                        }
-                        break;
-                    case InputType.GAMEPAD:
-                        {
-                            for (int i = 0; i < Entries.Count; i++)
-                            {
-                                Buttons button = actionMaps[userIndex][i + 5].Buttons[0];
-
-                                if (button != 0)
-                                    text = button.ToString();
-                                else
-                                    text = "--";
-
-                                // Allow only one button mapping for non-directional buttons.
-                                buttonLabels[i].Text = text;
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-
-
         // Draws the InputMapping screen.
         public override void Draw(GameTime gameTime)
         {
             if (IsVisible)
             {
-                Color labelColor = Color.DarkSlateGray;
-                
-                for (int i = 0; i < buttonLabels.Length; i++)
-                {
-                    if (Entries[i].IsSelected)
-                        Utils.PulseColor(ref labelColor);
-                    else
-                        labelColor = Color.DarkSlateGray;
+                int userIndex = GetUserIndex(PrimaryUser);
+                Color keyboardLabelColor = Color.White;
+                Color gamePadLabelColor = Color.White;
 
-                    SpriteBatch.DrawString(Font, buttonLabels[i].Text, buttonLabels[i].Position, labelColor);
+                SpriteBatch.DrawString(Font, actionsLabel.Text, actionsLabel.Position, Color.Yellow);
+                SpriteBatch.DrawString(Font, keyboardLabel.Text, keyboardLabel.Position, Color.Yellow);
+                SpriteBatch.DrawString(Font, gamePadLabel.Text, gamePadLabel.Position, Color.Yellow);
+
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    switch (PrimaryUser.InputType)
+                    {
+                        case InputType.KEYBOARD:
+                            {
+                                if (Entries[i].IsSelected)
+                                {
+                                    keyboardLabelColor = Color.Yellow;
+                                    Utils.PulseColor(ref keyboardLabelColor);
+                                }
+                                else
+                                    keyboardLabelColor = Color.White;
+                            }
+                            break;
+                        case InputType.GAMEPAD:
+                            {
+                                if (Entries[i].IsSelected)
+                                {
+                                    gamePadLabelColor = Color.Yellow;
+                                    Utils.PulseColor(ref gamePadLabelColor);
+                                }
+                                else
+                                    gamePadLabelColor = Color.White;
+                            }
+                            break;
+                    }
+
+                    string text = string.Empty;
+                    ActionMap actions = actionMaps[userIndex][i + NUM_SKIPPED_KEYS];
+
+                    if (actions.Keys[0] == 0)
+                        text = "--";
+                    else
+                        text = actions.Keys[0].ToString();
+
+                    SpriteBatch.DrawString(Font, text, keyLabels[i], keyboardLabelColor);
+
+                    Texture2D buttonTexture = Input.GetPlatformButton(actions.Buttons[0]);
+                    Vector2 origin = new Vector2(buttonTexture.Width * 0.5f, buttonTexture.Height * 0.5f);
+
+                    SpriteBatch.Draw(buttonTexture, buttonLabels[i], buttonTexture.Bounds, gamePadLabelColor, 0f, origin, 0.3f, SpriteEffects.None, 0f);
                 }
 
                 SpriteBatch.Draw(gamePadTexture, gamePadPosition, gamePadTexture.Bounds,
-                    Color.White, 0f, gamePadOrigin, 1f, SpriteEffects.None, DrawOrder);
+                    Color.White, 0f, gamePadOrigin, 0.5f, SpriteEffects.None, DrawOrder);
             }
 
             base.Draw(gameTime);
@@ -254,46 +284,23 @@ namespace GameStateManager
 
             if (userIndex != -1)
             {
-                switch (user.InputType)
+                for (int i = NUM_SKIPPED_KEYS; i < actionMaps[userIndex].Length - 3; i++)
                 {
-                    case InputType.KEYBOARD:
+                    ActionMap actions = actionMaps[userIndex][i];
+                    Keys assignedKey = actions.Keys[0];
+                    Buttons assignedButton = actions.Buttons[0];
+
+                    if (assignedKey != user.ActionMaps[i].Keys[0] ||
+                        assignedButton != user.ActionMaps[i].Buttons[0])
+                    {
+                        if (assignedKey == 0 || assignedButton == 0)
                         {
-                            for (int i = 5; i < actionMaps[userIndex].Length - 3; i++)
-                            {
-                                Keys assignedKey = actionMaps[userIndex][i].Keys[0];
-
-                                if (assignedKey != user.ActionMaps[i].Keys[0])
-                                {
-                                    if (assignedKey == 0)
-                                    {
-                                        unassignedInput = true;
-                                        break;
-                                    }
-
-                                    hasInputChanged = true;
-                                }
-                            }
+                            unassignedInput = true;
+                            break;
                         }
-                        break;
-                    case InputType.GAMEPAD:
-                        {
-                            for (int i = 5; i < actionMaps[userIndex].Length - 3; i++)
-                            {
-                                Buttons assignedButton = actionMaps[userIndex][i].Buttons[0];
 
-                                if (assignedButton != user.ActionMaps[i].Buttons[0])
-                                {
-                                    if (assignedButton == 0)
-                                    {
-                                        unassignedInput = true;
-                                        break;
-                                    }
-
-                                    hasInputChanged = true;
-                                }
-                            }
-                        }
-                        break;
+                        hasInputChanged = true;
+                    }
                 }
             }
 
@@ -309,22 +316,6 @@ namespace GameStateManager
             }
             else
                 base.OnDismiss(user);
-        }
-
-
-        // Overrides the default implementation of OnHide enable controller hot-swap.
-        public override void OnHide()
-        {
-            Input.CanSwapControllerType = true;
-            base.OnHide();
-        }
-
-
-        // Overrides the default implementation of OnShow disable controller hot-swap.
-        public override void OnShow()
-        {
-            Input.CanSwapControllerType = false;
-            base.OnShow();
         }
 
 
