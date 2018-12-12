@@ -103,7 +103,7 @@ namespace GameStateManager
             {
                 Entries[i].IsSelected = false;
 
-                if (Entries[i].IsHighlighted && Input.IsActionPressed(Action.LK, PrimaryUser))
+                if (Entries[i].IsHighlighted && Input.IsActionPressed(Action.UI_SELECT, PrimaryUser))
                 {
                     Entries[i].OnSelected(PrimaryUser);
                     //Audio.PlaySound("entrySelected");
@@ -111,7 +111,7 @@ namespace GameStateManager
                 }
             }
 
-            if (Input.IsActionPressed(Action.HK, PrimaryUser))
+            if (Input.IsActionPressed(Action.UI_BACK, PrimaryUser))
             {
                 OnDismiss(PrimaryUser);
                 //Audio.PlaySound("menuDismissed");
