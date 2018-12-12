@@ -34,8 +34,6 @@ namespace GameStateManager
         // Activates the loading screen.
         public static void Load(Screen screenToLoad, bool isLoadingSlow = false)
         {
-            //PreviousScreensCount = ScreenManager.Screens.Count;
-            //ScreenManager.TransitionOffPreviousScreens();
             LoadingScreen loadingScreen = new LoadingScreen(screenToLoad, isLoadingSlow);
         }
 

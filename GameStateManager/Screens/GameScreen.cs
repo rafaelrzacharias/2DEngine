@@ -39,10 +39,6 @@ namespace GameStateManager
         // this will only be called when the gameplay screen is active.
         public override void HandleInput()
         {
-            // The game pauses either if the user presses the pause button, or if they unplug the active gamepad.
-            // This requires us to keep track of whether a gamepad was ever plugged in, because we don't want
-            // to pause on PC if they are playing with a keyboard and have no gamepad at all!
-            // Specify further, how controller disconnection should display message and how pausing the game is handled!!!
             if (Input.IsActionPressed(Action.START, PrimaryUser))
                 OnDismiss(PrimaryUser);
 
