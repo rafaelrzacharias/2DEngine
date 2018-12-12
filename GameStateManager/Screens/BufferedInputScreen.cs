@@ -41,10 +41,10 @@ namespace GameStateManager
             upRightTexture = Resources.GetTexture("upRight");
             downLeftTexture = Resources.GetTexture("downLeft");
             downRightTexture = Resources.GetTexture("downRight");
-            aButtonTexture = Resources.GetTexture("aButton");
-            bButtonTexture = Resources.GetTexture("bButton");
-            xButtonTexture = Resources.GetTexture("xButton");
-            yButtonTexture = Resources.GetTexture("yButton");
+            aButtonTexture = Resources.GetTexture("aButtonPadFace");
+            bButtonTexture = Resources.GetTexture("bButtonPadFace");
+            xButtonTexture = Resources.GetTexture("xButtonPadFace");
+            yButtonTexture = Resources.GetTexture("yButtonPadFace");
             plusTexture = Resources.GetTexture("plus");
             padFaceTexture = Resources.GetTexture("padFace");
 
