@@ -312,6 +312,22 @@ namespace GameStateManager
         }
 
 
+        // Overrides the default implementation of OnHide enable controller hot-swap.
+        public override void OnHide()
+        {
+            Input.CanSwapControllerType = true;
+            base.OnHide();
+        }
+
+
+        // Overrides the default implementation of OnShow disable controller hot-swap.
+        public override void OnShow()
+        {
+            Input.CanSwapControllerType = false;
+            base.OnShow();
+        }
+
+
         // Event handler for when the "Yes" entry is selected in the new input message box.
         private void SaveInputMapMessageBoxScreen_Yes(User user)
         {
