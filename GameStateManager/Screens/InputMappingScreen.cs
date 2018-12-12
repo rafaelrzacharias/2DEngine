@@ -54,7 +54,7 @@ namespace GameStateManager
                 Entries[i - 5].Position.Y += (viewport.Height * 0.3f + (i - 5) * Font.LineSpacing * 1.2f);
                 Entries[i - 5].Origin = Vector2.Zero;
                 Entries[i - 5].UpdateBounds();
-                Entries[i - 5].Selected += InputMappingScreen_Selected;
+                //Entries[i - 5].Selected += InputMappingScreen_Selected;
 
                 float width = Font.MeasureString(Input.ActionNames[i]).X;
 
@@ -148,8 +148,8 @@ namespace GameStateManager
                                     }
                                     break;
                             }
-                            
-                            Entries[i].IsSelected = false;
+
+                            Entries[i].OnDeselected(PrimaryUser);
                         }
 
                     }
@@ -364,17 +364,6 @@ namespace GameStateManager
             }
 
             return -1;
-        }
-
-
-        // THIS SHOULD BE MOVED INTO THE MENU_ENTRY CLASS URGENTLY !!!!!!!!!!!!!!!!!!!!!!!!!!
-        // Applies a new button/key to the selected actionEntry.
-        private void InputMappingScreen_Selected(User user)
-        {
-            for (int i = 0; i < Entries.Count; i++)
-                    Entries[i].IsSelected = false;
-
-            Entries[highlightedEntry].IsSelected = true;
         }
     }
 }
