@@ -37,13 +37,13 @@
             Entries.Add(exitEntry);
 
             optionsMenu = ScreenManager.GetScreen("optionsMenu") as OptionsMenuScreen;
-            optionsMenu.Hide += OptionsMenu_OnHide;
+            optionsMenu.Hide += SubMenus_OnHide;
 
             bufferedInputMenu = ScreenManager.GetScreen("bufferedInputMenu") as BufferedInputScreen;
-            bufferedInputMenu.Hide += BufferedInputMenu_OnHide;
+            bufferedInputMenu.Hide += SubMenus_OnHide;
 
             inputMappingMenu = ScreenManager.GetScreen("inputMappingMenu") as InputMappingScreen;
-            inputMappingMenu.Hide += InputMappingMenu_OnHide;
+            inputMappingMenu.Hide += SubMenus_OnHide;
 
             OnShow();
         }
@@ -143,22 +143,8 @@
         }
 
 
-        // Callback for when the "Options Menu" is dismissed.
-        private void OptionsMenu_OnHide()
-        {
-            OnShow();
-        }
-
-
-        // Callback for when the "Buffered Input Menu" is dismissed.
-        private void BufferedInputMenu_OnHide()
-        {
-            OnShow();
-        }
-
-
-        // Callback for when the "Input Mapping Menu" is dismissed.
-        private void InputMappingMenu_OnHide()
+        // Callback for when the "Options", "" BufferedInput" or "InputMapping" menus are dismissed.
+        private void SubMenus_OnHide()
         {
             OnShow();
         }
