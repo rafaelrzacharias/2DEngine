@@ -77,13 +77,10 @@ downLeft
 
 downRight
 
-aButton
-PadFace
+aButtonPadFace
 bButtonPadFace
-xButton
-PadFace
-yButton
-PadFace
+xButtonPadFace
+yButtonPadFace
 aButton
 
 bButton
