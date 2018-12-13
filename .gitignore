@@ -1,8 +1,5 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-
+﻿#This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+#
 /.vs
 
 /UpgradeLog2.htm
@@ -18,5 +15,3 @@
 /GameStateManager/Content/obj
 /ContentBuilder/bin
 /ContentBuilder/obj
-/ContentBuilder/bin/Debug
-/ContentBuilder/obj/Debug
