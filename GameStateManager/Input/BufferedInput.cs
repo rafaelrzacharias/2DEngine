@@ -99,8 +99,9 @@ namespace GameStateManager
             {
                 Action action = Input.Actions[i];
 
-                // If the action is a direction, skip it.
-                if ((action & ~(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT)) == Action.NONE)
+                // If the action is a direction or a UI action, skip it.
+                if ((action & ~(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT | 
+                    Action.UI_SELECT | Action.UI_BACK)) == Action.NONE)
                     continue;
 
                 if (Input.IsActionPressed(action, Input.Users[userIndex]))
