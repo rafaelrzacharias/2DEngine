@@ -58,7 +58,7 @@ namespace GameStateManager
         // Handles the input to control the screen transitions.
         public override void HandleInput()
         {
-            if (Input.IsActionPressed(Action.UI_BACK, PrimaryUser))
+            if (Input.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Escape))
                 OnDismiss(PrimaryUser);
         }
 
