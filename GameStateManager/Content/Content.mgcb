@@ -521,3 +521,8 @@
 /processorParam:TextureFormat=Color
 /build:Textures/yButtonPadFace.png
 
+#begin resources.res
+/importer:ResourcesListImporter
+/processor:ResourcesListProcessor
+/build:resources.res
+
