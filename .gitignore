@@ -2,10 +2,19 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+
 /.vs
+
 /UpgradeLog2.htm
+
 /UpgradeLog.htm
+
 /GameStateManager/obj
+
 /GameStateManager/bin
+
 /GameStateManager/Content/bin
+
 /GameStateManager/Content/obj
+/ContentBuilder/bin
+/ContentBuilder/obj
