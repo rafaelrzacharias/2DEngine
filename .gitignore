@@ -15,3 +15,14 @@
 /GameStateManager/Content/obj
 /ContentBuilder/bin
 /ContentBuilder/obj
+*.cache
+*.dll
+*.exe
+*.pdb
+*.suo
+*.user
+*.tlog
+*.log
+Version.cs
+Version.h
+Version.cpp
