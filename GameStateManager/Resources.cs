@@ -1,8 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Media;
+using System;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework.Media;
 
 
 namespace GameStateManager
@@ -18,133 +19,39 @@ namespace GameStateManager
         // Initializes all dictionaries and populates them with the available resources.
         public static void Initialize(ContentManager content, ResourcesList resourcesList)
         {
-            //if (content != null)
-            //{
-                //Songs = new Dictionary<string, Song>(100);
-                //SoundEffects = new Dictionary<string, SoundEffect>(1000);
-                //Fonts = new Dictionary<string, SpriteFont>(100);
-                //Textures = new Dictionary<string, Texture2D>(1000);
+            string contentFolder = AppDomain.CurrentDomain.BaseDirectory + "Content\\";
 
-                for (int i = 0; i < resourcesList.Songs.Length; i++)
+                for (int i = 0; i < resourcesList.Songs.Count; i++)
                 {
-                    string song = resourcesList.Songs[i].ToString();
+                    string song = resourcesList.Songs[i];
 
                     if (Songs.ContainsKey(song) == false)
-                        Songs.Add(song, content.Load<Song>(resourcesList.Songs[i]));
+                        Songs.Add(song, content.Load<Song>(contentFolder + "Songs\\" + song));
                 }
 
-                for (int i = 0; i < resourcesList.SoundEffects.Length; i++)
+                for (int i = 0; i < resourcesList.SoundEffects.Count; i++)
                 {
-                    string soundEffect = resourcesList.SoundEffects[i].ToString();
+                    string soundEffect = resourcesList.SoundEffects[i];
 
                     if (SoundEffects.ContainsKey(soundEffect) == false)
-                        SoundEffects.Add(soundEffect, content.Load<SoundEffect>(resourcesList.SoundEffects[i]));
+                        SoundEffects.Add(soundEffect, content.Load<SoundEffect>(contentFolder + "SoundEffects\\" + soundEffect));
                 }
 
-                for (int i = 0; i < resourcesList.Fonts.Length; i++)
+                for (int i = 0; i < resourcesList.Fonts.Count; i++)
                 {
-                    string font = resourcesList.Fonts[i].ToString();
+                    string font = resourcesList.Fonts[i];
 
                     if (Fonts.ContainsKey(font) == false)
-                        Fonts.Add(font, content.Load<SpriteFont>(resourcesList.Fonts[i]));
+                        Fonts.Add(font, content.Load<SpriteFont>(contentFolder + "SpriteFonts\\" + font));
                 }
 
-                for (int i = 0; i < resourcesList.Textures.Length; i++)
+                for (int i = 0; i < resourcesList.Textures.Count; i++)
                 {
-                    string texture = resourcesList.Textures[i].ToString();
+                    string texture = resourcesList.Textures[i];
 
                     if (Textures.ContainsKey(texture) == false)
-                        Textures.Add(texture, content.Load<Texture2D>(resourcesList.Textures[i]));
+                        Textures.Add(texture, content.Load<Texture2D>(contentFolder + "Textures\\" + texture));
                 }
-
-
-                //using (StreamReader reader = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "Content\\resources.txt"))
-                //{
-                //    string path = string.Empty;
-                //    bool readingSongs = false;
-                //    bool readingSoundEffects = false;
-                //    bool readingSpriteFonts = false;
-                //    bool readingTextures = false;
-
-                //    while (reader.EndOfStream == false)
-                //    {
-                //        string assetName = reader.ReadLine();
-
-                //        if (assetName == "[Songs]")
-                //        {
-                //            path = AppDomain.CurrentDomain.BaseDirectory + "Content\\Songs\\";
-                //            readingSongs = true;
-                //            readingSoundEffects = false;
-                //            readingSpriteFonts = false;
-                //            readingTextures = false;
-                //            assetName = reader.ReadLine();
-                //        }
-                //        else if (assetName == "[SoundEffects]")
-                //        {
-                //            path = AppDomain.CurrentDomain.BaseDirectory + "Content\\SoundEffects\\";
-                //            readingSongs = false;
-                //            readingSoundEffects = true;
-                //            readingSpriteFonts = false;
-                //            readingTextures = false;
-                //            assetName = reader.ReadLine();
-                //        }
-                //        else if (assetName == "[SpriteFonts]")
-                //        {
-                //            path = AppDomain.CurrentDomain.BaseDirectory + "Content\\SpriteFonts\\";
-                //            readingSongs = false;
-                //            readingSoundEffects = false;
-                //            readingSpriteFonts = true;
-                //            readingTextures = false;
-                //            assetName = reader.ReadLine();
-                //        }
-                //        else if (assetName == "[Textures]")
-                //        {
-                //            path = AppDomain.CurrentDomain.BaseDirectory + "Content\\Textures\\";
-                //            readingSongs = false;
-                //            readingSoundEffects = false;
-                //            readingSpriteFonts = false;
-                //            readingTextures = true;
-                //            assetName = reader.ReadLine();
-                //        }
-
-                //        if (string.IsNullOrEmpty(assetName))
-                //            continue;
-
-                //        if (readingSongs)
-                //        {
-                //            if (Songs.ContainsKey(assetName) == false)
-                //            {
-                //                Song song = content.Load<Song>(path + assetName);
-                //                Songs.Add(assetName, song);
-                //            }
-                //        }
-                //        else if (readingSoundEffects)
-                //        {
-                //            if (SoundEffects.ContainsKey(assetName) == false)
-                //            {
-                //                SoundEffect soundEffect = content.Load<SoundEffect>(path + assetName);
-                //                SoundEffects.Add(assetName, soundEffect);
-                //            }
-                //        }
-                //        else if (readingSpriteFonts)
-                //        {
-                //            if (Fonts.ContainsKey(assetName) == false)
-                //            {
-                //                SpriteFont font = content.Load<SpriteFont>(path + assetName);
-                //                Fonts.Add(assetName, font);
-                //            }
-                //        }
-                //        else if (readingTextures)
-                //        {
-                //            if (Textures.ContainsKey(assetName) == false)
-                //            {
-                //                Texture2D texture = content.Load<Texture2D>(path + assetName);
-                //                Textures.Add(assetName, texture);
-                //            }
-                //        }
-                //    }
-                //}
-            //}
         }
 
 
