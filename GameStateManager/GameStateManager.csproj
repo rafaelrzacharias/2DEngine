@@ -58,7 +58,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Audio\Audio.cs" />
-    <Compile Include="ContentReaders\ResourcesListReaderTEMP.cs" />
     <Compile Include="Data\ResourcesList.cs" />
     <Compile Include="Debug\AudioStats.cs" />
     <Compile Include="Debug\Console.cs" />
