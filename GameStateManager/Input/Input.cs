@@ -753,7 +753,7 @@ namespace GameStateManager
             if (action == Action.CONSOLE)
                 return CurrentKeyboardState.IsKeyDown(Keys.OemTilde) && LastKeyboardState.IsKeyUp(Keys.OemTilde);
 
-            if (user == null /*|| ignoredActions[user].Contains(action)*/)
+            if (user == null)
                 return false;
 
             ActionMap actionMap = user.ActionMaps[GetActionIndex(action)];
