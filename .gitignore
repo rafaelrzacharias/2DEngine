@@ -18,3 +18,5 @@
 /GameStateManager/Content/obj
 /ContentBuilder/bin
 /ContentBuilder/obj
+/ContentBuilder/bin/Debug
+/ContentBuilder/obj/Debug
