@@ -25,7 +25,8 @@ namespace GameStateManager
 
         protected override void Initialize()
         {
-            Resources.Initialize(Content);
+            ResourcesList resources = Content.Load<ResourcesList>("resources");
+            Resources.Initialize(Content, resources);
             Input.Initialize(this);
             Audio.Initialize();
             ScreenManager.Initialize(this);
