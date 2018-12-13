@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Xml;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework.Content.Pipeline;
 using GameStateManager;
-using System.Collections.Generic;
 
 namespace ContentBuilder
 {
@@ -13,8 +13,6 @@ namespace ContentBuilder
     {
         public override XmlDocument Import(string filename, ContentImporterContext context)
         {
-            context.Logger.LogMessage("Importing RES file: " + filename);
-
             XmlDocument doc = new XmlDocument();
             doc.Load(filename);
 
