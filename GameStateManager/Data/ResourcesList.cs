@@ -1,5 +1,8 @@
-﻿using Microsoft.Xna.Framework.Content;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Content.Pipeline;
+using Microsoft.Xna.Framework.Content.Pipeline.Serialization.Compiler;
+
 
 namespace GameStateManager
 {
@@ -64,5 +67,45 @@ namespace GameStateManager
     }
 
 
+    // The ContentWriter writes the values into the content file.
+    [ContentTypeWriter]
+    public class ResourcesListWriter : ContentTypeWriter<ResourcesList>
+    {
+        protected override void Write(ContentWriter output, ResourcesList value)
+        {
+            int length = value.Songs.Count;
+            output.Write(length);
 
+            for (int i = 0; i < length; i++)
+                output.Write(value.Songs[i].ToString());
+
+            length = value.SoundEffects.Count;
+            output.Write(length);
+
+            for (int i = 0; i < length; i++)
+                output.Write(value.SoundEffects[i].ToString());
+
+            length = value.Fonts.Count;
+            output.Write(length);
+
+            for (int i = 0; i < length; i++)
+                output.Write(value.Fonts[i].ToString());
+
+            length = value.Textures.Count;
+            output.Write(length);
+
+            for (int i = 0; i < length; i++)
+                output.Write(value.Textures[i].ToString());
+        }
+
+        public override string GetRuntimeType(TargetPlatform targetPlatform)
+        {
+            return typeof(ResourcesList).AssemblyQualifiedName;
+        }
+
+        public override string GetRuntimeReader(TargetPlatform targetPlatform)
+        {
+            return typeof(ResourcesListReader).AssemblyQualifiedName;
+        }
+    }
 }
