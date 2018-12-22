@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Input;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
@@ -19,7 +20,7 @@ namespace GameStateManager
 
         // The last "real time" that new input was received. Slightly late button
         // presses will not update this time; they are merged with previous input.
-        public static TimeSpan LastInputTime { get; private set; }
+        public static TimeSpan[] LastInputTime;
 
         // The current sequence of pressed buttons.
         private const int BUFFER_SIZE = 10;
@@ -40,6 +41,11 @@ namespace GameStateManager
         // Initialized the BufferedInput system.
         public static void Initialize()
         {
+            LastInputTime = new TimeSpan[Input.MAX_USERS];
+
+            for (int i = 0; i < LastInputTime.Length; i++)
+                LastInputTime[i] = TimeSpan.Zero;
+
             Buffers = new List<Action>[Input.MAX_USERS];
 
             for (int i = 0; i < Buffers.Length; i++)
@@ -62,12 +68,12 @@ namespace GameStateManager
 
 
         // Updates the BuffereInput for a given user.
-        public static void Update(int userIndex)
+        public static void Update(GameTime gameTime, int userIndex)
         {
-            UpdatePlayerActions(userIndex);
+            UpdatePlayerActions(gameTime, userIndex);
 
             // Expire old moves.
-            if (ScreenManager.GameTime.TotalGameTime - PlayersMoveTime[userIndex] > MOVE_TIMEOUT)
+            if (gameTime.TotalGameTime - PlayersMoveTime[userIndex] > MOVE_TIMEOUT)
                 PlayersMove[userIndex] = null;
 
             // Detection and record of current player's most recent move.
@@ -76,18 +82,16 @@ namespace GameStateManager
             if (newMove != null)
             {
                 PlayersMove[userIndex] = newMove;
-                PlayersMoveTime[userIndex] = ScreenManager.GameTime.TotalGameTime;
+                PlayersMoveTime[userIndex] = gameTime.TotalGameTime;
             }
         }
 
 
-        private static void UpdatePlayerActions(int userIndex)
+        private static void UpdatePlayerActions(GameTime gameTime, int userIndex)
         {
             // Expire old input.
-            TimeSpan time = TimeSpan.FromMilliseconds(0.0);
-            if (ScreenManager.GameTime != null)
-                time = ScreenManager.GameTime.TotalGameTime;
-            TimeSpan timeSinceLast = time - LastInputTime;
+            TimeSpan time = gameTime.TotalGameTime;
+            TimeSpan timeSinceLast = time - LastInputTime[userIndex];
 
             if (timeSinceLast > BufferTimeout)
                 Buffers[userIndex].Clear();
@@ -100,11 +104,11 @@ namespace GameStateManager
                 Action action = Input.Actions[i];
 
                 // If the action is a direction or a UI action, skip it.
-                if ((action & ~(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT | 
+                if ((action & ~(Action.UP | Action.DOWN | Action.LEFT | Action.RIGHT |
                     Action.UI_SELECT | Action.UI_BACK)) == Action.NONE)
                     continue;
 
-                if (Input.IsActionPressed(action, Input.Users[userIndex]))
+                if (Input.GetAction(action, Input.Controllers[userIndex]).IsTriggered)
                     actions |= action;
             }
 
@@ -113,8 +117,8 @@ namespace GameStateManager
             bool mergeInput = Buffers[userIndex].Count > 0 && timeSinceLast < MergeInputTime;
 
             // If there is a new direction.
-            Action currentAction = GetActionFromInput(Input.Users[userIndex], false);
-            Action lastAction = GetActionFromInput(Input.Users[userIndex], true);
+            Action currentAction = GetActionFromInput(Input.Controllers[userIndex], false);
+            Action lastAction = GetActionFromInput(Input.Controllers[userIndex], true);
 
             if (lastAction != currentAction)
             {
@@ -144,7 +148,7 @@ namespace GameStateManager
                     Buffers[userIndex].Add(actions);
 
                     // Record the time of this input to begin the merge window.
-                    LastInputTime = time;
+                    LastInputTime[userIndex] = time;
                 }
             }
         }
@@ -182,17 +186,17 @@ namespace GameStateManager
 
 
         // NOTE: This input system assumes that UP and LEFT has priority over other directions.
-        private static Action GetActionFromInput(User user, bool sampleLastFrame)
+        private static Action GetActionFromInput(Controller controller, bool sampleLastFrame)
         {
             Action action = Action.NONE;
-            ActionMap upMap = user.ActionMaps[Input.GetActionIndex(Action.UP)];
-            ActionMap downMap = user.ActionMaps[Input.GetActionIndex(Action.DOWN)];
-            ActionMap leftMap = user.ActionMaps[Input.GetActionIndex(Action.LEFT)];
-            ActionMap rightMap = user.ActionMaps[Input.GetActionIndex(Action.RIGHT)];
+            ActionMap upMap = controller.ActionMaps[Input.GetActionIndex(Action.UP)];
+            ActionMap downMap = controller.ActionMaps[Input.GetActionIndex(Action.DOWN)];
+            ActionMap leftMap = controller.ActionMaps[Input.GetActionIndex(Action.LEFT)];
+            ActionMap rightMap = controller.ActionMaps[Input.GetActionIndex(Action.RIGHT)];
 
-            switch (user.InputType)
+            switch (controller.Type)
             {
-                case InputType.KEYBOARD:
+                case ControllerType.KEYBOARD:
                     {
                         KeyboardState keyboardState = Input.CurrentKeyboardState;
 
@@ -250,12 +254,12 @@ namespace GameStateManager
                         }
                     }
                     break;
-                case InputType.GAMEPAD:
+                case ControllerType.GAMEPAD:
                     {
-                        GamePadState gamePadState = Input.CurrentGamePadState[user.ControllerIndex];
+                        GamePadState gamePadState = Input.CurrentGamePadState[controller.Slot];
 
                         if (sampleLastFrame)
-                            gamePadState = Input.LastGamePadState[user.ControllerIndex];
+                            gamePadState = Input.LastGamePadState[controller.Slot];
 
                         List<Buttons> upButtons = upMap.Buttons;
                         List<Buttons> downButtons = downMap.Buttons;
