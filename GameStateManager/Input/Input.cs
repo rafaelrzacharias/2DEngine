@@ -7,14 +7,6 @@ using System.Collections.Generic;
 
 namespace GameStateManager
 {
-    public enum InputType
-    {
-        NONE,
-        KEYBOARD,
-        GAMEPAD,
-        TOUCH
-    }
-
 #if DESKTOP
     public enum MouseButtons
     {
@@ -49,12 +41,34 @@ namespace GameStateManager
     }
 
 
+    // A struct that represents an input state from a controller.
+    public struct ActionState
+    {
+        public bool IsPressed; // If the action is being pressed.
+        public bool IsTriggered; // If the action was just pressed this frame.
+        public float Magnitude; // The action's intensity (for analog buttons).
+        public double Duration; // How long the action has being pressed for.
+
+
+        // Reset all fields to its default values.
+        public void Reset()
+        {
+            IsPressed = false;
+            IsTriggered = false;
+            Magnitude = 0.0f;
+            Duration = 0.0;
+        }
+    }
+
+
     // Helper for reading input from keyboard, gamepad, and touchscreen. This class tracks both the current
     // and previous state of the input devices, and implements query methods for high level input actions.
     public static class Input
     {
+        public static GameTime GameTime { get; private set; }
+
         public const int MAX_USERS = 4;
-        public static User[] Users;
+        public static Controller[] Controllers;
 
         public static Action[] Actions { get; private set; }
         public static string[] ActionNames { get; private set; }
@@ -92,10 +106,10 @@ namespace GameStateManager
         public static GamePadState[] LastGamePadState;
         public static GamePadState[] CurrentGamePadState;
 
-        private static Keys previousKey;
-        private static Buttons previousButton;
-        private static float elapsedTime;
-        private const float ELAPSED_LIMIT = 0.2f;
+        private static Buttons[] buttonList;
+        private static Action previousAction;
+        private static double elapsedTime;
+        private const double ELAPSED_LIMIT = 0.2;
 #endif
 #if MOBILE
         public static TouchCollection TouchState;
@@ -160,13 +174,17 @@ namespace GameStateManager
             CurrentMouseState = new MouseState();
 #endif
 #if DESKTOP || CONSOLE
+            buttonList = (Buttons[])Enum.GetValues(typeof(Buttons));
+
             LastGamePadState = new GamePadState[MAX_USERS];
             CurrentGamePadState = new GamePadState[MAX_USERS];
+            Controllers = new Controller[MAX_USERS];
 
             for (int i = 0; i < MAX_USERS; i++)
             {
                 LastGamePadState[i] = new GamePadState();
                 CurrentGamePadState[i] = new GamePadState();
+                Controllers[i] = new Controller();
             }
 #endif
 #if MOBILE
@@ -181,21 +199,17 @@ namespace GameStateManager
 
             };
 #endif
-            Users = new User[MAX_USERS];
-
-            for (int i = 0; i < MAX_USERS; i++)
-                Users[i] = new User();
         }
 
 
         // Gets the primary user.
-        public static User GetPrimaryUser()
+        public static Controller GetPrimaryUser()
         {
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i].IsPrimaryUser)
-                    return Users[i];
+                if (Controllers[i].IsPrimaryUser)
+                    return Controllers[i];
             }
 
             return null;
@@ -207,13 +221,13 @@ namespace GameStateManager
 
 
         // Sets the primary user.
-        public static void SetPrimaryUser(User user)
+        public static void SetPrimaryUser(Controller controller)
         {
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
-                Users[i].IsPrimaryUser = false;
+                Controllers[i].IsPrimaryUser = false;
 
-            user.IsPrimaryUser = true;
+            controller.IsPrimaryUser = true;
 #endif
 #if MOBILE
             Users[0].IsPrimaryUser = true;
@@ -221,22 +235,22 @@ namespace GameStateManager
         }
 
 
-        // Set the user controller type based on the given controller index.
-        public static void SetUserControllerType(User user, int controllerIndex)
+        // Set the user controller type based on the given controller slot.
+        public static void SetUserControllerType(Controller controller, int slot)
         {
 #if DESKTOP || CONSOLE
-            if (controllerIndex != MAX_USERS)
-                user.InputType = InputType.GAMEPAD;
+            if (slot != MAX_USERS)
+                controller.Type = ControllerType.GAMEPAD;
             else
-                user.InputType = InputType.KEYBOARD;
+                controller.Type = ControllerType.KEYBOARD;
 
-            user.ControllerIndex = controllerIndex;
+            controller.Slot = slot;
 
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i].ControllerIndex == controllerIndex && Users[i] != user)
+                if (Controllers[i].Slot == slot && Controllers[i] != controller)
                 {
-                    ResetUser(Users[i]);
+                    ResetUser(Controllers[i]);
                     break;
                 }
             }
@@ -248,30 +262,30 @@ namespace GameStateManager
 
 
         // Reset the user to a default state.
-        public static void ResetUser(User user)
+        public static void ResetUser(Controller controller)
         {
 #if DESKTOP
             if (GetUserCount() == 1)
             {
-                user.ControllerIndex = MAX_USERS;
-                user.InputType = InputType.KEYBOARD;
-                user.IsPrimaryUser = true;
+                controller.Slot = MAX_USERS;
+                controller.Type = ControllerType.KEYBOARD;
+                controller.IsPrimaryUser = true;
             }
             else
 #endif
             {
-                user.ControllerIndex = -1;
-                user.InputType = InputType.NONE;
-                user.IsPrimaryUser = false;
+                controller.Slot = -1;
+                controller.Type = ControllerType.NONE;
+                controller.IsPrimaryUser = false;
             }
 
             if (GetUserCount() == 1)
             {
                 for (int i = 0; i < MAX_USERS; i++)
                 {
-                    if (Users[i].IsActive)
+                    if (Controllers[i].IsActive)
                     {
-                        Users[i].IsPrimaryUser = true;
+                        Controllers[i].IsPrimaryUser = true;
                         break;
                     }
                 }
@@ -286,7 +300,7 @@ namespace GameStateManager
             int count = 0;
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i].IsActive)
+                if (Controllers[i].IsActive)
                     count++;
             }
 
@@ -300,8 +314,9 @@ namespace GameStateManager
 
         // Reads the latest state of the keyboard and gamepad
         // and uses it to update the input history buffer.
-        public static void Update()
+        public static void Update(GameTime gameTime)
         {
+            GameTime = gameTime;
 #if DESKTOP
             LastKeyboardState = CurrentKeyboardState;
             CurrentKeyboardState = Keyboard.GetState();
@@ -341,6 +356,48 @@ namespace GameStateManager
                     dragMouseStart = CurrentMouseState.Position.ToVector2();
                 }
             }
+
+            int slot = -1;
+            if (CanSwapControllerType && GetUserCount() == 1)
+                slot = WasAnyButtonPressed(false, false);
+
+            if (slot != -1)
+            {
+                Controller controller = GetPrimaryUser();
+                for (int i = 0; i < MAX_USERS; i++)
+                {
+                    if (Controllers[i].Slot == slot)
+                        continue;
+
+                    switch (controller.Type)
+                    {
+                        case ControllerType.KEYBOARD:
+                            {
+                                if (slot != MAX_USERS)
+                                {
+                                    controller.Slot = slot;
+                                    controller.Type = ControllerType.GAMEPAD;
+
+                                    OnUserControllerTypeChanged(i);
+                                }
+                            }
+                            break;
+                        case ControllerType.GAMEPAD:
+                            {
+                                if (slot == MAX_USERS)
+                                {
+                                    controller.Slot = slot;
+                                    controller.Type = ControllerType.KEYBOARD;
+
+                                    OnUserControllerTypeChanged(i);
+                                }
+                            }
+                            break;
+                    }
+
+                    break;
+                }
+            }
 #endif
 #if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
@@ -354,50 +411,10 @@ namespace GameStateManager
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
 
-                if (Users[i].IsActive)
-                    BufferedInput.Update(i);
-            }
-#endif
-#if DESKTOP
-            int index = -1;
-            if (CanSwapControllerType && GetUserCount() == 1)
-                index = WasAnyButtonPressed(false, false);
-
-            if (index != -1)
-            {
-                User user = GetPrimaryUser();
-                for (int i = 0; i < MAX_USERS; i++)
+                if (Controllers[i].IsActive)
                 {
-                    if (Users[i].ControllerIndex == index)
-                        continue;
-
-                    switch (user.InputType)
-                    {
-                        case InputType.KEYBOARD:
-                            {
-                                if (index != MAX_USERS)
-                                {
-                                    user.ControllerIndex = index;
-                                    user.InputType = InputType.GAMEPAD;
-
-                                    OnUserControllerTypeChanged(i);
-                                }
-                            }
-                            break;
-                        case InputType.GAMEPAD:
-                            {
-                                if (index == MAX_USERS)
-                                {
-                                    user.ControllerIndex = index;
-                                    user.InputType = InputType.KEYBOARD;
-
-                                    OnUserControllerTypeChanged(i);
-                                }
-                            }
-                            break;
-                    }
-
-                    break;
+                    Controllers[i].Update(gameTime);
+                    BufferedInput.Update(gameTime, i);
                 }
             }
 #endif
@@ -420,55 +437,44 @@ namespace GameStateManager
 
 #if DESKTOP || CONSOLE
         // Event raised when a controller is disconnected.
-        public delegate void ControllerDisconnectedEventHandler(int controllerIndex);
+        public delegate void ControllerDisconnectedEventHandler(int slot);
         public static event ControllerDisconnectedEventHandler ControllerDisconnected;
 
-        public static void OnControllerDisconnected(int controllerIndex)
+        public static void OnControllerDisconnected(int slot)
         {
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i].ControllerIndex == controllerIndex)
+                if (Controllers[i].Slot == slot)
                 {
-                    ResetUser(Users[i]);
+                    ResetUser(Controllers[i]);
                     break;
                 }
             }
 
             if (ControllerDisconnected != null)
-                ControllerDisconnected.Invoke(controllerIndex);
+                ControllerDisconnected.Invoke(slot);
         }
 
 
         // Event raised when a controller is connected.
-        public delegate void ControllerConnectedEventHandler(int controllerIndex);
+        public delegate void ControllerConnectedEventHandler(int slot);
         public static event ControllerConnectedEventHandler ControllerConnected;
 
-        public static void OnControllerConnected(int controllerIndex)
+        public static void OnControllerConnected(int slot)
         {
             if (ControllerConnected != null)
-                ControllerConnected.Invoke(controllerIndex);
+                ControllerConnected.Invoke(slot);
         }
 
 
         // Event raised when an active user changes its controller type.
-        public delegate void ControllerTypeChangedEventHandler(int controllerIndex);
+        public delegate void ControllerTypeChangedEventHandler(int slot);
         public static event ControllerTypeChangedEventHandler ControllerTypeChanged;
 
-        public static void OnUserControllerTypeChanged(int userIndex)
+        public static void OnUserControllerTypeChanged(int slot)
         {
             if (ControllerTypeChanged != null)
-                ControllerTypeChanged.Invoke(userIndex);
-        }
-#endif
-
-#if DESKTOP
-        // Checks if the mouse is currently hovering an interactible area.
-        public static bool IsMouseOver(Rectangle area)
-        {
-            return (CurrentMouseState.Position.X > area.X && 
-                CurrentMouseState.Position.X < area.X + area.Width &&
-                CurrentMouseState.Position.Y > area.Y && 
-                CurrentMouseState.Position.Y < area.Y + area.Height);
+                ControllerTypeChanged.Invoke(slot);
         }
 #endif
 
@@ -509,8 +515,7 @@ namespace GameStateManager
         }
 
 
-        private static Buttons[] buttonList = (Buttons[])Enum.GetValues(typeof(Buttons));      
-
+        // Checks if a connected gamePad has changed its state since last frame.
         private static bool HasGamePadStateChanged(GamePadState currentGamePadState, GamePadState lastGamePadState)
         {
             if (currentGamePadState.IsConnected)
@@ -527,7 +532,7 @@ namespace GameStateManager
             return false;
         }
 
-  
+
 #if DESKTOP
         // Return all pressed keys in a keyboard that are currently being pressed.
         public static Keys[] GetPressedKeys()
@@ -570,6 +575,16 @@ namespace GameStateManager
         }
 
 
+        // Checks if the mouse is currently hovering an interactible area.
+        public static bool IsMouseOver(Rectangle area)
+        {
+            return (CurrentMouseState.Position.X > area.X &&
+                CurrentMouseState.Position.X < area.X + area.Width &&
+                CurrentMouseState.Position.Y > area.Y &&
+                CurrentMouseState.Position.Y < area.Y + area.Height);
+        }
+
+
         // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
         public static bool HasMouseMoved()
         {
@@ -577,10 +592,40 @@ namespace GameStateManager
         }
 
 
+        // Returns the distance that the mouse travelled since last frame.
+        public static float GetMouseDistance()
+        {
+            return Vector2.Distance(
+                CurrentMouseState.Position.ToVector2(), 
+                LastMouseState.Position.ToVector2());
+        }
+
+
         // Checks whether or not the scroll wheel changed.
         public static bool HasScrollWheelChanged()
         {
             return CurrentMouseState.ScrollWheelValue != LastMouseState.ScrollWheelValue;
+        }
+
+
+        // Returns true if the mouse wheel scrolled up.
+        public static bool HasMouseScrolledUp()
+        {
+            return CurrentMouseState.ScrollWheelValue > LastMouseState.ScrollWheelValue;
+        }
+
+
+        // Returns true if the mouse wheel scrolled down.
+        public static bool HasMouseScrolledDown()
+        {
+            return CurrentMouseState.ScrollWheelValue < LastMouseState.ScrollWheelValue;
+        }
+
+
+        // Returns the mouse wheel scroll distance since last frame.
+        public static int GetMouseScrolledDistance()
+        {
+            return CurrentMouseState.ScrollWheelValue - LastMouseState.ScrollWheelValue;
         }
 
 
@@ -602,6 +647,68 @@ namespace GameStateManager
             return false;
         }
 #endif
+
+        // Returns a platform button, given an action.
+        public static Texture2D GetPlatformButton(Buttons button)
+        {
+            return platformButtons[button];
+        }   
+
+
+        // Returns the state of an action, given the action and the controller.
+        public static ActionState GetAction(Action action, Controller controller)
+        {
+            if (action == Action.CONSOLE)
+            {
+                ActionState actionState = new ActionState();
+                actionState.IsTriggered = CurrentKeyboardState.IsKeyDown(Keys.OemTilde) && LastKeyboardState.IsKeyUp(Keys.OemTilde);
+                return actionState;
+            }
+
+            if (controller == null)
+                return new ActionState();
+
+            return controller.ActionStates[GetActionIndex(action)];
+        }
+
+
+        // Returns true if the given action was just pressed on this frame,
+        // or if it's still being pressed after a certain amount of time.
+        public static bool GetTimedAction(Action action, Controller controller)
+        {
+            if (controller == null)
+                return false;
+
+            ActionState actionState = controller.ActionStates[GetActionIndex(action)];
+
+            // If its a new key press, return true and restart the timer.
+            if (actionState.IsTriggered)
+            {
+                previousAction = action;
+                elapsedTime = 0.0;
+                return true;
+            }
+
+            // If we are currently holding down the key
+            if (actionState.IsPressed && previousAction == action)
+            {
+                // Return true if holding for long enough and reset the timer.
+                if (elapsedTime >= ELAPSED_LIMIT)
+                {
+                    elapsedTime = 0.0;
+                    return true;
+                }
+                else
+                {
+                    // Otherwise, increase the timer by a frame's worth of time and do nothing.
+                    elapsedTime += GameTime.ElapsedGameTime.TotalSeconds;
+                }
+            }
+
+            // Return false if we either don't have a new key press,
+            // or we have one but haven't held it for long enough.
+            return false;
+        }
 
 
         // Reset the action maps to their default values.
@@ -740,210 +847,6 @@ namespace GameStateManager
         }
 
 
-        // Returns a platform button, given an action.
-        public static Texture2D GetPlatformButton(Buttons button)
-        {
-            return platformButtons[button];
-        }
-
-
-        // Check if an action was just performed in the most recent update.
-        public static bool IsActionPressed(Action action, User user, bool checkLastFrame = true)
-        {
-            if (action == Action.CONSOLE)
-                return CurrentKeyboardState.IsKeyDown(Keys.OemTilde) && LastKeyboardState.IsKeyUp(Keys.OemTilde);
-
-            if (user == null)
-                return false;
-
-            ActionMap actionMap = user.ActionMaps[GetActionIndex(action)];
-
-            switch (user.InputType)
-            {
-                case InputType.KEYBOARD:
-                    {
-                        for (int i = 0; i < actionMap.Keys.Count; i++)
-                        {
-                            Keys key = actionMap.Keys[i];
-
-                            if (CurrentKeyboardState.IsKeyDown(key))
-                            {
-                                if (checkLastFrame)
-                                {
-                                    if (LastKeyboardState.IsKeyUp(key))
-                                        return true;
-                                }
-                                else
-                                    return true;
-                            }
-                        }
-
-                        for (int i = 0; i < actionMap.MouseButtons.Count; i++)
-                        {
-                            switch (actionMap.MouseButtons[i])
-                            {
-                                case MouseButtons.LEFT:
-                                    {
-                                        if (CurrentMouseState.LeftButton == ButtonState.Pressed)
-                                        {
-                                            if (checkLastFrame)
-                                            {
-                                                if (LastMouseState.LeftButton == ButtonState.Released)
-                                                    return true;
-                                            }
-                                            else
-                                                return true;
-                                        }
-                                    }
-                                    break;
-                                case MouseButtons.RIGHT:
-                                    {
-                                        if (CurrentMouseState.RightButton == ButtonState.Pressed)
-                                        {
-                                            if (checkLastFrame)
-                                            {
-                                                if (LastMouseState.RightButton == ButtonState.Released)
-                                                    return true;
-                                            }
-                                            else
-                                                return true;
-                                        }
-                                    }
-                                    break;
-                                case MouseButtons.MIDDLE:
-                                    {
-                                        if (CurrentMouseState.MiddleButton == ButtonState.Pressed)
-                                        {
-                                            if (checkLastFrame)
-                                            {
-                                                if (LastMouseState.MiddleButton == ButtonState.Released)
-                                                    return true;
-                                            }
-                                            else
-                                                return true;
-                                        }
-                                    }
-                                    break;
-                            }
-                        }
-                        break;
-                    }
-                case InputType.GAMEPAD:
-                    {
-                        for (int i = 0; i < actionMap.Buttons.Count; i++)
-                        {
-                            Buttons button = actionMap.Buttons[i];
-
-                            if (CurrentGamePadState[user.ControllerIndex].IsButtonDown(button))
-                            {
-                                if (checkLastFrame)
-                                {
-                                    if (LastGamePadState[user.ControllerIndex].IsButtonUp(button))
-                                        return true;
-                                }
-                                else
-                                    return true;
-                            }
-                        }
-                    }
-                    break;
-            }
-
-            return false;
-        }
-
-
-        // Returns true if the given action was just pressed on this frame,
-        // or if it's still being pressed after a certain amount of time.
-        public static bool IsTimedActionPressed(Action action, User user)
-        {
-            if (user == null)
-                return false;
-
-            ActionMap actionMap = user.ActionMaps[GetActionIndex(action)];
-
-            switch (user.InputType)
-            {
-                case InputType.KEYBOARD:
-                    {
-                        for (int i = 0; i < actionMap.Keys.Count; i++)
-                        {
-                            Keys key = actionMap.Keys[i];
-                            bool isKeyDown = CurrentKeyboardState.IsKeyDown(key);
-
-                            // If its a new key press, return true and restart the timer.
-                            if (LastKeyboardState.IsKeyUp(key) && isKeyDown)
-                            {
-                                previousKey = key;
-                                elapsedTime = 0f;
-                                return true;
-                            }
-
-                            // If we are currently holding down the key
-                            if (isKeyDown && previousKey == key)
-                            {
-                                // Return true if holding for long enough and reset the timer.
-                                if (elapsedTime >= ELAPSED_LIMIT)
-                                {
-                                    elapsedTime = 0f;
-                                    return true;
-                                }
-                                else
-                                {
-                                    // Otherwise, increase the timer by a frame's worth of time and do nothing.
-                                    float dt = (float)ScreenManager.GameTime.ElapsedGameTime.TotalSeconds;
-                                    elapsedTime += dt;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case InputType.GAMEPAD:
-                    {
-                        GamePadState currentGamePadState = CurrentGamePadState[user.ControllerIndex];
-                        GamePadState lastGamePadState = LastGamePadState[user.ControllerIndex];
-
-                        for (int i = 0; i < actionMap.Buttons.Count; i++)
-                        {
-                            Buttons button = actionMap.Buttons[i];
-
-                            bool isButtonDown = currentGamePadState.IsButtonDown(button);
-
-                            // If its a new button press, return true and restart the timer.
-                            if (lastGamePadState.IsButtonUp(button) && isButtonDown)
-                            {
-                                previousButton = button;
-                                elapsedTime = 0f;
-                                return true;
-                            }
-
-                            // If we are currently holding down the button
-                            if (isButtonDown && previousButton == button)
-                            {
-                                // Return true if holding for long enough and reset the timer.
-                                if (elapsedTime >= ELAPSED_LIMIT)
-                                {
-                                    elapsedTime = 0f;
-                                    return true;
-                                }
-                                else
-                                {
-                                    // Otherwise, increase the timer by a frame's worth of time and do nothing.
-                                    float dt = (float)ScreenManager.GameTime.ElapsedGameTime.TotalSeconds;
-                                    elapsedTime += dt;
-                                }
-                            }
-                        }
-                    }
-                    break;
-            }
-
-            // Return false if we either don't have a new key press,
-            // or we have one but haven't held it for long enough.
-            return false;
-        }
-
-
         // Returns the index in Actions, given an action.
         public static int GetActionIndex(Action action)
         {
@@ -965,9 +868,9 @@ namespace GameStateManager
 
 
         // Maps a new key to a given action.
-        public static void SetActionMap(User user, Action action, Keys key)
+        public static void SetActionMap(Controller controller, Action action, Keys key)
         {
-            ActionMap[] actionMaps = user.ActionMaps;
+            ActionMap[] actionMaps = controller.ActionMaps;
             ActionMap targetActionMap = actionMaps[GetActionIndex(action)];
 
             if (targetActionMap.Keys.Contains(key) == false)
@@ -982,9 +885,9 @@ namespace GameStateManager
 
 
         // Maps a new button to a given action.
-        public static void SetActionMap(User user, Action action, Buttons button)
+        public static void SetActionMap(Controller controller, Action action, Buttons button)
         {
-            ActionMap[] actionMaps = user.ActionMaps;
+            ActionMap[] actionMaps = controller.ActionMaps;
             ActionMap targetActionMap = actionMaps[GetActionIndex(action)];
 
             if (targetActionMap.Buttons.Contains(button) == false)
@@ -999,17 +902,17 @@ namespace GameStateManager
 
 
         // Set the entire actionMaps of a user, based on a given actionMaps.
-        public static void SetActionMaps(User user, ActionMap[] actionMaps)
+        public static void SetActionMaps(Controller controller, ActionMap[] actionMaps)
         {
             for (int i = 0; i < MAX_USERS; i++)
             {
-                if (Users[i] == user)
+                if (Controllers[i] == controller)
                 {
                     for (int j = 0; j < actionMaps.Length; j++)
                     {
-                        Users[i].ActionMaps[j].Keys = new List<Keys>(actionMaps[j].Keys);
-                        Users[i].ActionMaps[j].MouseButtons = new List<MouseButtons>(actionMaps[j].MouseButtons);
-                        Users[i].ActionMaps[j].Buttons = new List<Buttons>(actionMaps[j].Buttons);
+                        Controllers[i].ActionMaps[j].Keys = new List<Keys>(actionMaps[j].Keys);
+                        Controllers[i].ActionMaps[j].MouseButtons = new List<MouseButtons>(actionMaps[j].MouseButtons);
+                        Controllers[i].ActionMaps[j].Buttons = new List<Buttons>(actionMaps[j].Buttons);
                     }
 
                     break;
