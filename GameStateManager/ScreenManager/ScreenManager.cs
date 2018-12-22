@@ -20,7 +20,6 @@ namespace GameStateManager
         public static Viewport Viewport { get; private set; }
         public static Rectangle TitleSafeArea { get; private set; }
         public static Game Game { get; private set; }
-        public static GameTime GameTime { get; private set; }
         public static Random Random { get; private set; }
 
         // Initializes the screen manager component.
@@ -65,8 +64,6 @@ namespace GameStateManager
         // Allows each screen to run logic.
         public static void Update(GameTime gameTime)
         {
-            GameTime = gameTime;
-
             // Make a copy of the master screen list, to avoid confusion if
             // the process of updating one screen adds or removes others.
             screensToUpdate.Clear();
@@ -97,7 +94,7 @@ namespace GameStateManager
                     if (otherScreenHasFocus == false)
                     {
                         if (screen.IsTransitioning == false && Console.State == State.CLOSED)
-                            screen.HandleInput();
+                            screen.HandleInput(gameTime);
 
                         otherScreenHasFocus = true;
                     }
