@@ -50,14 +50,14 @@
 
 
         // Event handler for when the "Yes" entry is selected on the Message Box.
-        private void MessageBoxScreen_Yes(User user)
+        private void MessageBoxScreen_Yes(Controller controller)
         {
             ScreenManager.Game.Exit();
         }
 
 
         // Event handler for when the "No" entry is selected on the Message Box.
-        private void MessageBoxScreen_No(User user)
+        private void MessageBoxScreen_No(Controller controller)
         {
             IsEnabled = true;
             confirmQuit.OnHide();
@@ -65,7 +65,7 @@
 
 
         // Event handler for when the "Play Game" entry is selected.
-        private void PlayGameEntry_OnSelected(User user)
+        private void PlayGameEntry_OnSelected(Controller controller)
         {
             OnHide();
             LoadingScreen.Unload(ScreenManager.GetScreen("mainMenuBackground"));
@@ -82,7 +82,7 @@
 
 
         // Event handler for when the "Options" entry is selected.
-        private void OptionsEntry_OnSelected(User user)
+        private void OptionsEntry_OnSelected(Controller controller)
         {
             OnHide();
             optionsMenu.OnShow();
@@ -90,7 +90,7 @@
 
 
         // Event handler for when the "Buffered Input" entry is selected.
-        private void BufferedInputEntry_Selected(User user)
+        private void BufferedInputEntry_Selected(Controller controller)
         {
             OnHide();
             bufferedInputMenu.OnShow();
@@ -98,7 +98,7 @@
 
 
         // Event handler for when the "Input Mapping" entry is selected.
-        private void InputMappingEntry_Selected(User user)
+        private void InputMappingEntry_Selected(Controller controller)
         {
             OnHide();
             inputMappingMenu.OnShow();
@@ -106,9 +106,9 @@
 
 
         // Event handler for when the "Exit" entry is selected. A popup message is displayed.
-        private void ExitEntry_OnSelected(User user)
+        private void ExitEntry_OnSelected(Controller controller)
         {
-            OnDismiss(user);
+            OnDismiss(controller);
         }
 
 
@@ -134,9 +134,9 @@
         }
 
 
-        public override void OnDismiss(User user)
+        public override void OnDismiss(Controller controller)
         {
-            base.OnDismiss(user);
+            base.OnDismiss(controller);
 
             IsEnabled = false;
             confirmQuit.OnShow();

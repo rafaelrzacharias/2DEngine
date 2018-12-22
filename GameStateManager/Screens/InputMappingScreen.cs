@@ -142,11 +142,11 @@ namespace GameStateManager
                     {
                         ActionMap currentActionMap = actionMaps[userIndex][i + NUM_SKIPPED_KEYS];
 
-                        if (Input.IsActionPressed(Input.Actions[j], PrimaryUser, true))
+                        if (Input.GetAction(Input.Actions[j], PrimaryUser).IsTriggered)
                         {
-                            switch (PrimaryUser.InputType)
+                            switch (PrimaryUser.Type)
                             {
-                                case InputType.KEYBOARD:
+                                case ControllerType.KEYBOARD:
                                     {
                                         Keys newKey = PrimaryUser.ActionMaps[j].Keys[0];
                                         Keys oldKey = currentActionMap.Keys[0];
@@ -163,7 +163,7 @@ namespace GameStateManager
                                         }
                                     }
                                     break;
-                                case InputType.GAMEPAD:
+                                case ControllerType.GAMEPAD:
                                     {
                                         Buttons newButton = PrimaryUser.ActionMaps[j].Buttons[0];
                                         Buttons oldButton = currentActionMap.Buttons[0];
@@ -201,10 +201,10 @@ namespace GameStateManager
 
 
         // Overrides the default implementation of HandleInputs
-        public override void HandleInput()
+        public override void HandleInput(GameTime gameTime)
         {
             if (anyEntrySelected == false)
-                base.HandleInput();
+                base.HandleInput(gameTime);
 
             anyEntrySelected = false;
         }
@@ -225,9 +225,9 @@ namespace GameStateManager
 
                 for (int i = 0; i < Entries.Count; i++)
                 {
-                    switch (PrimaryUser.InputType)
+                    switch (PrimaryUser.Type)
                     {
-                        case InputType.KEYBOARD:
+                        case ControllerType.KEYBOARD:
                             {
                                 if (Entries[i].IsSelected)
                                 {
@@ -238,7 +238,7 @@ namespace GameStateManager
                                     keyboardLabelColor = Color.White;
                             }
                             break;
-                        case InputType.GAMEPAD:
+                        case ControllerType.GAMEPAD:
                             {
                                 if (Entries[i].IsSelected)
                                 {
@@ -276,9 +276,9 @@ namespace GameStateManager
 
 
         // Overrides the default implementation of OnDismiss.
-        public override void OnDismiss(User user)
+        public override void OnDismiss(Controller controller)
         {
-            int userIndex = GetUserIndex(user);
+            int userIndex = GetUserIndex(controller);
             bool hasInputChanged = false;
             bool unassignedInput = false;
 
@@ -290,8 +290,8 @@ namespace GameStateManager
                     Keys assignedKey = actions.Keys[0];
                     Buttons assignedButton = actions.Buttons[0];
 
-                    if (assignedKey != user.ActionMaps[i].Keys[0] ||
-                        assignedButton != user.ActionMaps[i].Buttons[0])
+                    if (assignedKey != controller.ActionMaps[i].Keys[0] ||
+                        assignedButton != controller.ActionMaps[i].Buttons[0])
                     {
                         if (assignedKey == 0 || assignedButton == 0)
                         {
@@ -315,17 +315,17 @@ namespace GameStateManager
                 saveInputMap.OnShow();
             }
             else
-                base.OnDismiss(user);
+                base.OnDismiss(controller);
         }
 
 
         // Event handler for when the "Yes" entry is selected in the new input message box.
-        private void SaveInputMapMessageBoxScreen_Yes(User user)
+        private void SaveInputMapMessageBoxScreen_Yes(Controller controller)
         {
-            int userIndex = GetUserIndex(user);
+            int userIndex = GetUserIndex(controller);
 
             if (userIndex != -1)
-                Input.SetActionMaps(user, actionMaps[userIndex]);
+                Input.SetActionMaps(controller, actionMaps[userIndex]);
 
             saveInputMap.OnHide();
             OnHide();
@@ -333,9 +333,9 @@ namespace GameStateManager
 
 
         // Event handler for when the "No" entry is selected in the new input message box.
-        private void SaveInputMapMessageBoxScreen_No(User user)
+        private void SaveInputMapMessageBoxScreen_No(Controller controller)
         {
-            int userIndex = GetUserIndex(user);
+            int userIndex = GetUserIndex(controller);
 
             if (userIndex != -1)
                 Input.ResetActionMaps(actionMaps[userIndex]);
@@ -346,7 +346,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Ok" entry is selected in the unassigned input message box.
-        private void UnassignedInputMessage_Ok(User user)
+        private void UnassignedInputMessage_Ok(Controller controller)
         {
             unassignedInputMessage.OnHide();
             IsEnabled = true;
@@ -355,18 +355,18 @@ namespace GameStateManager
 
         // Callback for the InputMappingScreen to know when the UnassignedInputMessage
         // or the SaveInputMapMessageBoxScreen were dismissed.
-        private void OnMessageBoxDismiss(User user)
+        private void OnMessageBoxDismiss(Controller controller)
         {
             IsEnabled = true;
         }
 
 
         // Helper function to find the user index in Input.Users, given a user.
-        private int GetUserIndex(User user)
+        private int GetUserIndex(Controller controller)
         {
             for (int i = 0; i < Input.MAX_USERS; i++)
             {
-                if (Input.Users[i] == user)
+                if (Input.Controllers[i] == controller)
                     return i;
             }
 

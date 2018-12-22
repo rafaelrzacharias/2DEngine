@@ -68,8 +68,8 @@ namespace GameStateManager
         // The main menu responds to input from any connected gamepad, but whichever player makes a
         // selection from this menu is given control over all subsequent screens, so other gamepads
         // are inactive until the controlling player returns to the main menu.
-        protected User ControllingUser;
-        public User PrimaryUser
+        protected Controller ControllingUser;
+        public Controller PrimaryUser
         {
             get { return ControllingUser != null ? ControllingUser : Input.GetPrimaryUser(); }
             set { ControllingUser = value; }
@@ -136,16 +136,16 @@ namespace GameStateManager
 
 
         // Callback for when the screen is dismissed.
-        public delegate void DismissCallback(User user);
+        public delegate void DismissCallback(Controller controller);
         public DismissCallback Dismiss;
 
-        public virtual void OnDismiss(User user)
+        public virtual void OnDismiss(Controller controller)
         {
             if (IsRootMenu == false)
                 OnHide();
 
             if (Dismiss != null)
-                Dismiss.Invoke(user);
+                Dismiss.Invoke(controller);
         }
 
 
@@ -265,7 +265,7 @@ namespace GameStateManager
 
         // // Allows the screen to handle user input. Unlike Update, this method is only called
         // when the screen is active, and not when some other screen has taken the focus.
-        public virtual void HandleInput() { }
+        public virtual void HandleInput(GameTime gameTime) { }
 
 
         // Screen-specific updte to player rich presence.

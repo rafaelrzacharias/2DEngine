@@ -29,7 +29,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "No" entry is selected on the Message Box.
-        private void MessageBox_No(User user)
+        private void MessageBox_No(Controller controller)
         {
             IsEnabled = true;
             confirmQuit.OnHide();
@@ -37,7 +37,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Quit Game" entry is selected.
-        private void QuitGameEntry_OnSelected(User user)
+        private void QuitGameEntry_OnSelected(Controller controller)
         {
             IsEnabled = false;
             confirmQuit.OnShow();
@@ -46,7 +46,7 @@ namespace GameStateManager
 
         // Event handler for when the "Yes" entry is selected on the Message Box.
         // It uses the loading screen to transition from the game back to the main menu.
-        private void MessageBox_Yes(User user)
+        private void MessageBox_Yes(Controller controller)
         {
             confirmQuit.OnHide();
             OnHide();
@@ -65,9 +65,9 @@ namespace GameStateManager
 
 
         // Callback for when the "Resume Game" entry is selected.
-        private void ResumeGameEntry_OnSelected(User user)
+        private void ResumeGameEntry_OnSelected(Controller controller)
         {
-            OnDismiss(user);
+            OnDismiss(controller);
         }
 
 

@@ -21,7 +21,7 @@ namespace GameStateManager
         private Texture2D noInputTexture;
         private Color inputTextureColor;
         private Vector2 controllerTexturePosition;
-        private User temporaryUser;
+        private Controller temporaryUser;
 
         // Constructs a new controller disconnection screen.
         public ControllerDisconnectionScreen(string screenName, string menuTitle = "")
@@ -35,7 +35,7 @@ namespace GameStateManager
             keyboardTexture = Resources.GetTexture("keyboardTexture");
             noInputTexture = Resources.GetTexture("noInputTexture");
             inputTextureColor = Color.White;
-            temporaryUser = new User();
+            temporaryUser = new Controller();
             EnabledGestures = GestureType.Tap;
             DrawOrder = 0.3f;
             ShouldDarkenBackground = true;
@@ -89,22 +89,22 @@ namespace GameStateManager
                 Vector2 inputTexPos = controllerTexturePosition;
                 for (int i = 0; i < Input.MAX_USERS; i++)
                 {
-                    switch (Input.Users[i].InputType)
+                    switch (Input.Controllers[i].Type)
                     {
-                        case InputType.NONE:
+                        case ControllerType.NONE:
                             inputTexture = noInputTexture;
                             break;
-                        case InputType.KEYBOARD:
+                        case ControllerType.KEYBOARD:
                             inputTexture = keyboardTexture;
                             break;
-                        case InputType.GAMEPAD:
+                        case ControllerType.GAMEPAD:
                             inputTexture = controllerTexture;
                             break;
-                        case InputType.TOUCH:
+                        case ControllerType.TOUCH:
                             break;
                     }
 
-                    if (Input.Users[i].IsActive)
+                    if (Input.Controllers[i].IsActive)
                         inputTextureColor = Color.White;
                     else
                         inputTextureColor = BackgroundColor;
@@ -123,7 +123,7 @@ namespace GameStateManager
 
 
         // Event handler for when a controller is disconnected.
-        private void Input_ControllerDisconnected(int controllerIndex)
+        private void Input_ControllerDisconnected(int slot)
         {
             SetText("Controller disconnected: Connect a controller.", Color.Yellow);
 
@@ -135,15 +135,15 @@ namespace GameStateManager
         }
 
         // Event handler for when a controller is connected.
-        private void Input_ControllerConnected(int controllerIndex)
+        private void Input_ControllerConnected(int slot)
         {
             if (IsVisible || Input.GetPrimaryUser() != null)
             {
                 SetText("Controller connected: Choose a slot.", Color.Green);
 
                 ControllingUser = temporaryUser;
-                ControllingUser.ControllerIndex = controllerIndex;
-                ControllingUser.InputType = InputType.GAMEPAD;
+                ControllingUser.Slot = slot;
+                ControllingUser.Type = ControllerType.GAMEPAD;
 
                 if (IsVisible == false)
                     OnShow();
@@ -151,12 +151,12 @@ namespace GameStateManager
         }
 
 
-        private void ControllerDisconnectionScreen_Selected(User user)
+        private void ControllerDisconnectionScreen_Selected(Controller controller)
         {
-            Input.SetUserControllerType(Input.Users[highlightedEntry], user.ControllerIndex);
+            Input.SetUserControllerType(Input.Controllers[highlightedEntry], controller.Slot);
 
             if (Input.GetUserCount() == 1)
-                Input.SetPrimaryUser(Input.Users[highlightedEntry]);
+                Input.SetPrimaryUser(Input.Controllers[highlightedEntry]);
 
             OnHide();
         }

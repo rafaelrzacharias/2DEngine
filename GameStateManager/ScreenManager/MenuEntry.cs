@@ -53,30 +53,30 @@ namespace GameStateManager
         public float Rotation { get; protected set; }
 
         // Event raised when the menu entry is selected.
-        public delegate void SelectedEventHandler(User user);
+        public delegate void SelectedEventHandler(Controller controller);
         public event SelectedEventHandler Selected;
 
-        public virtual void OnSelected(User user)
+        public virtual void OnSelected(Controller controller)
         {
             IsSelected = true;
             //Audio.PlaySound("entrySelected");
 
             if (Selected != null)
-                Selected.Invoke(user);
+                Selected.Invoke(controller);
         }
 
 
         // Event raised when the menu entry is deselected.
-        public delegate void DeselectedEventHandler(User user);
+        public delegate void DeselectedEventHandler(Controller controller);
         public event DeselectedEventHandler Deselected;
 
-        public virtual void OnDeselected(User user)
+        public virtual void OnDeselected(Controller controller)
         {
             IsSelected = false;
             //Audio.PlaySound("entrySelected");
 
             if (Deselected != null)
-                Deselected.Invoke(user);
+                Deselected.Invoke(controller);
         }
 
 

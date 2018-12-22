@@ -13,15 +13,15 @@ namespace GameStateManager
         }
 
 
-        public override void HandleInput()
+        public override void HandleInput(GameTime gameTime)
         {
-            base.HandleInput();
+            base.HandleInput(gameTime);
 
-            int controllerIndex = Input.WasAnyButtonPressed();
+            int controllerIndex = Input.WasAnyButtonPressed(true, true);
             if (controllerIndex != -1)
             {
-                Input.SetPrimaryUser(Input.Users[0]);
-                Input.SetUserControllerType(Input.Users[0], controllerIndex);
+                Input.SetPrimaryUser(Input.Controllers[0]);
+                Input.SetUserControllerType(Input.Controllers[0], controllerIndex);
 
                 OnHide();
 
