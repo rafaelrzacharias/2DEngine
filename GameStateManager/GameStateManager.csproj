@@ -74,9 +74,9 @@
     <Compile Include="Game1.cs" />
     <Compile Include="Input\ActionMap.cs" />
     <Compile Include="Input\BufferedInput.cs" />
+    <Compile Include="Input\Controller.cs" />
     <Compile Include="Input\Move.cs" />
     <Compile Include="Input\MoveList.cs" />
-    <Compile Include="Input\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.cs" />
