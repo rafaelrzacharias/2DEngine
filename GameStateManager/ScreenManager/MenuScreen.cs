@@ -41,10 +41,10 @@ namespace GameStateManager
 
         private void UpdateEntriesHighlight()
         {
-            isMenuUp = Input.IsTimedActionPressed(Action.UP, PrimaryUser);
-            isMenuDown = Input.IsTimedActionPressed(Action.DOWN, PrimaryUser);
+            isMenuUp = Input.GetTimedAction(Action.UP, PrimaryUser);
+            isMenuDown = Input.GetTimedAction(Action.DOWN, PrimaryUser);
 
-            if (PrimaryUser != null && PrimaryUser.InputType == InputType.KEYBOARD && Input.HasMouseMoved())
+            if (PrimaryUser != null && PrimaryUser.Type == ControllerType.KEYBOARD && Input.HasMouseMoved())
             {
                 for (int i = 0; i < Entries.Count; i++)
                 {
@@ -103,7 +103,7 @@ namespace GameStateManager
             {
                 Entries[i].IsSelected = false;
 
-                if (Entries[i].IsHighlighted && Input.IsActionPressed(Action.UI_SELECT, PrimaryUser))
+                if (Entries[i].IsHighlighted && Input.GetAction(Action.UI_SELECT, PrimaryUser).IsTriggered)
                 {
                     Entries[i].OnSelected(PrimaryUser);
                     //Audio.PlaySound("entrySelected");
@@ -111,7 +111,7 @@ namespace GameStateManager
                 }
             }
 
-            if (Input.IsActionPressed(Action.UI_BACK, PrimaryUser))
+            if (Input.GetAction(Action.UI_BACK, PrimaryUser).IsTriggered)
             {
                 OnDismiss(PrimaryUser);
                 //Audio.PlaySound("menuDismissed");
@@ -137,8 +137,11 @@ namespace GameStateManager
         }
 
         // Responds to user input, changing the selected entry and accepting or cancelling the menu.
-        public override void HandleInput()
+        public override void HandleInput(GameTime gameTime)
         {
+            if (PrimaryUser != null)
+                PrimaryUser.Update(gameTime);
+
             UpdateEntriesHighlight();
             UpdateEntriesSelected();
         }

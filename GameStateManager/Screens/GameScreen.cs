@@ -29,7 +29,7 @@ namespace GameStateManager
 
 
         // Event handler for when the "Pause Menu" is dismissed.
-        private void PauseMenu_OnDismiss(User user)
+        private void PauseMenu_OnDismiss(Controller controller)
         {
             OnShow();
         }
@@ -37,21 +37,21 @@ namespace GameStateManager
 
         // Lets the game respond to player input. Unlike the Update method,
         // this will only be called when the gameplay screen is active.
-        public override void HandleInput()
+        public override void HandleInput(GameTime gameTime)
         {
-            if (Input.IsActionPressed(Action.START, PrimaryUser))
+            if (Input.GetAction(Action.START, PrimaryUser).IsTriggered)
                 OnDismiss(PrimaryUser);
 
-            if (Input.IsActionPressed(Action.LK, PrimaryUser))
+            if (Input.GetAction(Action.LK, PrimaryUser).IsTriggered)
                 Audio.PlaySong("song", true, 0.1f);
 
-            if (Input.IsActionPressed(Action.HK, PrimaryUser))
+            if (Input.GetAction(Action.HK, PrimaryUser).IsTriggered)
                 Audio.PauseOrResumeSong();
 
-            if (Input.IsActionPressed(Action.LB, PrimaryUser))
+            if (Input.GetAction(Action.LB, PrimaryUser).IsTriggered)
                 Audio.StopSong();
 
-            if (Input.IsActionPressed(Action.RB, PrimaryUser))
+            if (Input.GetAction(Action.RB, PrimaryUser).IsTriggered)
             {
                 foreach (KeyValuePair<string, SoundEffect> pair in Resources.SoundEffects)
                     Audio.PlaySound(pair.Key, new AudioEmitter(), false);
@@ -68,9 +68,9 @@ namespace GameStateManager
             base.Draw(gameTime);
         }
 
-        public override void OnDismiss(User user)
+        public override void OnDismiss(Controller controller)
         {
-            base.OnDismiss(user);
+            base.OnDismiss(controller);
             pauseMenu.OnShow();
         }
     }

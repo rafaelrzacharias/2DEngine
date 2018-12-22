@@ -292,7 +292,7 @@ namespace GameStateManager
             switch (State)
             {
                 case State.CLOSED:
-                    if (Input.IsActionPressed(Action.CONSOLE, Input.GetPrimaryUser()))
+                    if (Input.GetAction(Action.CONSOLE, Input.GetPrimaryUser()).IsTriggered)
                         Show();
                     break;
                 case State.OPENING:
@@ -304,7 +304,7 @@ namespace GameStateManager
                     }
                     break;
                 case State.OPENED:
-                    if (Input.IsActionPressed(Action.CONSOLE, Input.GetPrimaryUser()))
+                    if (Input.GetAction(Action.CONSOLE, Input.GetPrimaryUser()).IsTriggered)
                         State = State.CLOSING;
                     else
                         ProcessKeyInputs(dt);
