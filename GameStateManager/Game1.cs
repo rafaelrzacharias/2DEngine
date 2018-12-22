@@ -47,7 +47,7 @@ namespace GameStateManager
             Debug.Update(gameTime);
 
             //Debug.Profiler.BeginMark("Update: Input", Color.Black);
-            Input.Update();
+            Input.Update(gameTime);
             //Debug.Profiler.EndMark("Update: Input");
 
             //Debug.Profiler.BeginMark("Update: Audio", Color.Red);
