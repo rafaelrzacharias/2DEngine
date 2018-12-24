@@ -73,6 +73,7 @@
     <Compile Include="Debug\StringBuilderExtensions.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Input\ActionMap.cs" />
+    <Compile Include="Input\ActionState.cs" />
     <Compile Include="Input\BufferedInput.cs" />
     <Compile Include="Input\Controller.cs" />
     <Compile Include="Input\Move.cs" />
