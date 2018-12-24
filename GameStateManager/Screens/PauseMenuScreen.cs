@@ -82,6 +82,7 @@ namespace GameStateManager
             base.OnShow();
             Audio.PauseOrResumeAllSounds();
             Audio.PauseOrResumeSong();
+            Input.PauseOrResumeControllersVibration();
         }
 
 
@@ -96,6 +97,7 @@ namespace GameStateManager
             base.OnHide();
             Audio.PauseOrResumeAllSounds();
             Audio.PauseOrResumeSong();
+            Input.PauseOrResumeControllersVibration();
         }
 
 
