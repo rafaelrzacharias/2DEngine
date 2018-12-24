@@ -41,26 +41,6 @@ namespace GameStateManager
     }
 
 
-    // A struct that represents an input state from a controller.
-    public struct ActionState
-    {
-        public bool IsPressed; // If the action is being pressed.
-        public bool IsTriggered; // If the action was just pressed this frame.
-        public float Magnitude; // The action's intensity (for analog buttons).
-        public double Duration; // How long the action has being pressed for.
-
-
-        // Reset all fields to its default values.
-        public void Reset()
-        {
-            IsPressed = false;
-            IsTriggered = false;
-            Magnitude = 0.0f;
-            Duration = 0.0;
-        }
-    }
-
-
     // Helper for reading input from keyboard, gamepad, and touchscreen. This class tracks both the current
     // and previous state of the input devices, and implements query methods for high level input actions.
     public static class Input
@@ -431,7 +411,7 @@ namespace GameStateManager
                 Gestures[i] = TouchPanel.ReadGesture();
                 i++
             }
-#endif
+#endif            
         }
 
 
@@ -451,6 +431,8 @@ namespace GameStateManager
                 }
             }
 
+            StopControllersVibration();
+
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(slot);
         }
@@ -462,6 +444,8 @@ namespace GameStateManager
 
         public static void OnControllerConnected(int slot)
         {
+            StopControllersVibration();
+
             if (ControllerConnected != null)
                 ControllerConnected.Invoke(slot);
         }
@@ -473,8 +457,41 @@ namespace GameStateManager
 
         public static void OnUserControllerTypeChanged(int slot)
         {
+            StopControllersVibration();
+
             if (ControllerTypeChanged != null)
                 ControllerTypeChanged.Invoke(slot);
+        }
+
+
+        // Pause or Resume vibration in all controllers.
+        public static void PauseOrResumeControllersVibration()
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+                Controllers[i].PauseVibration = !Controllers[i].PauseVibration;
+        }
+
+        // Stop the vibration in all controllers.
+        public static void StopControllersVibration()
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+                Controllers[i].StopVibration();
+        }
+
+
+        // Sets a controller to vibrate for a given duration and intensity.
+        public static void VibrateController(Controller controller, double duration, float magnitude, 
+            MotorType motorType = MotorType.BOTH, VibratorMode vibrationMode = VibratorMode.CONSTANT, 
+            VibratorMode intermittenceMode = VibratorMode.NONE)
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (Controllers[i] == controller)
+                {
+                    Controllers[i].Vibrate(duration, magnitude, motorType, vibrationMode, intermittenceMode);
+                    break;
+                }
+            }
         }
 #endif
 
