@@ -348,7 +348,6 @@ namespace GameStateManager
             if (rightMotorRemainingDuration <= 0.0)
                 StopVibration(MotorType.RIGHT);
 
-            System.Console.WriteLine("Vibrating slot: " + Slot.ToString());
             GamePad.SetVibration(Slot, leftMotorCurrentMagnitude * li, rightMotorCurrentMagnitude * ri);
         }
 
