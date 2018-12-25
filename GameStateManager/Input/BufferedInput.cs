@@ -55,17 +55,20 @@ namespace GameStateManager
             PlayersMove = new Move[Buffers.Length];
             PlayersMoveTime = new TimeSpan[Buffers.Length];
 
+#if DESKTOP || CONSOLE
             Input.ControllerConnected += BufferedInput_OnControllerStatusChanged;
             Input.ControllerDisconnected += BufferedInput_OnControllerStatusChanged;
+#endif
         }
 
 
+#if DESKTOP || CONSOLE
         // Callback to clear the buffered inputs upon controller connection/disconnection.
         private static void BufferedInput_OnControllerStatusChanged(int controllerIndex)
         {
             ClearInputBuffers();
         }
-
+#endif
 
         // Updates the BuffereInput for a given user.
         public static void Update(GameTime gameTime, int userIndex)
@@ -197,6 +200,7 @@ namespace GameStateManager
             switch (controller.Type)
             {
                 case ControllerType.KEYBOARD:
+#if DESKTOP
                     {
                         KeyboardState keyboardState = Input.CurrentKeyboardState;
 
@@ -253,8 +257,10 @@ namespace GameStateManager
                             }
                         }
                     }
+#endif
                     break;
                 case ControllerType.GAMEPAD:
+#if DESKTOP || CONSOLE
                     {
                         GamePadState gamePadState = Input.CurrentGamePadState[controller.Slot];
 
@@ -311,6 +317,14 @@ namespace GameStateManager
                             }
                         }
                     }
+#endif
+                    break;
+                case ControllerType.TOUCH:
+#if MOBILE
+                    {
+
+                    }
+#endif
                     break;
             }
 

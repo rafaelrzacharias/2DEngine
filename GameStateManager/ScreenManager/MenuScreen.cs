@@ -16,7 +16,6 @@ namespace GameStateManager
         private Vector2 titleOrigin;
         private bool isMenuUp;
         private bool isMenuDown;
-        private bool isMouseOver;
         protected string MenuTitle;
 
         // Gets the list of menu entries, so derived classes can add or change the menu contents.
@@ -44,13 +43,12 @@ namespace GameStateManager
             isMenuUp = Input.GetTimedAction(Action.UP, PrimaryUser);
             isMenuDown = Input.GetTimedAction(Action.DOWN, PrimaryUser);
 
-            if (PrimaryUser != null && PrimaryUser.Type == ControllerType.KEYBOARD && Input.HasMouseMoved())
+#if DESKTOP || MOBILE
+            if (PrimaryUser != null /*&& PrimaryUser.Type == ControllerType.KEYBOARD*/ && Input.HasMouseMoved())
             {
                 for (int i = 0; i < Entries.Count; i++)
                 {
-                    isMouseOver = Input.IsMouseOver(Entries[i].Bounds);
-
-                    if (isMouseOver)
+                    if (Input.IsMouseOver(Entries[i].Bounds))
                     {
                         previousHighlightedEntry = i;
                         highlightedEntry = i;
@@ -60,7 +58,7 @@ namespace GameStateManager
                     highlightedEntry = -1;
                 }
             }
-
+#endif
             if (isMenuUp)
             {
                 if (highlightedEntry == -1)
@@ -117,15 +115,15 @@ namespace GameStateManager
                 //Audio.PlaySound("menuDismissed");
             }
 #if MOBILE
-            for (int i = 0; i < Input.Users[0].Gestures.Count; i++)
+            for (int i = 0; i < Input.Gestures.Length; i++)
             {
-                if (Input.Users[0].Gestures[i].GestureType == GestureType.Tap)
+                if (Input.Gestures[i].GestureType == GestureType.Tap)
                 {
                     for (int j = 0; j < Entries.Count; j++)
                     {
                         // Since gestures are only available on Mobile, we can safely pass Index 0
                         // to all entries since there will be only one player on Mobile.
-                        if (Entries[j].Bounds.Contains(Input.Users[0].Gestures[i].Position))
+                        if (Entries[j].Bounds.Contains(Input.Gestures[i].Position))
                         {
                             Entries[j].OnSelected(PrimaryUser);
                             //Audio.PlaySound("menuSelect");

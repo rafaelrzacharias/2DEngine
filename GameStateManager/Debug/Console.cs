@@ -324,6 +324,7 @@ namespace GameStateManager
         // Handle keyboard input.
         public void ProcessKeyInputs(float dt)
         {
+#if DESKTOP
             Keys[] keys = Input.GetPressedKeys();
 
             if (keys == null || keys.Length == 0)
@@ -389,6 +390,7 @@ namespace GameStateManager
                     }
                 }
             }
+#endif
         }
 
 

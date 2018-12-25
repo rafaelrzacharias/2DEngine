@@ -1,13 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 using System;
 using System.Collections.Generic;
 
 
 namespace GameStateManager
 {
-#if DESKTOP
+#if DESKTOP || MOBILE
     public enum MouseButtons
     {
         LEFT,
@@ -47,19 +48,27 @@ namespace GameStateManager
     {
         public static GameTime GameTime { get; private set; }
 
-        public const int MAX_USERS = 4;
+        public const int MAX_USERS =
+#if DESKTOP || CONSOLE
+            4;
+#endif
+#if MOBILE
+            1;
+#endif
         public static Controller[] Controllers;
 
         public static Action[] Actions { get; private set; }
         public static string[] ActionNames { get; private set; }
 
         private static Dictionary<Buttons, Texture2D> platformButtons;
-#if DESKTOP
-        public static KeyboardState LastKeyboardState;
-        public static KeyboardState CurrentKeyboardState;
+#if DESKTOP || MOBILE
         public static MouseState LastMouseState;
         public static MouseState CurrentMouseState;
         private static GameWindow Window;
+#endif
+#if DESKTOP
+        public static KeyboardState LastKeyboardState;
+        public static KeyboardState CurrentKeyboardState;
 
         private static Keys lastPressedKey;
         private static float keyRepeatTimer;
@@ -92,6 +101,7 @@ namespace GameStateManager
         private const double ELAPSED_LIMIT = 0.2;
 #endif
 #if MOBILE
+        public const int MAX_GESTURES = 10;
         public static TouchCollection TouchState;
         public static GestureSample[] Gestures;
 
@@ -100,8 +110,9 @@ namespace GameStateManager
 
         public static void Initialize(Game game)
         {
-#if DESKTOP
+#if DESKTOP || MOBILE
             Window = game.Window;
+#endif
             Actions = (Action[])Enum.GetValues(typeof(Action));
             ActionNames = new string[]
             {
@@ -148,27 +159,32 @@ namespace GameStateManager
             // The buffered input for each player
             BufferedInput.Initialize();
 
-            LastKeyboardState = new KeyboardState();
-            CurrentKeyboardState = new KeyboardState();
+#if DESKTOP || MOBILE
             LastMouseState = new MouseState();
             CurrentMouseState = new MouseState();
+#endif
+#if DESKTOP
+            LastKeyboardState = new KeyboardState();
+            CurrentKeyboardState = new KeyboardState();
 #endif
 #if DESKTOP || CONSOLE
             buttonList = (Buttons[])Enum.GetValues(typeof(Buttons));
 
             LastGamePadState = new GamePadState[MAX_USERS];
             CurrentGamePadState = new GamePadState[MAX_USERS];
+#endif
             Controllers = new Controller[MAX_USERS];
 
             for (int i = 0; i < MAX_USERS; i++)
             {
+#if DESKTOP || CONSOLE
                 LastGamePadState[i] = new GamePadState();
                 CurrentGamePadState[i] = new GamePadState();
+#endif
                 Controllers[i] = new Controller();
             }
-#endif
 #if MOBILE
-            TouchState = new TouchState();
+            TouchState = new TouchCollection();
             Gestures = new GestureSample[MAX_GESTURES];
 
             for (int i = 0; i < MAX_GESTURES; i++)
@@ -178,6 +194,9 @@ namespace GameStateManager
             {
 
             };
+
+            TouchPanel.EnableMouseTouchPoint = true;
+            //TouchPanel.EnableMouseGestures = true;
 #endif
         }
 
@@ -195,7 +214,7 @@ namespace GameStateManager
             return null;
 #endif
 #if MOBILE
-            return Users[0];
+            return Controllers[0];
 #endif
         }
 
@@ -203,26 +222,41 @@ namespace GameStateManager
         // Sets the primary user.
         public static void SetPrimaryUser(Controller controller)
         {
-#if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
                 Controllers[i].IsPrimaryUser = false;
 
             controller.IsPrimaryUser = true;
-#endif
-#if MOBILE
-            Users[0].IsPrimaryUser = true;
-#endif
         }
 
+
+#if CONSOLE
+        // Returns the index of the first connected gamePad.
+        public static int GetConnectedGamePad()
+        {
+            for (int i = 0; i < MAX_USERS; i++)
+            {
+                if (CurrentGamePadState[i].IsConnected)
+                    return i;
+            }
+
+            return -1;
+        }
+#endif
 
         // Set the user controller type based on the given controller slot.
         public static void SetUserControllerType(Controller controller, int slot)
         {
-#if DESKTOP || CONSOLE
             if (slot != MAX_USERS)
                 controller.Type = ControllerType.GAMEPAD;
             else
+            {
+#if DESKTOP
                 controller.Type = ControllerType.KEYBOARD;
+#endif
+#if MOBILE
+                controller.Type = ControllerType.TOUCH;
+#endif
+            }
 
             controller.Slot = slot;
 
@@ -234,10 +268,6 @@ namespace GameStateManager
                     break;
                 }
             }
-#endif
-#if MOBILE
-            Users[0].InputType = InputType.TOUCH;
-#endif
         }
 
 
@@ -297,11 +327,13 @@ namespace GameStateManager
         public static void Update(GameTime gameTime)
         {
             GameTime = gameTime;
+#if DESKTOP || MOBILE
+            LastMouseState = CurrentMouseState;
+            CurrentMouseState = Mouse.GetState(Window);
+#endif
 #if DESKTOP
             LastKeyboardState = CurrentKeyboardState;
             CurrentKeyboardState = Keyboard.GetState();
-            LastMouseState = CurrentMouseState;
-            CurrentMouseState = Mouse.GetState(Window);
 
             if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
             {
@@ -379,9 +411,9 @@ namespace GameStateManager
                 }
             }
 #endif
-#if DESKTOP || CONSOLE
             for (int i = 0; i < MAX_USERS; i++)
             {
+#if DESKTOP || CONSOLE
                 LastGamePadState[i] = CurrentGamePadState[i];
                 CurrentGamePadState[i] = GamePad.GetState(i);
 
@@ -390,28 +422,18 @@ namespace GameStateManager
 
                 if (CurrentGamePadState[i].IsConnected && LastGamePadState[i].IsConnected == false)
                     OnControllerConnected(i);
+#endif
+#if MOBILE
+                TouchState = TouchPanel.GetState();
 
+                
+#endif
                 if (Controllers[i].IsActive)
                 {
                     Controllers[i].Update(gameTime);
                     BufferedInput.Update(gameTime, i);
                 }
             }
-#endif
-#if MOBILE
-            TouchState = TouchPanel.GetState();
-            Gestures.Clear();
-
-            for (int i = 0; i < MAX_GESTURES; i++)
-                Gestures[i] = null;
-
-            int i = 0;
-            while (TouchPanel.IsGestureAvailable)
-            {
-                Gestures[i] = TouchPanel.ReadGesture();
-                i++
-            }
-#endif            
         }
 
 
@@ -422,6 +444,8 @@ namespace GameStateManager
 
         public static void OnControllerDisconnected(int slot)
         {
+            StopControllersVibration();
+
             for (int i = 0; i < MAX_USERS; i++)
             {
                 if (Controllers[i].Slot == slot)
@@ -430,8 +454,6 @@ namespace GameStateManager
                     break;
                 }
             }
-
-            StopControllersVibration();
 
             if (ControllerDisconnected != null)
                 ControllerDisconnected.Invoke(slot);
@@ -525,13 +547,14 @@ namespace GameStateManager
             }
 #endif
 #if MOBILE
-            if (Gestures.Length != 0)
+            if (TouchPanel.IsGestureAvailable || (TouchPanel.EnableMouseTouchPoint && CurrentMouseState.LeftButton == ButtonState.Pressed))
                 return MAX_USERS;
 #endif
             return -1;
         }
 
 
+#if DESKTOP || CONSOLE
         // Checks if a connected gamePad has changed its state since last frame.
         private static bool HasGamePadStateChanged(GamePadState currentGamePadState, GamePadState lastGamePadState)
         {
@@ -548,7 +571,7 @@ namespace GameStateManager
 
             return false;
         }
-
+#endif
 
 #if DESKTOP
         // Return all pressed keys in a keyboard that are currently being pressed.
@@ -589,23 +612,6 @@ namespace GameStateManager
         public static bool IsKeyPressed(Keys key)
         {
             return CurrentKeyboardState.IsKeyDown(key);
-        }
-
-
-        // Checks if the mouse is currently hovering an interactible area.
-        public static bool IsMouseOver(Rectangle area)
-        {
-            return (CurrentMouseState.Position.X > area.X &&
-                CurrentMouseState.Position.X < area.X + area.Width &&
-                CurrentMouseState.Position.Y > area.Y &&
-                CurrentMouseState.Position.Y < area.Y + area.Height);
-        }
-
-
-        // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
-        public static bool HasMouseMoved()
-        {
-            return CurrentMouseState.Position != LastMouseState.Position;
         }
 
 
@@ -665,6 +671,24 @@ namespace GameStateManager
         }
 #endif
 
+#if DESKTOP || MOBILE
+        // Checks if the mouse is currently hovering an interactible area.
+        public static bool IsMouseOver(Rectangle area)
+        {
+            return (CurrentMouseState.Position.X > area.X &&
+                CurrentMouseState.Position.X < area.X + area.Width &&
+                CurrentMouseState.Position.Y > area.Y &&
+                CurrentMouseState.Position.Y < area.Y + area.Height);
+        }
+
+
+        // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
+        public static bool HasMouseMoved()
+        {
+            return CurrentMouseState.Position != LastMouseState.Position;
+        }
+#endif
+
         // Returns a platform button, given an action.
         public static Texture2D GetPlatformButton(Buttons button)
         {
@@ -675,13 +699,14 @@ namespace GameStateManager
         // Returns the state of an action, given the action and the controller.
         public static ActionState GetAction(Action action, Controller controller)
         {
+#if DESKTOP
             if (action == Action.CONSOLE)
             {
                 ActionState actionState = new ActionState();
                 actionState.IsTriggered = CurrentKeyboardState.IsKeyDown(Keys.OemTilde) && LastKeyboardState.IsKeyUp(Keys.OemTilde);
                 return actionState;
             }
-
+#endif
             if (controller == null)
                 return new ActionState();
 
@@ -693,6 +718,7 @@ namespace GameStateManager
         // or if it's still being pressed after a certain amount of time.
         public static bool GetTimedAction(Action action, Controller controller)
         {
+#if DESKTOP || CONSOLE
             if (controller == null)
                 return false;
 
@@ -725,6 +751,10 @@ namespace GameStateManager
             // Return false if we either don't have a new key press,
             // or we have one but haven't held it for long enough.
             return false;
+#endif
+#if MOBILE
+            return false; // TEMPORARY!!!!!
+#endif
         }
 
 
@@ -737,6 +767,8 @@ namespace GameStateManager
             int i = GetActionIndex(Action.UI_SELECT);
 #if DESKTOP
             actionMaps[i].Keys.Add(Keys.Space);
+#endif
+#if DESKTOP || MOBILE
             actionMaps[i].MouseButtons.Add(MouseButtons.LEFT);
 #endif
 #if DESKTOP || CONSOLE
@@ -745,6 +777,8 @@ namespace GameStateManager
             i = GetActionIndex(Action.UI_BACK);
 #if DESKTOP
             actionMaps[i].Keys.Add(Keys.Escape);
+#endif
+#if DESKTOP || MOBILE
             actionMaps[i].MouseButtons.Add(MouseButtons.RIGHT);
 #endif
 #if DESKTOP || CONSOLE
@@ -883,7 +917,7 @@ namespace GameStateManager
             return ActionNames[GetActionIndex(action)];
         }
 
-
+#if DESKTOP
         // Maps a new key to a given action.
         public static void SetActionMap(Controller controller, Action action, Keys key)
         {
@@ -899,8 +933,9 @@ namespace GameStateManager
                     actionMaps[i].Keys.Remove(key);
             }
         }
+#endif
 
-
+#if DESKTOP || CONSOLE
         // Maps a new button to a given action.
         public static void SetActionMap(Controller controller, Action action, Buttons button)
         {
@@ -916,7 +951,7 @@ namespace GameStateManager
                     actionMaps[i].Buttons.Remove(button);
             }
         }
-
+#endif
 
         // Set the entire actionMaps of a user, based on a given actionMaps.
         public static void SetActionMaps(Controller controller, ActionMap[] actionMaps)
@@ -927,9 +962,16 @@ namespace GameStateManager
                 {
                     for (int j = 0; j < actionMaps.Length; j++)
                     {
+#if DESKTOP
                         Controllers[i].ActionMaps[j].Keys = new List<Keys>(actionMaps[j].Keys);
                         Controllers[i].ActionMaps[j].MouseButtons = new List<MouseButtons>(actionMaps[j].MouseButtons);
+#endif
+#if DESKTOP || CONSOLE
                         Controllers[i].ActionMaps[j].Buttons = new List<Buttons>(actionMaps[j].Buttons);
+#endif
+#if MOBILE
+                        // Not implemented yet!!!
+#endif
                     }
 
                     break;

@@ -58,8 +58,10 @@ namespace GameStateManager
         // Handles the input to control the screen transitions.
         public override void HandleInput(GameTime gameTime)
         {
+#if DESKTOP
             if (Input.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Escape))
                 OnDismiss(PrimaryUser);
+#endif
         }
 
 

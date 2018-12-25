@@ -81,8 +81,6 @@ namespace GameStateManager
             keyboardLabel.Text = "Keyboard";
             keyboardLabel.Position = new Vector2(actionsLabel.Position.X + offset, actionsLabel.Position.Y);
 
-            int userIndex = GetUserIndex(PrimaryUser);
-
             longestWord = 0;
             width = Font.MeasureString(keyboardLabel.Text).X;
 
@@ -94,8 +92,16 @@ namespace GameStateManager
                 keyLabels[i] = Entries[i].Position;
                 keyLabels[i].X += offset;
 
-                width = Font.MeasureString(actionMaps[userIndex][i + NUM_SKIPPED_KEYS].Keys[0].ToString()).X;
-
+#if DESKTOP
+                width = Font.MeasureString(actionMaps[0][i + NUM_SKIPPED_KEYS].Keys[0].ToString()).X;
+#endif
+#if CONSOLE
+                width = Font.MeasureString(actionMaps[0][i + NUM_SKIPPED_KEYS].Buttons[0].ToString()).X;
+#endif
+#if MOBILE
+                width = 10f; // TEMPORARY!!! Make this the size of touch buttons.
+                //width = Font.MeasureString(actionMaps[0][i + NUM_SKIPPED_KEYS].VirtualButtons[0].ToString()).X;
+#endif
                 if (width > longestWord)
                     longestWord = width;
             }
@@ -136,7 +142,9 @@ namespace GameStateManager
             {
                 if (Entries[i].IsSelected)
                 {
+#if DESKTOP
                     Input.CanSwapControllerType = false;
+#endif
 
                     for (int j = NUM_SKIPPED_KEYS; j < Input.Actions.Length - 3; j++)
                     {
@@ -147,6 +155,7 @@ namespace GameStateManager
                             switch (PrimaryUser.Type)
                             {
                                 case ControllerType.KEYBOARD:
+#if DESKTOP
                                     {
                                         Keys newKey = PrimaryUser.ActionMaps[j].Keys[0];
                                         Keys oldKey = currentActionMap.Keys[0];
@@ -162,8 +171,10 @@ namespace GameStateManager
                                                 actionMaps[userIndex][k].Keys[0] = 0;
                                         }
                                     }
+#endif
                                     break;
                                 case ControllerType.GAMEPAD:
+#if DESKTOP || CONSOLE
                                     {
                                         Buttons newButton = PrimaryUser.ActionMaps[j].Buttons[0];
                                         Buttons oldButton = currentActionMap.Buttons[0];
@@ -179,11 +190,21 @@ namespace GameStateManager
                                                 actionMaps[userIndex][k].Buttons[0] = 0;
                                         }
                                     }
+#endif
+                                    break;
+                                case ControllerType.TOUCH:
+#if MOBILE
+                                    {
+                                        // Not implemented yet!!
+                                    }
+#endif
                                     break;
                             }
 
                             Entries[i].OnDeselected(PrimaryUser);
+#if DESKTOP
                             Input.CanSwapControllerType = true;
+#endif
                         }
 
                     }
@@ -253,15 +274,21 @@ namespace GameStateManager
 
                     string text = string.Empty;
                     ActionMap actions = actionMaps[userIndex][i + NUM_SKIPPED_KEYS];
-
+#if DESKTOP
                     if (actions.Keys[0] == 0)
                         text = "--";
                     else
                         text = actions.Keys[0].ToString();
 
                     SpriteBatch.DrawString(Font, text, keyLabels[i], keyboardLabelColor);
-
+#endif
+#if DESKTOP || CONSOLE
                     Texture2D buttonTexture = Input.GetPlatformButton(actions.Buttons[0]);
+#endif
+#if MOBILE
+                    Texture2D buttonTexture = Resources.GetTexture("defaultTexture"); // TEMPORARY!!!
+                    //Texture2D buttonTexture = Input.GetPlatformButton(actions.VirtualButtons[0]);
+#endif
                     Vector2 origin = new Vector2(buttonTexture.Width * 0.5f, buttonTexture.Height * 0.5f);
 
                     SpriteBatch.Draw(buttonTexture, buttonLabels[i], buttonTexture.Bounds, gamePadLabelColor, 0f, origin, 0.3f, SpriteEffects.None, 0f);
@@ -287,13 +314,38 @@ namespace GameStateManager
                 for (int i = NUM_SKIPPED_KEYS; i < actionMaps[userIndex].Length - 3; i++)
                 {
                     ActionMap actions = actionMaps[userIndex][i];
+#if DESKTOP
                     Keys assignedKey = actions.Keys[0];
+#endif
+#if DESKTOP || CONSOLE
                     Buttons assignedButton = actions.Buttons[0];
-
-                    if (assignedKey != controller.ActionMaps[i].Keys[0] ||
-                        assignedButton != controller.ActionMaps[i].Buttons[0])
+#endif
+#if MOBILE
+                    Buttons assignedButton = 0;
+#endif
+                    if (
+#if DESKTOP
+                        assignedKey != controller.ActionMaps[i].Keys[0] ||
+#endif
+#if DESKTOP || CONSOLE
+                        assignedButton != controller.ActionMaps[i].Buttons[0]
+#endif
+#if MOBILE
+                        assignedButton != 0
+#endif
+                        )
                     {
-                        if (assignedKey == 0 || assignedButton == 0)
+                        if (
+#if DESKTOP
+                            assignedKey == 0 ||
+#endif
+#if DESKTOP || CONSOLE
+                            assignedButton == 0
+#endif
+#if MOBILE
+                            assignedButton == 0
+#endif
+                            )
                         {
                             unassignedInput = true;
                             break;

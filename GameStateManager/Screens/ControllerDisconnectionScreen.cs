@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input.Touch;
 
 namespace GameStateManager
 {
+#if DESKTOP || CONSOLE
     public class ControllerDisconnectionScreen : MenuScreen
     {
         public string Text;
@@ -64,9 +65,10 @@ namespace GameStateManager
                 Entries[i].UpdateBounds();
                 Entries[i].Selected += ControllerDisconnectionScreen_Selected;
             }
-
+#if DESKTOP || CONSOLE
             Input.ControllerConnected += Input_ControllerConnected;
             Input.ControllerDisconnected += Input_ControllerDisconnected;
+#endif
         }
 
 
@@ -127,27 +129,30 @@ namespace GameStateManager
         {
             SetText("Controller disconnected: Connect a controller.", Color.Yellow);
 
-            if (IsVisible == false && Input.GetPrimaryUser() != null)
-                OnShow();
+            ControllingUser = Input.GetPrimaryUser();
+#if CONSOLE
+            if (ControllingUser == null)
+            {
+                int index = Input.GetConnectedGamePad();
 
-            if (IsVisible)
-                ControllingUser = Input.GetPrimaryUser();
+                if (index != -1)
+                    SetTemporaryUser(index);
+            }
+#endif
+
+            if (IsVisible == false)
+                OnShow();
         }
 
         // Event handler for when a controller is connected.
         private void Input_ControllerConnected(int slot)
         {
-            if (IsVisible || Input.GetPrimaryUser() != null)
-            {
-                SetText("Controller connected: Choose a slot.", Color.Green);
+            SetText("Controller connected: Choose a slot.", Color.Green);
 
-                ControllingUser = temporaryUser;
-                ControllingUser.Slot = slot;
-                ControllingUser.Type = ControllerType.GAMEPAD;
+            SetTemporaryUser(slot);
 
-                if (IsVisible == false)
-                    OnShow();
-            }
+            if (IsVisible == false)
+                OnShow();
         }
 
 
@@ -181,16 +186,39 @@ namespace GameStateManager
 
         public override void OnShow()
         {
+#if DESKTOP
             Input.CanSwapControllerType = false;
+#endif
             Audio.PauseOrResumeAllSounds();
             Audio.PauseOrResumeSong();
             base.OnShow();
         }
 
 
+#if CONSOLE
+        public override void OnDismiss(Controller controller)
+        {
+            if (Input.GetUserCount() == 0)
+                return;
+
+            base.OnDismiss(controller);
+        }
+#endif
+
         protected override void OnFinishTransitionOff()
         {
+#if DESKTOP
             Input.CanSwapControllerType = true;
+#endif
+        }
+
+
+        private void SetTemporaryUser(int slot)
+        {
+            ControllingUser = temporaryUser;
+            ControllingUser.Slot = slot;
+            ControllingUser.Type = ControllerType.GAMEPAD;
         }
     }
+#endif
 }
