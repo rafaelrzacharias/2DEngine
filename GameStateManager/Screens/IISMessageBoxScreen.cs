@@ -11,13 +11,14 @@ namespace GameStateManager
             ShouldDarkenBackground = false;
             OnShow();
         }
-
+        
 
         public override void HandleInput(GameTime gameTime)
         {
             base.HandleInput(gameTime);
-
+;
             int controllerIndex = Input.WasAnyButtonPressed(true, true);
+
             if (controllerIndex != -1)
             {
                 Input.SetPrimaryUser(Input.Controllers[0]);
@@ -25,8 +26,10 @@ namespace GameStateManager
 
                 OnHide();
 
-                LoadingScreen.Unload(this);
-
+#if DESKTOP || CONSOLE
+                LoadingScreen.Load(new ControllerDisconnectionScreen("controllerDisconnection"));
+#endif
+                LoadingScreen.Load(new BackgroundScreen("mainMenuBackground"));
                 LoadingScreen.Load(new MessageBoxScreen("confirmQuit", "Are you sure you want to quit?", "", MessageBoxType.YESNO));
                 LoadingScreen.Load(new UnassignedInputMessage("unassignedInputMessage", "There are still unassigned inputs.", ""));
                 LoadingScreen.Load(new SaveInputMapMessageBoxScreen("saveInputMap", "Would you like to save?", ""));
@@ -36,6 +39,7 @@ namespace GameStateManager
                 LoadingScreen.Load(new MainMenuScreen("mainMenu", "Main Menu"));
             }
         }
+
 
         public override void Draw(GameTime gameTime)
         {
