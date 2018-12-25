@@ -62,6 +62,10 @@ namespace GameStateManager
             if (Input.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Escape))
                 OnDismiss(PrimaryUser);
 #endif
+#if MOBILE
+            if (Input.GetAction(Action.UI_BACK, PrimaryUser).IsTriggered) // TEMPORARY TO USE MOUSE FOR MOBILE!
+                OnDismiss(PrimaryUser);
+#endif
         }
 
 
