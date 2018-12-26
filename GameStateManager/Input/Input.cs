@@ -67,6 +67,8 @@ namespace GameStateManager
         private static GameWindow Window;
 #endif
 #if DESKTOP
+        public static bool CanSwapControllerType = true;
+        
         public static KeyboardState LastKeyboardState;
         public static KeyboardState CurrentKeyboardState;
 
@@ -74,11 +76,15 @@ namespace GameStateManager
         private static float keyRepeatTimer;
         private static float keyRepeatStartDuration = 0.3f;
         private static float keyRepeatDuration = 0.05f;
-
+#endif
+#if DESKTOP || MOBILE
         private static bool isLeftMouseDown;
         private const int dragThreshold = 3;
         public static bool isDragging;
         public static bool isDragComplete;
+
+        private static Vector2 mousePosition;
+        public static Vector2 MousePosition { get { return mousePosition; } }
 
         private static Vector2 dragMouseStart;
         public static Vector2 MouseDragStartPosition { get { return dragMouseStart; } }
@@ -88,8 +94,6 @@ namespace GameStateManager
 
         public static Vector2 MouseDragDelta { get; private set; }
         public static float MouseDragDistance { get; private set; }
-
-        public static bool CanSwapControllerType = true;
 #endif
 #if DESKTOP || CONSOLE
         public static GamePadState[] LastGamePadState;
@@ -194,9 +198,6 @@ namespace GameStateManager
             {
 
             };
-
-            TouchPanel.EnableMouseTouchPoint = true;
-            //TouchPanel.EnableMouseGestures = true;
 #endif
         }
 
@@ -330,44 +331,11 @@ namespace GameStateManager
 #if DESKTOP || MOBILE
             LastMouseState = CurrentMouseState;
             CurrentMouseState = Mouse.GetState(Window);
+            mousePosition = CurrentMouseState.Position.ToVector2();
 #endif
 #if DESKTOP
             LastKeyboardState = CurrentKeyboardState;
             CurrentKeyboardState = Keyboard.GetState();
-
-            if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
-            {
-                isLeftMouseDown = false;
-                isDragging = false;
-                isDragComplete = true;
-                dragMouseEnd = CurrentMouseState.Position.ToVector2();
-
-                MouseDragDistance = Vector2.Distance(dragMouseStart, dragMouseEnd);
-                MouseDragDelta = dragMouseEnd - dragMouseStart;
-            }
-
-            if (isLeftMouseDown == false && CurrentMouseState.LeftButton == ButtonState.Pressed &&
-                    CurrentMouseState.Equals(LastMouseState) == false)
-            {
-                isLeftMouseDown = true;
-                isDragComplete = false;
-                dragMouseStart = CurrentMouseState.Position.ToVector2();
-            }
-
-            if (isLeftMouseDown && CurrentMouseState.LeftButton == ButtonState.Released &&
-                    CurrentMouseState.Equals(LastMouseState) == false)
-                isLeftMouseDown = false;
-
-            if (isLeftMouseDown && isDragging == false)
-            {
-                Vector2 delta = dragMouseStart - CurrentMouseState.Position.ToVector2();
-
-                if (delta.Length() > dragThreshold) // if above threshold (5 px), set dragging to true
-                {
-                    isDragging = true;
-                    dragMouseStart = CurrentMouseState.Position.ToVector2();
-                }
-            }
 
             int slot = -1;
             if (CanSwapControllerType && GetUserCount() == 1)
@@ -409,6 +377,37 @@ namespace GameStateManager
 
                     break;
                 }
+            }
+#endif
+#if DESKTOP || MOBILE
+            if (CurrentMouseState.LeftButton == ButtonState.Released && isDragging)
+            {
+                isLeftMouseDown = false;
+                isDragging = false;
+                isDragComplete = true;
+                dragMouseEnd = mousePosition;
+
+                MouseDragDistance = Vector2.Distance(dragMouseStart, dragMouseEnd);
+                MouseDragDelta = dragMouseEnd - dragMouseStart;
+            }
+
+            if (isLeftMouseDown == false && CurrentMouseState.LeftButton == ButtonState.Pressed &&
+                    CurrentMouseState.Equals(LastMouseState) == false)
+            {
+                isLeftMouseDown = true;
+                isDragComplete = false;
+                dragMouseStart = mousePosition;
+            }
+
+            if (isLeftMouseDown && CurrentMouseState.LeftButton == ButtonState.Released &&
+                    CurrentMouseState.Equals(LastMouseState) == false)
+                isLeftMouseDown = false;
+
+            if (isLeftMouseDown && isDragging == false)
+            {
+                // if above threshold (5 px), set dragging to true
+                if ((dragMouseStart - mousePosition).Length() > dragThreshold)
+                    isDragging = true;
             }
 #endif
             for (int i = 0; i < MAX_USERS; i++)
@@ -547,7 +546,7 @@ namespace GameStateManager
             }
 #endif
 #if MOBILE
-            if (TouchPanel.IsGestureAvailable || (TouchPanel.EnableMouseTouchPoint && CurrentMouseState.LeftButton == ButtonState.Pressed))
+            if (TouchPanel.IsGestureAvailable || CurrentMouseState.LeftButton == ButtonState.Pressed)
                 return MAX_USERS;
 #endif
             return -1;
@@ -618,9 +617,7 @@ namespace GameStateManager
         // Returns the distance that the mouse travelled since last frame.
         public static float GetMouseDistance()
         {
-            return Vector2.Distance(
-                CurrentMouseState.Position.ToVector2(), 
-                LastMouseState.Position.ToVector2());
+            return Vector2.Distance(mousePosition, LastMouseState.Position.ToVector2());
         }
 
 
@@ -673,27 +670,19 @@ namespace GameStateManager
 
 #if DESKTOP || MOBILE
         // Checks if the mouse is currently hovering an interactible area.
-        public static bool IsMouseOver(Rectangle area)
-        {
-            return (CurrentMouseState.Position.X > area.X &&
-                CurrentMouseState.Position.X < area.X + area.Width &&
-                CurrentMouseState.Position.Y > area.Y &&
-                CurrentMouseState.Position.Y < area.Y + area.Height);
-        }
+        public static bool IsMouseOver(Rectangle area) { return area.Contains(mousePosition); }
+
+
+        // Checks of the mouse is currently hovering an interactible circle.
+        public static bool IsMouseOver(Circle area) { return area.Contains(mousePosition); }
 
 
         // Checks whether or not the mouse has moved on a player controlling a keyboard and mouse.
-        public static bool HasMouseMoved()
-        {
-            return CurrentMouseState.Position != LastMouseState.Position;
-        }
+        public static bool HasMouseMoved() { return CurrentMouseState.Position != LastMouseState.Position; }
 #endif
 
         // Returns a platform button, given an action.
-        public static Texture2D GetPlatformButton(Buttons button)
-        {
-            return platformButtons[button];
-        }   
+        public static Texture2D GetPlatformButton(Buttons button) { return platformButtons[button]; }   
 
 
         // Returns the state of an action, given the action and the controller.
