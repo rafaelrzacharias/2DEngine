@@ -59,6 +59,14 @@
         <Item>onscreenInnerThumbstick</Item>
         <Item>onscreenOuterThumbstick</Item>
         <Item>onscreenDPadBase</Item>
+        <Item>onscreenDPadDown</Item>
+        <Item>onscreenDPadDownLeft</Item>
+        <Item>onscreenDPadDownRight</Item>
+        <Item>onscreenDPadLeft</Item>
+        <Item>onscreenDPadRight</Item>
+        <Item>onscreenDPadUp</Item>
+        <Item>onscreenDPadUpLeft</Item>
+        <Item>onscreenDPadUpRight</Item>
         <Item>defaultTexture</Item>
       </Textures>
   </Asset>
