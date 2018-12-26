@@ -56,6 +56,9 @@
         <Item>menuButton</Item>
         <Item>plus</Item>
         <Item>padFace</Item>
+        <Item>onscreenInnerThumbstick</Item>
+        <Item>onscreenOuterThumbstick</Item>
+        <Item>onscreenDPadBase</Item>
         <Item>defaultTexture</Item>
       </Textures>
   </Asset>
