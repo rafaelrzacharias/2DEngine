@@ -67,6 +67,12 @@
         <Item>onscreenDPadUp</Item>
         <Item>onscreenDPadUpLeft</Item>
         <Item>onscreenDPadUpRight</Item>
+        <Item>onscreenLKButton</Item>
+        <Item>onscreenHKButton</Item>
+        <Item>onscreenLPButton</Item>
+        <Item>onscreenHPButton</Item>
+        <Item>onscreenJumpButton</Item>
+        <Item>onscreenGrabButton</Item>
         <Item>defaultTexture</Item>
       </Textures>
   </Asset>
